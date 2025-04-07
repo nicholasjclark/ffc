@@ -16,4 +16,6 @@ Imports:
     glue,
     lifecycle,
     rlang,
-    withr
+    withr,
+    mgcv,
+    dplyr
