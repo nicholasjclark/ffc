@@ -103,10 +103,11 @@ The linear predictor returned termwise will not include the offset or the interc
     </div>
     <div id="details">
     <h2>Details</h2>
-    <p>This function will update the supplied <code>formula</code> to ensure any time-varying
-functionals (supplied through <code><a href="fts.html">fts()</a></code> terms in the formula right hand side) are
-appropriately incorporated into the model. It then passes the updated model and data
-objects to the specified <code>engine</code> for model fitting</p>
+    <p>This function returns predictions from models fitted with <code><a href="ffc_gam.html">ffc_gam()</a></code>.
+Data passed to <code>newdata</code> will first be correctly augmented to include any basis functions
+whose coefficients were estimated as time-varying, so the user need only supply data
+that includes variables that were used in the original <code>data</code> that was supplied to
+<code><a href="ffc_gam.html">ffc_gam()</a></code></p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
