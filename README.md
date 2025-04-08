@@ -14,7 +14,7 @@ status](https://www.r-pkg.org/badges/version/ffc)](https://CRAN.R-project.org/pa
 coverage](https://codecov.io/gh/nicholasjclark/ffc/graph/badge.svg)](https://app.codecov.io/gh/nicholasjclark/ffc)
 <!-- badges: end -->
 
-The goal of ffc is to …
+The goal of **ffc** is to provide functional forecasting
 
 ## Installation
 
@@ -24,13 +24,4 @@ You can install the development version of ffc from
 ``` r
 # install.packages("pak")
 pak::pak("nicholasjclark/ffc")
-```
-
-## Example
-
-This is a basic example which shows you how to solve a common problem:
-
-``` r
-library(ffc)
-## basic example code
 ```

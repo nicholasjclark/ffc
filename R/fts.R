@@ -19,6 +19,10 @@
 #' see \code{\link[mgcv]{smooth.terms}} for an over view of what is available.
 #' @param time_k the dimension of the bases to be used in the time-varying coefficient
 #' smooths (see **Details** below). Arbitrarily set to `10` by default.
+#' @param time_m the order of the penalty for the time-varying coefficient smooths
+#'  (e.g. `2` for normal cubic spline penalty with 2nd derivatives).
+#'  Only some smooth classes use this. The `"ps"` class can use a `2` item `array`
+#'  giving the basis and penalty order separately.
 #' @param by a `factor` variable of the same dimension as each covariate, used to create
 #'  a replicate of the smooth for each factor level.
 #' @rdname fts
@@ -40,6 +44,7 @@ fts <- function(
     bs = "cr",
     time_bs = "cr",
     m = NA,
+    time_m = 2,
     d = NA,
     by = NA,
     xt = NULL,
@@ -90,9 +95,11 @@ fts <- function(
   return(
     list(
       call = deparse(substitute(sfun)),
+      term = term,
       by = by_var,
       time_bs = time_bs,
       time_k = time_k,
+      time_m = time_m,
       label = label
     )
   )

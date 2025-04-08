@@ -18,4 +18,5 @@ Imports:
     rlang,
     withr,
     mgcv,
-    dplyr
+    dplyr,
+    purrr

@@ -11,6 +11,7 @@ fts(
   bs = "cr",
   time_bs = "cr",
   m = NA,
+  time_m = 2,
   d = NA,
   by = NA,
   xt = NULL,
@@ -52,6 +53,11 @@ see \code{\link[mgcv]{smooth.terms}} for an over view of what is available.}
   (e.g. \code{\link[mgcv]{p.spline}} and \code{\link[mgcv]{Duchon.spline}}), then
   a list can be supplied, with a vector element for each margin. \code{NA} autoinitializes. 
   \code{m} is ignored by some bases (e.g. \code{"cr"}).}
+
+\item{time_m}{the order of the penalty for the time-varying coefficient smooths
+(e.g. \code{2} for normal cubic spline penalty with 2nd derivatives).
+Only some smooth classes use this. The \code{"ps"} class can use a \code{2} item \code{array}
+giving the basis and penalty order separately.}
 
 \item{d}{array of marginal basis dimensions. For example if you want a smooth for 3 covariates 
 made up of a tensor product of a 2 dimensional t.p.r.s. basis and a 1-dimensional basis, then 

@@ -5,12 +5,14 @@ ffc_gam_setup <- function(
     formula,
     knots,
     family = gaussian(),
-    dat = list(),
-    na.action,
-    drop.unused.levels = FALSE,
-    maxit = 5) {
+    dat = list()) {
+
   if (missing(knots)) {
-    out <- init_gam(formula(formula), data = dat, family = family)
+    out <- init_gam(
+      formula(formula),
+      data = dat,
+      family = family
+    )
     attr(out, "knots") <- NULL
   } else {
     if (!is.list(knots)) {
@@ -30,9 +32,8 @@ ffc_gam_setup <- function(
 #' The below functions are mostly perfect copies of functions
 #' written originally by Prof Simon Wood
 #' All credit goes to Prof Wood and the mgcv development team.
-#' They only exist in mvgam because of CRAN restrictions on
+#' They only exist in ffc_gam because of CRAN restrictions on
 #' calling internal functions from other packages
-
 #' @noRd
 rmvn <- function(n, mu, sig) {
   L <- mgcv::mroot(sig)

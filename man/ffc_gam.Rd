@@ -2,7 +2,7 @@
 % Please edit documentation in R/ffc_gam.R
 \name{ffc_gam}
 \alias{ffc_gam}
-\title{Define functions with dynamic coefficients in \pkg{ffc} formulae}
+\title{Fit a functional time series model using dynamic functional coefficients}
 \usage{
 ffc_gam(
   formula,
@@ -41,11 +41,12 @@ for fitting the model.}
 \item{...}{other arguments to pass to either \code{\link[mgcv]{gam}}}
 }
 \value{
-An object of class \code{ffc_gam}
+An object of class \code{ffc_gam}, which inherits from objects of class \code{gam} or
+\code{bam}
 }
 \description{
-Set up smooth terms with time-varying (dynamic) coefficients for use in
-\pkg{ffc} models
+Fit Generalized Additive Models that can include time-varying (dynamic)
+functions
 }
 \details{
 This function will update the supplied \code{formula} to ensure any time-varying
@@ -54,7 +55,7 @@ appropriately incorporated into the model. It then passes the updated model and 
 objects to the specified \code{engine} for model fitting
 }
 \seealso{
-\code{\link[=fts]{fts()}}
+\code{\link[=fts]{fts()}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
 }
 \author{
 Nicholas J Clark

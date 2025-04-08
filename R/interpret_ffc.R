@@ -8,32 +8,45 @@ interpret_ffc <- function(
     time_var = "time",
     gam_init = list(),
     newdata = NULL) {
-  # Factors in formula
-  facs <- colnames(attr(terms.formula(formula), "factors"))
+
+  # Tibbles often get rearranged by mgcv in very strange ways; grouping?
+  # best to convert to plain-Jane data.frames first
+  if(inherits(data, 'tbl_df')){
+    data <- as.data.frame(data)
+  }
 
   # Check if formula has an intercept
   keep_intercept <- attr(terms(formula), "intercept") == 1
 
-  # Check if any terms use the fts() wrapper
+  # Extract term labels
   response <- terms.formula(formula)[[2]]
-  tf <- attr(terms.formula(formula, keep.order = TRUE), "term.labels")
-  which_dynamics <- grep("fts(", tf, fixed = TRUE)
+  termlabs <- attr(terms.formula(formula, keep.order = TRUE), "term.labels")
+
+  # Check for offsets as well
+  off_names <- grep(
+    'offset',
+    rownames(attr(terms.formula(formula), 'factors')),
+    value = TRUE
+  )
+  if (length(off_names) > 0L) {
+    termlabs <- c(termlabs, off_names)
+  }
+
+  # Check if any terms use the fts() wrapper
+  which_dynamics <- grep("fts(", termlabs, fixed = TRUE)
 
   # Update the formula to the correct time-varying coefficient implementation
   fts_smooths <- list()
   if (length(which_dynamics) != 0L) {
-    termlabs <- attr(terms(formula, keep.order = TRUE), "term.labels")
     fts_smooths <- vector(length = length(which_dynamics), mode = "list")
 
     # Evaluate the fts() terms and update the formula appropriately
-    if (length(which_dynamics > 1)) {
-      termlabs <- termlabs[-which_dynamics]
-      for (i in seq_along(which_dynamics)) {
-        fts_smooths[[i]] <- eval(parse(text = tf[which_dynamics[i]]))
-      }
+    for (i in seq_along(which_dynamics)) {
+      fts_smooths[[i]] <- eval(parse(text = termlabs[which_dynamics[i]]))
     }
 
     # Replace dynamic terms with the correct specification
+    fts_labs <- c()
     for (i in seq_along(which_dynamics)) {
       fts_forms <- dyn_to_spline(
         fts_smooths[[i]],
@@ -47,18 +60,21 @@ interpret_ffc <- function(
       gam_init[[i]] <- fts_forms$gam_init
 
       # Update formula
-      termlabs <- c(termlabs, unlist(fts_forms$newform))
+      fts_labs <- c(fts_labs, unlist(fts_forms$newform))
 
       # Update data
       if (inherits(data, "list")) {
         data <- append(data, as.list(fts_forms$X))
       } else {
-        data <- dplyr::bind_cols(data, fts_forms$X)
+        data <- cbind(data, fts_forms$X)
       }
     }
 
     # Return the updated formula for passing to mgcv
-    updated_formula <- reformulate(termlabs, rlang::f_lhs(formula))
+    updated_formula <- reformulate(
+      c(termlabs[-which_dynamics], fts_labs),
+      rlang::f_lhs(formula)
+    )
     attr(updated_formula, ".Environment") <- attr(formula, ".Environment")
   } else {
     updated_formula <- formula
@@ -85,6 +101,7 @@ dyn_to_spline <- function(
     time_var = "time",
     gam_init = NULL,
     newdata = newdata) {
+
   # Extract key basis information
   label <- term$label
   time_k <- term$time_k
@@ -114,24 +131,33 @@ dyn_to_spline <- function(
   }
 
   # Get indices of null space functions
-  null_idx <- apply(X, 2, sd) == 0
   colnames(X) <- paste0(
-    term$label,
-    "_bs_",
-    1:NCOL(X)
+    "fts_bs_",
+    clean_sm_names(names(coef(gam_init)))
   )
 
-  # Begin building the updated formula; start with any parametric
-  # terms for null basis functions
-  newform <- vector(mode = "list", length = NCOL(X))
-  if (any(null_idx)) {
-    for (i in which(null_idx)) {
-      newform[[i]] <- colnames(X)[i]
-    }
+  # Need to ensure a constant basis is included to capture
+  # any mean-shifts in the functions over time
+  if(!any(apply(X, 2, sd) == 0)){
+    orig_names <- colnames(X)
+    X <- cbind(
+      X,
+      matrix(1, nrow = NROW(X), ncol = 1)
+    )
+    colnames(X) <- c(
+      orig_names,
+      paste0(
+        'fts_bs_',
+        label,
+        term_id,
+        '_mean'
+      )
+    )
   }
 
-  # Now build the smooth functions for time-varying coefficients
-  for (i in which(!null_idx)) {
+  # Begin building the updated formula
+  newform <- vector(mode = "list", length = NCOL(X))
+  for (i in 1:NCOL(X)) {
     newform[[i]] <- paste0(
       "s(",
       time_var,
@@ -156,4 +182,25 @@ dyn_to_spline <- function(
       gam_init = gam_init
     )
   )
+}
+
+#' Clean smooth names so no illegal characters are used in formulae
+#' @noRd
+clean_sm_names = function(sm_names) {
+  sm_names_clean <- gsub(' ', '_', sm_names, fixed = TRUE)
+  sm_names_clean <- gsub('(', '_', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(')', '_', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(',', 'by', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(':', 'by', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub('.', '_', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(']', '_', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub('[', '_', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(';', '_', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(':', '_', sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub("'", "", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub("\"", "", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub("%", "percent", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub("[.]+", "_", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub("'", "", sm_names_clean, fixed = TRUE)
+  sm_names_clean
 }
