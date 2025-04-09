@@ -47,10 +47,10 @@ Load the in-built Queensland Mortality data, which contains the number of deaths
 library(ffc)
 library(ggplot2); theme_set(theme_bw())
 data('qld_mortality')
-head(qld_mortality)
+head(qld_mortality, 15)
 ```
 
-Visualise the mortality curves over time using the log10 scale
+Visualise the observed mortality curves over time using the log10 scale
 ```{r, warning=FALSE}
 ggplot(data = qld_mortality,
        aes(x = age,
@@ -64,13 +64,13 @@ ggplot(data = qld_mortality,
   scale_y_log10()
 ```
 
-Fit a model to estimate how the log(mortality) curve changed over time using the `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death function using a set of `k = 10` thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`
+Fit a model to estimate how the log(mortality) curve changed over time using the `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death function using a set of `k = 10` thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. In this model we allow the time-varying effects to vary among sexes while ensuring they can be efficiently learned by linking their smoothing parameters
 ```{r}
 mod <- ffc_gam(
   deaths ~ 
     offset(log(population)) +
     sex + 
-    fts(age, k = 10, bs = 'tp',
+    fts(age, k = 10, bs = 'cr', by = sex,
         time_bs = 'cr', time_k = '15'),
   time = 'year',
   data = qld_mortality,

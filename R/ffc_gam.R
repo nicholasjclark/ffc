@@ -223,7 +223,7 @@ init_gam <- function(
     data = list(),
     na.action = na.omit,
     knots = NULL,
-    drop.unused.levels = FALSE,
+    drop.unused.levels = TRUE,
     control = mgcv::gam.control(),
     centred = TRUE,
     diagonalize = FALSE,

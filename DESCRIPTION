@@ -5,7 +5,7 @@ Date: 2025-04-03
 Authors@R: 
     person("Nicholas J", "Clark", , "nicholas.j.clark1214@gmail.com", 
                     role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7131-3301"))
-Description: Functional forecasting using Generalized Additive Models
+Description: Perform functional regression using Generalized Additive Models (GAMs) that enable functional responses to be modelled and predicted with a broad range of predictor effects. The package also handles functional predictors with time-varying coefficients that can be forecasted ahead using a variety of efficient forecasting algorithms, providing unmatched flexibility to model and predict how functional responses change over time. 
 License: MIT + file LICENSE
 Suggests: 
     testthat (>= 3.0.0)
