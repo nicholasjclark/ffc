@@ -163,7 +163,8 @@ strip_offset <- function(x) {
 }
 
 #' Generic GAM setup function
-#' @importFrom stats na.fail
+#' @importFrom stats na.fail coef gaussian model.frame quantile reformulate rnorm sd vcov
+#' @importFrom utils data
 #' @noRd
 ffc_gam_setup <- function(
     formula,
