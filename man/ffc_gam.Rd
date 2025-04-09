@@ -54,6 +54,29 @@ functionals (supplied through \code{\link[=fts]{fts()}} terms in the formula rig
 appropriately incorporated into the model. It then passes the updated model and data
 objects to the specified \code{engine} for model fitting
 }
+\examples{
+# Fit a dynamic function-on-function regression to the Queensland
+# mortality data
+data("qld_mortality")
+mod <- ffc_gam(
+  deaths ~
+  offset(log(population)) +
+  sex +
+  fts(age, k = 8, bs = 'cr',
+     time_bs = 'cr', time_k = 10),
+ time = 'year',
+ data = qld_mortality,
+ family = poisson(),
+ engine = 'bam'
+)
+class(mod)
+summary(mod)
+
+# Predictions work in the usual way
+head(predict(mod, type = 'link'))
+head(predict(mod, type = 'response'))
+
+}
 \seealso{
 \code{\link[=fts]{fts()}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
 }

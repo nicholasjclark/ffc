@@ -71,7 +71,7 @@ mod <- ffc_gam(
     offset(log(population)) +
     sex + 
     fts(age, k = 10, bs = 'cr', by = sex,
-        time_bs = 'cr', time_k = '15'),
+        time_bs = 'cr', time_k = 10),
   time = 'year',
   data = qld_mortality,
   family = poisson(),

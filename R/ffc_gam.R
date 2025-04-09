@@ -25,6 +25,28 @@
 #' `bam`
 #' @seealso [fts()], \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
 #' @author Nicholas J Clark
+#' @examples
+#' # Fit a dynamic function-on-function regression to the Queensland
+#' # mortality data
+#' data("qld_mortality")
+#' mod <- ffc_gam(
+#'   deaths ~
+#'   offset(log(population)) +
+#'   sex +
+#'   fts(age, k = 8, bs = 'cr',
+#'      time_bs = 'cr', time_k = 10),
+#'  time = 'year',
+#'  data = qld_mortality,
+#'  family = poisson(),
+#'  engine = 'bam'
+#' )
+#' class(mod)
+#' summary(mod)
+#'
+#' # Predictions work in the usual way
+#' head(predict(mod, type = 'link'))
+#' head(predict(mod, type = 'response'))
+#'
 #' @export
 ffc_gam <- function(
     formula,
