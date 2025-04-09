@@ -6,8 +6,6 @@
 #' @name fts_coefs.ffc_gam
 #' @importFrom mgcv predict.gam predict.bam
 #' @param object \code{list} object of class \code{ffc_gam}. See [ffc_gam()]
-#' @param se.fit \code{logical} indicating whether standard errors of time-varying
-#' basis coefficients should also be returned. Default is `TRUE`
 #' @param ... Ignored
 #' @details This function creates a `tidy` time series of basis function coefficients
 #' from all `fts()` terms that were supplied to the original model
@@ -25,7 +23,6 @@ fts_coefs <- function(object, ...) {
 #' @export
 fts_coefs.ffc_gam <- function(
     object,
-    se.fit = TRUE,
     ...) {
   if (is.null(object$fts_smooths)) {
     message("No functional smooths using fts() were included in this model")
@@ -48,7 +45,7 @@ fts_coefs.ffc_gam <- function(
 
     # Extract estimated coefficients
     betas <- mgcv::rmvn(
-      n = 500,
+      n = 1000,
       mu = coef(object),
       V = vcov(object)
     )
@@ -76,10 +73,10 @@ fts_coefs.ffc_gam <- function(
         object$smooth[[sm]]$last.para
         preds <- matrix(
           NA,
-          nrow = 500,
+          nrow = 1000,
           ncol = NROW(pred_dat)
         )
-        for (i in 1:500) {
+        for (i in 1:1000) {
           preds[i, ] <- as.vector(lp %*% betas[i, beta_idx])
         }
 
@@ -88,7 +85,7 @@ fts_coefs.ffc_gam <- function(
           .basis = by_var,
           .time = unique_times,
           .estimate = apply(preds, 2, mean),
-          .se = apply(preds, 2, function(x) sd(x) / length(x))
+          .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x)))
         )
         dat$time_var <- unique_times
         colnames(dat) <- c('.basis',

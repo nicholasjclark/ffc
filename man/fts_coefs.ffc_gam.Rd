@@ -7,15 +7,12 @@
 \usage{
 fts_coefs(object, ...)
 
-\method{fts_coefs}{ffc_gam}(object, se.fit = TRUE, ...)
+\method{fts_coefs}{ffc_gam}(object, ...)
 }
 \arguments{
 \item{object}{\code{list} object of class \code{ffc_gam}. See \code{\link[=ffc_gam]{ffc_gam()}}}
 
 \item{...}{Ignored}
-
-\item{se.fit}{\code{logical} indicating whether standard errors of time-varying
-basis coefficients should also be returned. Default is \code{TRUE}}
 }
 \value{
 A \code{fts_ts} object containing the point estimates and their standard errors

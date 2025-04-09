@@ -212,20 +212,57 @@ of the curve into the future
 functional_coefs <- fts_coefs(mod)
 functional_coefs
 #> # A tibble: 779 × 5
-#>    .basis                     .time .estimate       .se  year
-#>    <chr>                      <int>     <dbl>     <dbl> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.000140   1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.000122   1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.000107   1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.0000962  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.77 0.0000878  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.77 0.0000825  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.0000798  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.76 0.0000787  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.76 0.0000790  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.0000794  1989
+#>    .basis                     .time .estimate     .se  year
+#>    <chr>                      <int>     <dbl>   <dbl> <int>
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00200  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00172  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00151  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.00137  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.77 0.00128  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00123  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00122  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.76 0.00121  1987
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00122  1988
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00123  1989
 #> # ℹ 769 more rows
 ```
+
+There is no automatic plotting function yet to visualise these
+time-varying coefficients, but for now we can use a bit of `ggplot` to
+get this done
+
+``` r
+ggplot(
+  data = functional_coefs,
+  aes(x = year,
+      y = .estimate,
+      colour = .basis)
+) +
+  geom_ribbon(
+    mapping = aes(ymax = .estimate + 2 * .se,
+                  ymin = .estimate - 2 * .se,
+                  fill = .basis),
+    show.legend = FALSE
+  ) +
+  geom_line(
+    show.legend = FALSE
+  ) +
+  facet_wrap(
+    ~.basis, 
+    scales = 'free_y',
+    ncol = 4
+  ) +
+  labs(
+    y = 'Coefficient estimate',
+    x = 'Year'
+  )
+```
+
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+
+Clearly there is a lot of structure and dependence here, suggesting that
+a dynamic factor model fitted to these coefficient time series would be
+valuable for creating functional forecasts. More on that to come!
 
 ## Getting help
 

@@ -113,6 +113,36 @@ functional_coefs <- fts_coefs(mod)
 functional_coefs
 ```
 
+There is no automatic plotting function yet to visualise these time-varying coefficients, but for now we can use a bit of `ggplot` to get this done
+```{r}
+ggplot(
+  data = functional_coefs,
+  aes(x = year,
+      y = .estimate,
+      colour = .basis)
+) +
+  geom_ribbon(
+    mapping = aes(ymax = .estimate + 2 * .se,
+                  ymin = .estimate - 2 * .se,
+                  fill = .basis),
+    show.legend = FALSE
+  ) +
+  geom_line(
+    show.legend = FALSE
+  ) +
+  facet_wrap(
+    ~.basis, 
+    scales = 'free_y',
+    ncol = 4
+  ) +
+  labs(
+    y = 'Coefficient estimate',
+    x = 'Year'
+  )
+```
+
+Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. More on that to come!
+
 ## Getting help
 If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/nicholasjclark/ffc/issues)
 
