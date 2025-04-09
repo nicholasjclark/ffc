@@ -4,7 +4,7 @@
 \alias{predict.ffc_gam}
 \title{Predict from a fitted \pkg{ffc_gam} model}
 \usage{
-\method{predict}{ffc_gam}(object, newdata, type = "link", se.fit = FALSE)
+\method{predict}{ffc_gam}(object, newdata, type = "link", se.fit = FALSE, ...)
 }
 \arguments{
 \item{object}{ a fitted \code{gam} object as produced by \code{gam()}.
@@ -34,6 +34,8 @@ linear predictor matrix can also be used to implement approximate prediction
 outside \code{R} (see example code, below). }
 
 \item{se.fit}{ when this is TRUE (not default) standard error estimates are returned for each prediction.}
+
+\item{...}{ignored}
 }
 \value{
 If \code{type == "lpmatrix"} then a \code{matrix} is returned which

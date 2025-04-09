@@ -3,6 +3,7 @@
 #'
 #' @importFrom mgcv predict.gam predict.bam
 #' @inheritParams mgcv::predict.gam
+#' @param ... ignored
 #' @rdname predict.ffc_gam
 #' @details This function returns predictions from models fitted with [ffc_gam()].
 #' Data passed to `newdata` will first be correctly augmented to include any basis functions
@@ -28,7 +29,8 @@ predict.ffc_gam <- function(
     object,
     newdata,
     type = "link",
-    se.fit = FALSE) {
+    se.fit = FALSE,
+    ...) {
   type <- match.arg(
     type,
     choices = c(
