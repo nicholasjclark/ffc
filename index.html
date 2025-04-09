@@ -55,12 +55,20 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
+
 <div class="section level1">
 <div class="page-header"><h1 id="ffc">ffc<a class="anchor" aria-label="anchor" href="#ffc"></a>
 </h1></div>
 <!-- badges: start -->
 
-<p>The goal of <strong>ffc</strong> is to provide functional forecasting</p>
+</div>
+<div class="section level1">
+<h1 id="ffc-1">ffc<a class="anchor" aria-label="anchor" href="#ffc-1"></a>
+</h1>
+<blockquote>
+<p><strong>F</strong>unctional <strong>F</strong>ore<strong>C</strong>asting</p>
+</blockquote>
+<p>The goal of the <code>ffc</code> 📦 is to perform functional regression using Generalized Additive Models (GAMs). The package integrates with the extremely flexible <a href="https://cran.r-project.org/package=mgcv" target="_blank" class="external-link"><code>mgcv</code></a> package to enable functional responses to be modelled and predicted using a broad range of predictor effects. Key among these types of predictors are <em>dynamic functional predictors</em> using a new <code><a href="reference/fts.html">fts()</a></code> term, which sets up functional predictors whose coefficients are modelled as time-varying. These time-varying coefficients can then be forecasted ahead using a variety of efficient forecasting algorithms, providing unmatched flexibility to model and predict how functional responses change over time.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -69,7 +77,145 @@
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"nicholasjclark/ffc"</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="a-brief-example">A brief example<a class="anchor" aria-label="anchor" href="#a-brief-example"></a>
+</h2>
+<p>Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">ffc</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>; <span class="fu">theme_set</span><span class="op">(</span><span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'qld_mortality'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">qld_mortality</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   year age    sex deaths population</span></span>
+<span><span class="co">#&gt; 1 1980   0 female    190   17699.81</span></span>
+<span><span class="co">#&gt; 2 1980   1 female     20   17505.27</span></span>
+<span><span class="co">#&gt; 3 1980   2 female      6   17715.56</span></span>
+<span><span class="co">#&gt; 4 1980   3 female      6   18080.06</span></span>
+<span><span class="co">#&gt; 5 1980   4 female     10   18390.10</span></span>
+<span><span class="co">#&gt; 6 1980   5 female      6   18870.54</span></span></code></pre></div>
+<p>Visualise the mortality curves over time using the log10 scale</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span>data <span class="op">=</span> <span class="va">qld_mortality</span>,</span>
+<span>       <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>,</span>
+<span>           y <span class="op">=</span> <span class="va">deaths</span> <span class="op">/</span> <span class="va">population</span>,</span>
+<span>           group <span class="op">=</span> <span class="va">year</span>,</span>
+<span>           colour <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span> <span class="va">sex</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_colour_viridis_c</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Observed log(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_y_log10</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-3-1.png" width="100%"></p>
+<p>Fit a model to estimate how the log(mortality) curve changed over time using the <code>deaths</code> as the outcome and using a time-varying function of <code>age</code> as the primary predictor. Using <code><a href="reference/fts.html">fts()</a></code>, we model the age-death function using a set of <code>k = 10</code> thin plate basis functions whose coefficients are allowed to vary over time, where <code>time = 'year'</code></p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ffc_gam.html">ffc_gam</a></span><span class="op">(</span></span>
+<span>  <span class="va">deaths</span> <span class="op">~</span> </span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">population</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="va">sex</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="reference/fts.html">fts</a></span><span class="op">(</span><span class="va">age</span>, k <span class="op">=</span> <span class="fl">10</span>, bs <span class="op">=</span> <span class="st">'tp'</span>,</span>
+<span>        time_bs <span class="op">=</span> <span class="st">'cr'</span>, time_k <span class="op">=</span> <span class="st">'15'</span><span class="op">)</span>,</span>
+<span>  time <span class="op">=</span> <span class="st">'year'</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">qld_mortality</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  engine <span class="op">=</span> <span class="st">'bam'</span>,</span>
+<span>  discrete <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Inspect the model summary; notice in the <code>Formula</code> slot how the basis functions are modelled as <code>by</code> variables in independent smooths of <code>year</code></p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Family: poisson </span></span>
+<span><span class="co">#&gt; Link function: log </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Formula:</span></span>
+<span><span class="co">#&gt; deaths ~ sex + offset(log(population)) + s(year, by = fts_bs_s_age__1, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__2, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__3, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__4, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__5, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__6, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__7, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__8, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_s_age__9, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1) + s(year, by = fts_bs_fts_age1_mean, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 15, id = 1)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Parametric coefficients:</span></span>
+<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; (Intercept) -5.567370   0.002625   -2121   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; sexmale      0.473754   0.002078     228   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Approximate significance of smooth terms:</span></span>
+<span><span class="co">#&gt;                                 edf Ref.df Chi.sq p-value    </span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__1       8.453  9.657  36159  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__2       6.669  7.826  23363  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__3       8.142  9.317  22342  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__4       6.735  7.921  22197  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__5       7.794  8.942  23817  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__6       6.449  7.600  22290  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__7       7.569  8.687  20362  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__8       6.084  7.006  27395  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age__9       6.212  6.915  12887  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_fts_age1_mean 10.758 12.260  10448  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; R-sq.(adj) =  0.978   Deviance explained =   97%</span></span>
+<span><span class="co">#&gt; fREML =  24615  Scale est. = 1         n = 8282</span></span></code></pre></div>
+<p>View predicted functional curves using a fixed offset (where <code>population = 1</code>) to calculate a standardized rate of mortality</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">newdat</span> <span class="op">&lt;-</span> <span class="va">qld_mortality</span></span>
+<span><span class="va">newdat</span><span class="op">$</span><span class="va">population</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
+<span><span class="va">newdat</span><span class="op">$</span><span class="va">preds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
+<span>  <span class="va">mod</span>,</span>
+<span>  newdata <span class="op">=</span> <span class="va">newdat</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">'response'</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">ggplot</span><span class="op">(</span>data <span class="op">=</span> <span class="va">newdat</span>,</span>
+<span>       <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>,</span>
+<span>           y <span class="op">=</span> <span class="va">preds</span>,</span>
+<span>           group <span class="op">=</span> <span class="va">year</span>,</span>
+<span>           colour <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span> <span class="va">sex</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_colour_viridis_c</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Expected log10(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_y_log10</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-6-1.png" width="100%"></p>
+<p>The time-varying coefficients (and their Standard Errors) can be extracted into a <code>tidy</code> format using <code><a href="reference/fts_coefs.ffc_gam.html">fts_coefs()</a></code>, which will facilitate the use of time series models to enable efficient forecasting of the curve into the future</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">functional_coefs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fts_coefs.ffc_gam.html">fts_coefs</a></span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span>
+<span><span class="va">functional_coefs</span></span>
+<span><span class="co">#&gt; # A tibble: 410 × 5</span></span>
+<span><span class="co">#&gt;    .basis          .time .estimate       .se  year</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;           &lt;int&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1 fts_bs_s_age__1  1980      5.11 0.000126   1980</span></span>
+<span><span class="co">#&gt;  2 fts_bs_s_age__1  1981      5.08 0.000113   1981</span></span>
+<span><span class="co">#&gt;  3 fts_bs_s_age__1  1982      5.06 0.000103   1982</span></span>
+<span><span class="co">#&gt;  4 fts_bs_s_age__1  1983      5.03 0.0000947  1983</span></span>
+<span><span class="co">#&gt;  5 fts_bs_s_age__1  1984      5.00 0.0000874  1984</span></span>
+<span><span class="co">#&gt;  6 fts_bs_s_age__1  1985      4.97 0.0000814  1985</span></span>
+<span><span class="co">#&gt;  7 fts_bs_s_age__1  1986      4.95 0.0000765  1986</span></span>
+<span><span class="co">#&gt;  8 fts_bs_s_age__1  1987      4.92 0.0000724  1987</span></span>
+<span><span class="co">#&gt;  9 fts_bs_s_age__1  1988      4.90 0.0000700  1988</span></span>
+<span><span class="co">#&gt; 10 fts_bs_s_age__1  1989      4.87 0.0000688  1989</span></span>
+<span><span class="co">#&gt; # ℹ 400 more rows</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="getting-help">Getting help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
+</h2>
+<p>If you encounter a clear bug, please file an issue with a minimal reproducible example on <a href="https://github.com/nicholasjclark/ffc/issues" class="external-link">GitHub</a></p>
+</div>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h2>
+<p>The <code>ffc</code> project is licensed under an <code>MIT</code> open source license</p>
+</div>
+</div>
+
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

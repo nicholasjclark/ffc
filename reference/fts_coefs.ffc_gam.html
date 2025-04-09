@@ -71,25 +71,13 @@ basis coefficients should also be returned. Default is <code>TRUE</code></p></dd
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>If <code>type == "lpmatrix"</code> then a <code>matrix</code> is returned which
-will give a vector of linear predictor values (minus any offest)
-at the supplied covariate values, when applied to the model coefficient vector.
-Otherwise, if <code>se.fit == TRUE</code> then a <code>2 </code>item <code>list</code> is returned with
-items (both <code>arrays</code>) <code>fit</code> and <code>se.fit</code> containing predictions and
-associated standard error estimates, otherwise an <code>array</code> of predictions is
-returned. The dimensions of the returned <code>arrays</code> depends on whether
-type is <code>"terms"</code> or not: if it is then the <code>array</code> is <code>2</code> dimensional with each
-term in the linear predictor separate, otherwise the <code>array</code> is 1 dimensional and
-contains the linear predictor/predicted values (or corresponding s.e.s).
-The linear predictor returned termwise will not include the offset or the intercept.</p>
+    <p>A <code>fts_ts</code> object containing the point estimates and their standard errors
+for basis function coefficients</p>
     </div>
     <div id="details">
     <h2>Details</h2>
-    <p>This function returns predictions from models fitted with <code><a href="ffc_gam.html">ffc_gam()</a></code>.
-Data passed to <code>newdata</code> will first be correctly augmented to include any basis functions
-whose coefficients were estimated as time-varying, so the user need only supply data
-that includes variables that were used in the original <code>data</code> that was supplied to
-<code><a href="ffc_gam.html">ffc_gam()</a></code></p>
+    <p>This function creates a <code>tidy</code> time series of basis function coefficients
+from all <code><a href="fts.html">fts()</a></code> terms that were supplied to the original model</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
