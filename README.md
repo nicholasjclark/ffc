@@ -206,10 +206,57 @@ ggplot(data = newdat,
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
 
-The time-varying coefficients (and their Standard Errors) can be
-extracted into a `tidy` format using `fts_coefs()`, which will
-facilitate the use of time series models to enable efficient forecasting
-of the entire curve into the future
+Using support from the `marginaleffects` 📦, we can make easily predict
+changes in mortality rate for specific age groups. For example, here is
+the expected decline in mortality rate for 17 year-olds in Queensland
+over the study period
+
+``` r
+library(marginaleffects)
+plot_predictions(
+  mod,
+  by = c('year', 'sex'),
+  newdata = datagrid(
+    age = 17,
+    year = unique,
+    sex = unique,
+    population = 1
+  ),
+  type = 'response'
+) +
+  labs(x = 'Year',
+       y = 'Expected log10(Mortality)') +
+  scale_y_log10()
+```
+
+<img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
+
+And here are the slopes of this change
+
+``` r
+plot_slopes(
+  mod,
+  variables = 'year',
+  by = c('year', 'sex'),
+  newdata = datagrid(
+    age = 17,
+    year = unique,
+    sex = unique,
+    population = 1
+  ),
+  type = 'response'
+) +
+  labs(x = 'Year',
+       y = '1st derivative of mortality rate change') +
+  geom_hline(yintercept = 0,
+             linetype = 'dashed')
+```
+
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" /> The
+time-varying coefficients (and their Standard Errors) can be extracted
+into a `tidy` format using `fts_coefs()`, which will facilitate the use
+of time series models to enable efficient forecasting of the entire
+curve into the future
 
 ``` r
 functional_coefs <- fts_coefs(mod)
@@ -217,15 +264,15 @@ functional_coefs
 #> # A tibble: 779 × 5
 #>    .basis                     .time .estimate     .se  year
 #>    <chr>                      <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00200  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00177  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00158  1982
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.76 0.00204  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.76 0.00180  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.76 0.00160  1982
 #>  4 fts_bs_s_age_bysexfemale_1  1983     -3.76 0.00145  1983
 #>  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00135  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00129  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00124  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00122  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00121  1988
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00127  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00122  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00120  1987
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00120  1988
 #> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00120  1989
 #> # ℹ 769 more rows
 ```
@@ -261,7 +308,7 @@ ggplot(
   )
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
 
 Clearly there is a lot of structure and dependence here, suggesting that
 a dynamic factor model fitted to these coefficient time series would be

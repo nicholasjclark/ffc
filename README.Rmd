@@ -106,6 +106,44 @@ ggplot(data = newdat,
   scale_y_log10()
 ```
 
+Using support from the `marginaleffects` 📦, we can make easily predict changes in mortality rate for specific age groups. For example, here is the expected decline in mortality rate for 17 year-olds in Queensland over the study period
+```{r warning=FALSE}
+library(marginaleffects)
+plot_predictions(
+  mod,
+  by = c('year', 'sex'),
+  newdata = datagrid(
+    age = 17,
+    year = unique,
+    sex = unique,
+    population = 1
+  ),
+  type = 'response'
+) +
+  labs(x = 'Year',
+       y = 'Expected log10(Mortality)') +
+  scale_y_log10()
+```
+
+And here are the slopes of this change
+```{r, warning=FALSE}
+plot_slopes(
+  mod,
+  variables = 'year',
+  by = c('year', 'sex'),
+  newdata = datagrid(
+    age = 17,
+    year = unique,
+    sex = unique,
+    population = 1
+  ),
+  type = 'response'
+) +
+  labs(x = 'Year',
+       y = '1st derivative of mortality rate change') +
+  geom_hline(yintercept = 0,
+             linetype = 'dashed')
+```
 The time-varying coefficients (and their Standard Errors) can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future
 ```{r}
 functional_coefs <- fts_coefs(mod)
