@@ -64,7 +64,7 @@ ggplot(data = qld_mortality,
   scale_y_log10()
 ```
 
-Fit a model to estimate how the log(mortality) curve changed over time using the `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death function using a set of `k = 10` thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. In this model we allow the time-varying effects to vary among sexes while ensuring they can be efficiently learned by linking their smoothing parameters
+Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death function with a set of `k = 10` thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. In this model we also allow the time-varying effects to vary among sexes, while ensuring they can be efficiently learned by linking their smoothing parameters. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
 ```{r}
 mod <- ffc_gam(
   deaths ~ 
@@ -75,17 +75,16 @@ mod <- ffc_gam(
   time = 'year',
   data = qld_mortality,
   family = poisson(),
-  engine = 'bam',
-  discrete = TRUE
+  engine = 'bam'
 )
 ```
 
-Inspect the model summary; notice in the `Formula` slot how the basis functions are modelled as `by` variables in independent smooths of `year`
+Inspect the model summary; notice in the `Formula` slot how the basis functions are modelled as `by` variables within independent smooths of `year` that share their smoothing parameters
 ```{r}
 summary(mod)
 ```
 
-View predicted functional curves using a fixed offset (where `population = 1`) to calculate a standardized rate of mortality
+View predicted functional curves using a fixed offset (where `population = 1`), which allows us to calculate a standardized rate of mortality
 ```{r}
 newdat <- qld_mortality
 newdat$population <- 1
@@ -107,7 +106,7 @@ ggplot(data = newdat,
   scale_y_log10()
 ```
 
-The time-varying coefficients (and their Standard Errors) can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the curve into the future
+The time-varying coefficients (and their Standard Errors) can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future
 ```{r}
 functional_coefs <- fts_coefs(mod)
 functional_coefs

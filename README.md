@@ -87,13 +87,16 @@ ggplot(data = qld_mortality,
 <img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
 
 Fit a model to estimate how the log(mortality) curve changed over time
-using the `deaths` as the outcome and using a time-varying function of
-`age` as the primary predictor. Using `fts()`, we model the age-death
-function using a set of `k = 10` thin plate basis functions whose
-coefficients are allowed to vary over time, where `time = 'year'`. In
-this model we allow the time-varying effects to vary among sexes while
-ensuring they can be efficiently learned by linking their smoothing
-parameters
+using `deaths` as the outcome and using a time-varying function of `age`
+as the primary predictor. Using `fts()`, we model the age-death function
+with a set of `k = 10` thin plate basis functions whose coefficients are
+allowed to vary over time, where `time = 'year'`. In this model we also
+allow the time-varying effects to vary among sexes, while ensuring they
+can be efficiently learned by linking their smoothing parameters. We use
+the `bam()` engine (as opposed to `gam()`) for parameter estimation,
+given the large size of the dataset. In future, other engines such as
+`brm()` and `mvgam()`, will be made available for full luxury Bayesian
+inference.
 
 ``` r
 mod <- ffc_gam(
@@ -105,14 +108,13 @@ mod <- ffc_gam(
   time = 'year',
   data = qld_mortality,
   family = poisson(),
-  engine = 'bam',
-  discrete = TRUE
+  engine = 'bam'
 )
 ```
 
 Inspect the model summary; notice in the `Formula` slot how the basis
-functions are modelled as `by` variables in independent smooths of
-`year`
+functions are modelled as `by` variables within independent smooths of
+`year` that share their smoothing parameters
 
 ``` r
 summary(mod)
@@ -144,7 +146,7 @@ summary(mod)
 #> 
 #> Parametric coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.659335   0.004209 -1344.5   <2e-16 ***
+#> (Intercept) -5.664580   0.004213 -1344.6   <2e-16 ***
 #> sexmale      0.578047   0.005186   111.5   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -169,16 +171,17 @@ summary(mod)
 #> s(year):fts_bs_s_age_bysexmale_7    8.509 10.104 232146.8  <2e-16 ***
 #> s(year):fts_bs_s_age_bysexmale_8    7.814  9.315 394459.4  <2e-16 ***
 #> s(year):fts_bs_s_age_bysexmale_9    4.889  5.840 125245.2  <2e-16 ***
-#> s(year):fts_bs_fts_age1_mean       11.260 12.706   9556.0  <2e-16 ***
+#> s(year):fts_bs_fts_age1_mean       11.260 12.706   9557.7  <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> R-sq.(adj) =  0.987   Deviance explained = 97.7%
-#> fREML =  20794  Scale est. = 1         n = 8282
+#> fREML =  20942  Scale est. = 1         n = 8282
 ```
 
 View predicted functional curves using a fixed offset (where
-`population = 1`) to calculate a standardized rate of mortality
+`population = 1`), which allows us to calculate a standardized rate of
+mortality
 
 ``` r
 newdat <- qld_mortality
@@ -206,7 +209,7 @@ ggplot(data = newdat,
 The time-varying coefficients (and their Standard Errors) can be
 extracted into a `tidy` format using `fts_coefs()`, which will
 facilitate the use of time series models to enable efficient forecasting
-of the curve into the future
+of the entire curve into the future
 
 ``` r
 functional_coefs <- fts_coefs(mod)
@@ -214,16 +217,16 @@ functional_coefs
 #> # A tibble: 779 × 5
 #>    .basis                     .time .estimate     .se  year
 #>    <chr>                      <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00200  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00172  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00151  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.00137  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.77 0.00128  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00123  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00122  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.76 0.00121  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00122  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00123  1989
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00208  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00179  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00157  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.00142  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00132  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00127  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00125  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00124  1987
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00124  1988
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.74 0.00125  1989
 #> # ℹ 769 more rows
 ```
 
