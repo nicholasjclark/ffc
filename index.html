@@ -115,7 +115,7 @@
 <span>  <span class="fu">labs</span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Observed log(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">scale_y_log10</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-3-1.png" width="100%"></p>
-<p>Fit a model to estimate how the log(mortality) curve changed over time using the <code>deaths</code> as the outcome and using a time-varying function of <code>age</code> as the primary predictor. Using <code><a href="reference/fts.html">fts()</a></code>, we model the age-death function using a set of <code>k = 10</code> thin plate basis functions whose coefficients are allowed to vary over time, where <code>time = 'year'</code>. In this model we allow the time-varying effects to vary among sexes while ensuring they can be efficiently learned by linking their smoothing parameters</p>
+<p>Fit a model to estimate how the log(mortality) curve changed over time using <code>deaths</code> as the outcome and using a time-varying function of <code>age</code> as the primary predictor. Using <code><a href="reference/fts.html">fts()</a></code>, we model the age-death function with a set of <code>k = 10</code> thin plate basis functions whose coefficients are allowed to vary over time, where <code>time = 'year'</code>. In this model we also allow the time-varying effects to vary among sexes, while ensuring they can be efficiently learned by linking their smoothing parameters. We use the <code><a href="https://rdrr.io/pkg/mgcv/man/bam.html" class="external-link">bam()</a></code> engine (as opposed to <code><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam()</a></code>) for parameter estimation, given the large size of the dataset. In future, other engines such as <code>brm()</code> and <code>mvgam()</code>, will be made available for full luxury Bayesian inference.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ffc_gam.html">ffc_gam</a></span><span class="op">(</span></span>
 <span>  <span class="va">deaths</span> <span class="op">~</span> </span>
@@ -126,10 +126,9 @@
 <span>  time <span class="op">=</span> <span class="st">'year'</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">qld_mortality</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  engine <span class="op">=</span> <span class="st">'bam'</span>,</span>
-<span>  discrete <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  engine <span class="op">=</span> <span class="st">'bam'</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Inspect the model summary; notice in the <code>Formula</code> slot how the basis functions are modelled as <code>by</code> variables in independent smooths of <code>year</code></p>
+<p>Inspect the model summary; notice in the <code>Formula</code> slot how the basis functions are modelled as <code>by</code> variables within independent smooths of <code>year</code> that share their smoothing parameters</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -160,7 +159,7 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric coefficients:</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span><span class="co">#&gt; (Intercept) -5.659335   0.004209 -1344.5   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept) -5.664580   0.004213 -1344.6   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; sexmale      0.578047   0.005186   111.5   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
@@ -185,13 +184,13 @@
 <span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7    8.509 10.104 232146.8  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8    7.814  9.315 394459.4  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9    4.889  5.840 125245.2  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_fts_age1_mean       11.260 12.706   9556.0  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_fts_age1_mean       11.260 12.706   9557.7  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; R-sq.(adj) =  0.987   Deviance explained = 97.7%</span></span>
-<span><span class="co">#&gt; fREML =  20794  Scale est. = 1         n = 8282</span></span></code></pre></div>
-<p>View predicted functional curves using a fixed offset (where <code>population = 1</code>) to calculate a standardized rate of mortality</p>
+<span><span class="co">#&gt; fREML =  20942  Scale est. = 1         n = 8282</span></span></code></pre></div>
+<p>View predicted functional curves using a fixed offset (where <code>population = 1</code>), which allows us to calculate a standardized rate of mortality</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdat</span> <span class="op">&lt;-</span> <span class="va">qld_mortality</span></span>
 <span><span class="va">newdat</span><span class="op">$</span><span class="va">population</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
@@ -212,23 +211,23 @@
 <span>  <span class="fu">labs</span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Expected log10(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">scale_y_log10</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-6-1.png" width="100%"></p>
-<p>The time-varying coefficients (and their Standard Errors) can be extracted into a <code>tidy</code> format using <code><a href="reference/fts_coefs.ffc_gam.html">fts_coefs()</a></code>, which will facilitate the use of time series models to enable efficient forecasting of the curve into the future</p>
+<p>The time-varying coefficients (and their Standard Errors) can be extracted into a <code>tidy</code> format using <code><a href="reference/fts_coefs.ffc_gam.html">fts_coefs()</a></code>, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">functional_coefs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fts_coefs.ffc_gam.html">fts_coefs</a></span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span>
 <span><span class="va">functional_coefs</span></span>
 <span><span class="co">#&gt; # A tibble: 779 × 5</span></span>
 <span><span class="co">#&gt;    .basis                     .time .estimate     .se  year</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;                      &lt;int&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00200  1980</span></span>
-<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00172  1981</span></span>
-<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00151  1982</span></span>
-<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.00137  1983</span></span>
-<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1  1984     -3.77 0.00128  1984</span></span>
-<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00123  1985</span></span>
-<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00122  1986</span></span>
-<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1  1987     -3.76 0.00121  1987</span></span>
-<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00122  1988</span></span>
-<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00123  1989</span></span>
+<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00208  1980</span></span>
+<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00179  1981</span></span>
+<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00157  1982</span></span>
+<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.00142  1983</span></span>
+<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00132  1984</span></span>
+<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00127  1985</span></span>
+<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00125  1986</span></span>
+<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00124  1987</span></span>
+<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00124  1988</span></span>
+<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1  1989     -3.74 0.00125  1989</span></span>
 <span><span class="co">#&gt; # ℹ 769 more rows</span></span></code></pre></div>
 <p>There is no automatic plotting function yet to visualise these time-varying coefficients, but for now we can use a bit of <code>ggplot</code> to get this done</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
