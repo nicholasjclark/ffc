@@ -145,5 +145,8 @@ Clearly there is a lot of structure and dependence here, suggesting that a dynam
 ## Getting help
 If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/nicholasjclark/ffc/issues)
 
+## Contributing
+Contributions are very welcome, but please see our [Code of Conduct](https://github.com/nicholasjclark/ffc/blob/main/.github/CODE_OF_CONDUCT.md) when you are considering changes that you would like to make.
+
 ## License
 The `ffc` project is licensed under an `MIT` open source license

@@ -217,16 +217,16 @@ functional_coefs
 #> # A tibble: 779 × 5
 #>    .basis                     .time .estimate     .se  year
 #>    <chr>                      <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00208  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00179  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00157  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.00142  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00132  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00127  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00125  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00124  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00124  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.74 0.00125  1989
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.78 0.00218  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.77 0.00188  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.77 0.00164  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.77 0.00147  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.77 0.00136  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.77 0.00130  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00127  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.76 0.00126  1987
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00125  1988
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00125  1989
 #> # ℹ 769 more rows
 ```
 
@@ -272,6 +272,12 @@ valuable for creating functional forecasts. More on that to come!
 If you encounter a clear bug, please file an issue with a minimal
 reproducible example on
 [GitHub](https://github.com/nicholasjclark/ffc/issues)
+
+## Contributing
+
+Contributions are very welcome, but please see our [Code of
+Conduct](https://github.com/nicholasjclark/ffc/blob/main/.github/CODE_OF_CONDUCT.md)
+when you are considering changes that you would like to make.
 
 ## License
 
