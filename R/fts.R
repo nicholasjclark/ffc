@@ -82,8 +82,10 @@ fts <- function(
   # Create the smooth object for evaluating the basis functions;
   # warnings and errors should propagate directly from mgcv
   sfun <- match.call()
-  args <- match(c('k', 'bs', 'm', 'd', 'by', 'xt', 'pc'),
-                names(sfun), 0L)
+  args <- match(
+    c("k", "bs", "m", "d", "by", "xt", "pc"),
+    names(sfun), 0L
+  )
   sfun <- sfun[c(1:(dim + 1), args)]
   if (dim > 1L) {
     sfun[[1L]] <- quote(te)

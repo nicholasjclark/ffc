@@ -8,10 +8,9 @@ interpret_ffc <- function(
     time_var = "time",
     gam_init = list(),
     newdata = NULL) {
-
   # Tibbles often get rearranged by mgcv in very strange ways; grouping?
   # best to convert to plain-Jane data.frames first
-  if(inherits(data, 'tbl_df')){
+  if (inherits(data, "tbl_df")) {
     data <- as.data.frame(data)
   }
 
@@ -24,8 +23,8 @@ interpret_ffc <- function(
 
   # Check for offsets as well
   off_names <- grep(
-    'offset',
-    rownames(attr(terms.formula(formula), 'factors')),
+    "offset",
+    rownames(attr(terms.formula(formula), "factors")),
     value = TRUE
   )
   if (length(off_names) > 0L) {
@@ -101,7 +100,6 @@ dyn_to_spline <- function(
     time_var = "time",
     gam_init = NULL,
     newdata = newdata) {
-
   # Extract key basis information
   label <- term$label
   time_k <- term$time_k
@@ -110,7 +108,7 @@ dyn_to_spline <- function(
   # Initialise a gam object so the basis functions can be evaluated
   # and extracted; just use some Gaussian outcome here as all we need
   # is the predictor design matrix, with no column of 1s for intercepts
-  if(is.null(newdata)) {
+  if (is.null(newdata)) {
     data$my_fake_y <- rnorm(length(data[[1]]))
     gam_init <- ffc_gam_setup(
       formula(paste("my_fake_y ~ 0 + ", term$call)),
@@ -118,12 +116,12 @@ dyn_to_spline <- function(
     )
 
     # Design matrix will contain the evaluated basis functions
-    X <- predict(
+    X <- mgcv::predict.gam(
       gam_init,
       type = "lpmatrix"
     )
   } else {
-    X <- predict(
+    X <- mgcv::predict.gam(
       gam_init,
       newdata = newdata,
       type = "lpmatrix"
@@ -138,7 +136,7 @@ dyn_to_spline <- function(
 
   # Need to ensure a constant basis is included to capture
   # any mean-shifts in the functions over time
-  if(!any(apply(X, 2, sd) == 0)){
+  if (!any(apply(X, 2, sd) == 0)) {
     orig_names <- colnames(X)
     X <- cbind(
       X,
@@ -147,10 +145,10 @@ dyn_to_spline <- function(
     colnames(X) <- c(
       orig_names,
       paste0(
-        'fts_bs_',
+        "fts_bs_",
         label,
         term_id,
-        '_mean'
+        "_mean"
       )
     )
   }
@@ -186,17 +184,17 @@ dyn_to_spline <- function(
 
 #' Clean smooth names so no illegal characters are used in formulae
 #' @noRd
-clean_sm_names = function(sm_names) {
-  sm_names_clean <- gsub(' ', '_', sm_names, fixed = TRUE)
-  sm_names_clean <- gsub('(', '_', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub(')', '_', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub(',', 'by', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub(':', 'by', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub('.', '_', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub(']', '_', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub('[', '_', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub(';', '_', sm_names_clean, fixed = TRUE)
-  sm_names_clean <- gsub(':', '_', sm_names_clean, fixed = TRUE)
+clean_sm_names <- function(sm_names) {
+  sm_names_clean <- gsub(" ", "_", sm_names, fixed = TRUE)
+  sm_names_clean <- gsub("(", "_", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(")", "_", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(",", "by", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(":", "by", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(".", "_", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub("]", "_", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub("[", "_", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(";", "_", sm_names_clean, fixed = TRUE)
+  sm_names_clean <- gsub(":", "_", sm_names_clean, fixed = TRUE)
   sm_names_clean <- gsub("'", "", sm_names_clean, fixed = TRUE)
   sm_names_clean <- gsub("\"", "", sm_names_clean, fixed = TRUE)
   sm_names_clean <- gsub("%", "percent", sm_names_clean, fixed = TRUE)

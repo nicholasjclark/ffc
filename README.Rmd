@@ -9,6 +9,10 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
+  dev = "png",
+  dpi = 150,
+  fig.height = 6,
+  fig.width = 9,
   out.width = "100%"
 )
 ```
@@ -22,7 +26,11 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/nicholasjclark/ffc/graph/badge.svg)](https://app.codecov.io/gh/nicholasjclark/ffc)
 <!-- badges: end -->
 
-The goal of **ffc** is to provide functional forecasting
+# ffc
+
+> **F**unctional **F**ore**C**asting
+
+The goal of the `ffc` 📦 is to perform functional regression using Generalized Additive Models (GAMs). The package integrates with the extremely flexible [`mgcv`](https://cran.r-project.org/package=mgcv){target="_blank"} package to enable functional responses to be modelled and predicted using a broad range of predictor effects. Key among these types of predictors are *dynamic functional predictors* using a new `fts()` term, which sets up functional predictors whose coefficients are modelled as time-varying. These time-varying coefficients can then be forecasted ahead using a variety of efficient forecasting algorithms, providing unmatched flexibility to model and predict how functional responses change over time.
 
 ## Installation
 
@@ -33,3 +41,80 @@ You can install the development version of ffc from [GitHub](https://github.com/
 pak::pak("nicholasjclark/ffc")
 ```
 
+## A brief example
+Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia
+```{r}
+library(ffc)
+library(ggplot2); theme_set(theme_bw())
+data('qld_mortality')
+head(qld_mortality)
+```
+
+Visualise the mortality curves over time using the log10 scale
+```{r, warning=FALSE}
+ggplot(data = qld_mortality,
+       aes(x = age,
+           y = deaths / population,
+           group = year,
+           colour = year)) +
+  geom_line() +
+  facet_wrap(~ sex) +
+  scale_colour_viridis_c() +
+  labs(y = 'Observed log(Mortality)') +
+  scale_y_log10()
+```
+
+Fit a model to estimate how the log(mortality) curve changed over time using the `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death function using a set of `k = 10` thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`
+```{r}
+mod <- ffc_gam(
+  deaths ~ 
+    offset(log(population)) +
+    sex + 
+    fts(age, k = 10, bs = 'tp',
+        time_bs = 'cr', time_k = '15'),
+  time = 'year',
+  data = qld_mortality,
+  family = poisson(),
+  engine = 'bam',
+  discrete = TRUE
+)
+```
+
+Inspect the model summary; notice in the `Formula` slot how the basis functions are modelled as `by` variables in independent smooths of `year`
+```{r}
+summary(mod)
+```
+
+View predicted functional curves using a fixed offset (where `population = 1`) to calculate a standardized rate of mortality
+```{r}
+newdat <- qld_mortality
+newdat$population <- 1
+newdat$preds <- predict(
+  mod,
+  newdata = newdat,
+  type = 'response'
+)
+
+ggplot(data = newdat,
+       aes(x = age,
+           y = preds,
+           group = year,
+           colour = year)) +
+  geom_line() +
+  facet_wrap(~ sex) +
+  scale_colour_viridis_c() +
+  labs(y = 'Expected log10(Mortality)') +
+  scale_y_log10()
+```
+
+The time-varying coefficients (and their Standard Errors) can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the curve into the future
+```{r}
+functional_coefs <- fts_coefs(mod)
+functional_coefs
+```
+
+## Getting help
+If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/nicholasjclark/ffc/issues)
+
+## License
+The `ffc` project is licensed under an `MIT` open source license

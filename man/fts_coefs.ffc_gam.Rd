@@ -18,28 +18,16 @@ fts_coefs(object, ...)
 basis coefficients should also be returned. Default is \code{TRUE}}
 }
 \value{
-If \code{type == "lpmatrix"} then a \code{matrix} is returned which
-will give a vector of linear predictor values (minus any offest)
-at the supplied covariate values, when applied to the model coefficient vector.
-Otherwise, if \code{se.fit == TRUE} then a \code{2 }item \code{list} is returned with
-items (both \code{arrays}) \code{fit} and \code{se.fit} containing predictions and
-associated standard error estimates, otherwise an \code{array} of predictions is
-returned. The dimensions of the returned \code{arrays} depends on whether
-type is \code{"terms"} or not: if it is then the \code{array} is \code{2} dimensional with each
-term in the linear predictor separate, otherwise the \code{array} is 1 dimensional and
-contains the linear predictor/predicted values (or corresponding s.e.s).
-The linear predictor returned termwise will not include the offset or the intercept.
+A \code{fts_ts} object containing the point estimates and their standard errors
+for basis function coefficients
 }
 \description{
 Extract time-varying basis coefficients a fitted \pkg{ffc_gam} model so they can
 be visualized and / or forecasted ahead
 }
 \details{
-This function returns predictions from models fitted with \code{\link[=ffc_gam]{ffc_gam()}}.
-Data passed to \code{newdata} will first be correctly augmented to include any basis functions
-whose coefficients were estimated as time-varying, so the user need only supply data
-that includes variables that were used in the original \code{data} that was supplied to
-\code{ffc_gam()}
+This function creates a \code{tidy} time series of basis function coefficients
+from all \code{fts()} terms that were supplied to the original model
 }
 \seealso{
 \code{\link[=ffc_gam]{ffc_gam()}}, \code{\link[=fts]{fts()}}

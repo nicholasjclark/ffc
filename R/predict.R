@@ -24,23 +24,24 @@
 #' @method predict ffc_gam
 #' @author Nicholas J Clark
 #' @export
-predict.ffc_gam = function(
+predict.ffc_gam <- function(
     object,
     newdata,
-    type = 'link',
-    se.fit = FALSE){
-
+    type = "link",
+    se.fit = FALSE) {
   type <- match.arg(
     type,
-    choices = c('link',
-                'terms',
-                'response',
-                'lpmatrix',
-                'iterms')
+    choices = c(
+      "link",
+      "terms",
+      "response",
+      "lpmatrix",
+      "iterms"
+    )
   )
 
   # Update the supplied newdata in light of any fts() smooths
-  if(missing(newdata)){
+  if (missing(newdata)) {
     interpreted <- list()
     interpreted$data <- object$model
   } else {
@@ -54,19 +55,21 @@ predict.ffc_gam = function(
   }
 
   # Determine the prediction engine
-  if(class(object)[2] == 'gam'){
-    pred_engine <- 'predict.gam'
+  if (class(object)[2] == "gam") {
+    pred_engine <- "predict.gam"
   } else {
-    pred_engine <- 'predict.bam'
+    pred_engine <- "predict.bam"
   }
 
   # Compute predictions
   out <- do.call(
     pred_engine,
-    list(object = object,
-         newdata = interpreted$data,
-         type = type,
-         se.fit = se.fit)
+    list(
+      object = object,
+      newdata = interpreted$data,
+      type = type,
+      se.fit = se.fit
+    )
   )
 
   return(out)
