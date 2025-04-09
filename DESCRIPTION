@@ -1,9 +1,11 @@
 Package: ffc
-Title: What the Package Does (One Line, Title Case)
+Title: Functional ForeCasting
 Version: 0.0.0.9000
+Date: 2025-04-03
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Nicholas J", "Clark", , "nicholas.j.clark1214@gmail.com", 
+                    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7131-3301"))
+Description: Functional forecasting using Generalized Additive Models
 License: MIT + file LICENSE
 Suggests: 
     testthat (>= 3.0.0)
@@ -23,3 +25,4 @@ Imports:
     withr,
     dplyr,
     purrr
+LazyData: true

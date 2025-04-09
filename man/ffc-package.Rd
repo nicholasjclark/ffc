@@ -4,12 +4,12 @@
 \name{ffc-package}
 \alias{ffc}
 \alias{ffc-package}
-\title{ffc: What the Package Does (One Line, Title Case)}
+\title{ffc: Functional ForeCasting}
 \description{
-What the package does (one paragraph).
+Functional forecasting using Generalized Additive Models
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Nicholas J Clark \email{nicholas.j.clark1214@gmail.com} (\href{https://orcid.org/0000-0001-7131-3301}{ORCID})
 
 }
 \keyword{internal}
