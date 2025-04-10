@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{An object of class \code{fts_ts}}
+
+\item{...}{Ignored}
 }
 \description{
 Print an fts_ts tibble

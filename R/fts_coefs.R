@@ -106,6 +106,7 @@ fts_coefs.ffc_gam <- function(
 #' Print an fts_ts tibble
 #'
 #' @param x An object of class `fts_ts`
+#' @param ... Ignored
 #' @export
 print.fts_ts <- function(x, ...) {
   NextMethod()
