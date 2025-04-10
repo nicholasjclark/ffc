@@ -60,21 +60,23 @@ objects to the specified \code{engine} for model fitting
 data("qld_mortality")
 mod <- ffc_gam(
   deaths ~
-  offset(log(population)) +
-  sex +
-  fts(age, k = 8, bs = 'cr',
-     time_bs = 'cr', time_k = 10),
- time = 'year',
- data = qld_mortality,
- family = poisson(),
- engine = 'bam'
+    offset(log(population)) +
+    sex +
+    fts(age,
+      k = 8, bs = "cr",
+      time_bs = "cr", time_k = 10
+    ),
+  time = "year",
+  data = qld_mortality,
+  family = poisson(),
+  engine = "bam"
 )
 class(mod)
 summary(mod)
 
 # Predictions work in the usual way
-head(predict(mod, type = 'link'))
-head(predict(mod, type = 'response'))
+head(predict(mod, type = "link"))
+head(predict(mod, type = "response"))
 
 # Extract basis coefficient time series
 (functional_ts <- fts_coefs(mod))

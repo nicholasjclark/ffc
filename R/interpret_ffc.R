@@ -104,6 +104,7 @@ dyn_to_spline <- function(
   label <- term$label
   time_k <- term$time_k
   time_bs <- term$time_bs
+  time_m <- term$time_m
 
   # Initialise a gam object so the basis functions can be evaluated
   # and extracted; just use some Gaussian outcome here as all we need
@@ -169,6 +170,8 @@ dyn_to_spline <- function(
       time_bs,
       "', k = ",
       time_k,
+      ", m = ",
+      time_m,
       ", id = ",
       term_id,
       ")"
