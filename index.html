@@ -83,7 +83,7 @@
 <p>Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">ffc</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>; <span class="fu">theme_set</span><span class="op">(</span><span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>; <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme_get.html" class="external-link">theme_set</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'qld_mortality'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">qld_mortality</span>, <span class="fl">15</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    year age    sex deaths population</span></span>
@@ -104,16 +104,16 @@
 <span><span class="co">#&gt; 15 1980  14 female     11   19505.02</span></span></code></pre></div>
 <p>Visualise the observed mortality curves over time using the log10 scale</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span>data <span class="op">=</span> <span class="va">qld_mortality</span>,</span>
-<span>       <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">qld_mortality</span>,</span>
+<span>       <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>,</span>
 <span>           y <span class="op">=</span> <span class="va">deaths</span> <span class="op">/</span> <span class="va">population</span>,</span>
 <span>           group <span class="op">=</span> <span class="va">year</span>,</span>
 <span>           colour <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span> <span class="va">sex</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">scale_colour_viridis_c</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Observed log(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">scale_y_log10</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span> <span class="va">sex</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_colour_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Observed log(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_log10</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-3-1.png" width="100%"></p>
 <p>Fit a model to estimate how the log(mortality) curve changed over time using <code>deaths</code> as the outcome and using a time-varying function of <code>age</code> as the primary predictor. Using <code><a href="reference/fts.html">fts()</a></code>, we model the age-death function with a set of <code>k = 10</code> thin plate basis functions whose coefficients are allowed to vary over time, where <code>time = 'year'</code>. In this model we also allow the time-varying effects to vary among sexes, while ensuring they can be efficiently learned by linking their smoothing parameters. We use the <code><a href="https://rdrr.io/pkg/mgcv/man/bam.html" class="external-link">bam()</a></code> engine (as opposed to <code><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam()</a></code>) for parameter estimation, given the large size of the dataset. In future, other engines such as <code>brm()</code> and <code>mvgam()</code>, will be made available for full luxury Bayesian inference.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -200,16 +200,16 @@
 <span>  type <span class="op">=</span> <span class="st">'response'</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">ggplot</span><span class="op">(</span>data <span class="op">=</span> <span class="va">newdat</span>,</span>
-<span>       <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>,</span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">newdat</span>,</span>
+<span>       <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>,</span>
 <span>           y <span class="op">=</span> <span class="va">preds</span>,</span>
 <span>           group <span class="op">=</span> <span class="va">year</span>,</span>
 <span>           colour <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span> <span class="va">sex</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">scale_colour_viridis_c</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Expected log10(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">scale_y_log10</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span> <span class="va">sex</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_colour_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>y <span class="op">=</span> <span class="st">'Expected log10(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_log10</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-6-1.png" width="100%"></p>
 <p>Using support from the <code>marginaleffects</code> 📦, we can make easily predict changes in mortality rate for specific age groups. For example, here is the expected decline in mortality rate for 17 year-olds in Queensland over the study period</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -225,9 +225,9 @@
 <span>  <span class="op">)</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">'response'</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">'Year'</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">'Year'</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">'Expected log10(Mortality)'</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">scale_y_log10</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_log10</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-7-1.png" width="100%"></p>
 <p>And here are the slopes of this change</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -243,9 +243,9 @@
 <span>  <span class="op">)</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">'response'</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">'Year'</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">'Year'</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">'1st derivative of mortality rate change'</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_hline</span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>             linetype <span class="op">=</span> <span class="st">'dashed'</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-8-1.png" width="100%"> The time-varying coefficients (and their Standard Errors) can be extracted into a <code>tidy</code> format using <code><a href="reference/fts_coefs.ffc_gam.html">fts_coefs()</a></code>, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -254,40 +254,40 @@
 <span><span class="co">#&gt; # A tibble: 779 × 5</span></span>
 <span><span class="co">#&gt;    .basis                     .time .estimate     .se  year</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;                      &lt;int&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1  1980     -3.76 0.00204  1980</span></span>
-<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1  1981     -3.76 0.00180  1981</span></span>
-<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1  1982     -3.76 0.00160  1982</span></span>
-<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1  1983     -3.76 0.00145  1983</span></span>
-<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00135  1984</span></span>
-<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00127  1985</span></span>
-<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00122  1986</span></span>
+<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00194  1980</span></span>
+<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1  1981     -3.76 0.00170  1981</span></span>
+<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1  1982     -3.76 0.00150  1982</span></span>
+<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1  1983     -3.76 0.00136  1983</span></span>
+<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00128  1984</span></span>
+<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00123  1985</span></span>
+<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00120  1986</span></span>
 <span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00120  1987</span></span>
-<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00120  1988</span></span>
-<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00120  1989</span></span>
+<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00121  1988</span></span>
+<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00122  1989</span></span>
 <span><span class="co">#&gt; # ℹ 769 more rows</span></span></code></pre></div>
 <p>There is no automatic plotting function yet to visualise these time-varying coefficients, but for now we can use a bit of <code>ggplot</code> to get this done</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">functional_coefs</span>,</span>
-<span>  <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">year</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">year</span>,</span>
 <span>      y <span class="op">=</span> <span class="va">.estimate</span>,</span>
 <span>      colour <span class="op">=</span> <span class="va">.basis</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_ribbon</span><span class="op">(</span></span>
-<span>    mapping <span class="op">=</span> <span class="fu">aes</span><span class="op">(</span>ymax <span class="op">=</span> <span class="va">.estimate</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">.se</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span></span>
+<span>    mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymax <span class="op">=</span> <span class="va">.estimate</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">.se</span>,</span>
 <span>                  ymin <span class="op">=</span> <span class="va">.estimate</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">.se</span>,</span>
 <span>                  fill <span class="op">=</span> <span class="va">.basis</span><span class="op">)</span>,</span>
 <span>    show.legend <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_line</span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
 <span>    show.legend <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">facet_wrap</span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span></span>
 <span>    <span class="op">~</span><span class="va">.basis</span>, </span>
 <span>    scales <span class="op">=</span> <span class="st">'free_y'</span>,</span>
 <span>    ncol <span class="op">=</span> <span class="fl">4</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
 <span>    y <span class="op">=</span> <span class="st">'Coefficient estimate'</span>,</span>
 <span>    x <span class="op">=</span> <span class="st">'Year'</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
