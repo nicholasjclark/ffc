@@ -6,13 +6,15 @@ data("growth_data")
 # Fit a model that can be used for testing several downstream functions
 example_mod <- ffc_gam(
   formula = height_cm ~
-    s(id, bs = 're') +
-    fts(age_yr, bs = 'tp', k = 4,
-        time_bs = 'cr', time_k = 6),
+    s(id, bs = "re") +
+    fts(age_yr,
+      bs = "tp", k = 4,
+      time_bs = "cr", time_k = 6
+    ),
   data = growth_data,
   time = "age_yr",
   family = mgcv::Tweedie(p = 1.5),
-  engine = 'bam',
+  engine = "bam",
   discrete = TRUE
 )
 

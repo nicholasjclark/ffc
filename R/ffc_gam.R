@@ -31,21 +31,26 @@
 #' data("qld_mortality")
 #' mod <- ffc_gam(
 #'   deaths ~
-#'   offset(log(population)) +
-#'   sex +
-#'   fts(age, k = 8, bs = 'cr',
-#'      time_bs = 'cr', time_k = 10),
-#'  time = 'year',
-#'  data = qld_mortality,
-#'  family = poisson(),
-#'  engine = 'bam'
+#'     offset(log(population)) +
+#'     sex +
+#'     fts(age,
+#'       k = 8, bs = "cr",
+#'       time_bs = "cr", time_k = 10
+#'     ),
+#'   time = "year",
+#'   data = qld_mortality,
+#'   family = poisson(),
+#'   engine = "bam"
 #' )
 #' class(mod)
 #' summary(mod)
 #'
 #' # Predictions work in the usual way
-#' head(predict(mod, type = 'link'))
-#' head(predict(mod, type = 'response'))
+#' head(predict(mod, type = "link"))
+#' head(predict(mod, type = "response"))
+#'
+#' # Extract basis coefficient time series
+#' (functional_ts <- fts_coefs(mod))
 #'
 #' @export
 ffc_gam <- function(
@@ -249,8 +254,7 @@ init_gam <- function(
     control = mgcv::gam.control(),
     centred = TRUE,
     diagonalize = FALSE,
-    sp = NULL
-) {
+    sp = NULL) {
   if (is.character(family)) family <- eval(parse(text = family))
   if (is.function(family)) family <- family()
   if (is.null(family$family)) stop("family not recognized")
@@ -261,7 +265,7 @@ init_gam <- function(
   mf$family <- mf$knots <- mf$sp <- mf$file <- mf$control <-
     mf$centred <- mf$sp.prior <- mf$diagonalize <- NULL
   mf$drop.unused.levels <- drop.unused.levels
-  mf[[1]] <- quote(stats::model.frame) ##as.name("model.frame")
+  mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
   pmf <- mf
 
   pmf$formula <- gp$pf
@@ -320,7 +324,7 @@ init_gam <- function(
   )
   jags.ini <- list()
   lam <- if (is.null(G$L)) lambda else G$L %*% lambda
-  #jin <- mgcv:::jini(G,lam)
+  # jin <- mgcv:::jini(G,lam)
   G$formula <- formula
   G$coefficients <- rep(0, length(G$term.names))
   names(G$coefficients) <- G$term.names
@@ -334,9 +338,9 @@ init_gam <- function(
   G$Vp <- G$Ve <- diag(rep(1, length(G$coefficients)))
   G$sp <- exp(G$sp)
   G$scale.estimated <- FALSE
-  G$method <- 'UBRE'
+  G$method <- "UBRE"
   G$pred.formula <- gp$pred.formula
-  class(G) <- c('gam', 'glm', 'lm')
+  class(G) <- c("gam", "glm", "lm")
   G$R <- model.matrix(G)
   return(G)
 }

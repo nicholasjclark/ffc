@@ -264,16 +264,16 @@ functional_coefs
 #> # A tibble: 779 × 5
 #>    .basis                     .time .estimate     .se  year
 #>    <chr>                      <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.76 0.00204  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.76 0.00180  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.76 0.00160  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.76 0.00145  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00135  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00127  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00122  1986
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00194  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.76 0.00170  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.76 0.00150  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.76 0.00136  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00128  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00123  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00120  1986
 #>  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00120  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00120  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00120  1989
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00121  1988
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00122  1989
 #> # ℹ 769 more rows
 ```
 

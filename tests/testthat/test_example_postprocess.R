@@ -1,9 +1,9 @@
-context("examples")
+# Test post-processing of the example model
 
 test_that("ffc_gam() is structured correctly", {
-  expect_true(inherits(example_mod, 'ffc_gam'))
-  expect_true(inherits(example_mod, 'bam'))
-  expect_true(example_mod$time_var == 'age_yr')
+  expect_true(inherits(example_mod, "ffc_gam"))
+  expect_true(inherits(example_mod, "bam"))
+  expect_true(example_mod$time_var == "age_yr")
   eval(parse(text = example_mod$fts_smooths[[1]]$call))
 })
 
@@ -17,8 +17,8 @@ test_that("mgcv post-processing works correctly", {
 
 test_that("fts_coefs() works correctly", {
   functional_coefs <- fts_coefs(example_mod)
-  expect_true(inherits(functional_coefs, 'fts_ts'))
-  expect_true(inherits(functional_coefs, 'tbl_df'))
+  expect_true(inherits(functional_coefs, "fts_ts"))
+  expect_true(inherits(functional_coefs, "tbl_df"))
 
   # Times should match exactly to those included in the object
   expect_true(

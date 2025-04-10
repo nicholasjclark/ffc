@@ -88,15 +88,44 @@ fts_coefs.ffc_gam <- function(
           .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x)))
         )
         dat$time_var <- unique_times
-        colnames(dat) <- c('.basis',
-                           '.time',
-                           '.estimate',
-                           '.se',
-                           time_var)
+        colnames(dat) <- c(
+          ".basis",
+          ".time",
+          ".estimate",
+          ".se",
+          time_var
+        )
         dat
       })
     )
     class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
     return(fts_preds)
   }
+}
+
+#' Print an fts_ts tibble
+#'
+#' @param x An object of class `fts_ts`
+#' @export
+print.fts_ts <- function(x, ...) {
+  NextMethod()
+}
+
+#' @export
+format.fts_ts <- function(
+    x, ...,
+    n = NULL,
+    width = NULL,
+    n_extra = NULL) {
+  NextMethod()
+}
+
+#' @noRd
+fts_ts_2_tsbl <- function(x) {
+  insight::check_if_installed("tsibble")
+  tsibble::as_tsibble(
+    functional_ts,
+    key = .basis,
+    index = .time
+  )
 }

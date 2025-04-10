@@ -9,7 +9,7 @@
 #' \item{id}{factor indicating the different subjects}
 #' }
 #' @references
-#'Tuddenham, R. D., and Snyder, M. M. (1954) "Physical growth of
-#'California boys and girls from birth to age 18", \emph{University of
-#'California Publications in Child Development}, 1, 183-364.
+#' Tuddenham, R. D., and Snyder, M. M. (1954) "Physical growth of
+#' California boys and girls from birth to age 18", \emph{University of
+#' California Publications in Child Development}, 1, 183-364.
 "growth_data"

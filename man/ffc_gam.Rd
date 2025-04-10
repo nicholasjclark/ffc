@@ -76,6 +76,9 @@ summary(mod)
 head(predict(mod, type = 'link'))
 head(predict(mod, type = 'response'))
 
+# Extract basis coefficient time series
+(functional_ts <- fts_coefs(mod))
+
 }
 \seealso{
 \code{\link[=fts]{fts()}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}

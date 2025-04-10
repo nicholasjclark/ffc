@@ -110,8 +110,11 @@ dyn_to_spline <- function(
   # is the predictor design matrix, with no column of 1s for intercepts
   if (is.null(newdata)) {
     data$my_fake_y <- rnorm(length(data[[1]]))
+    myform <- formula(paste("my_fake_y ~ 0 + ", term$call),
+      env = attr(formula, ".Environment")
+    )
     gam_init <- ffc_gam_setup(
-      formula(paste("my_fake_y ~ 0 + ", term$call)),
+      myform,
       dat = data
     )
 
