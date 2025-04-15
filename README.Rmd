@@ -144,9 +144,12 @@ plot_slopes(
   geom_hline(yintercept = 0,
              linetype = 'dashed')
 ```
-The time-varying coefficients (and their Standard Errors) can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future
+
+The time-varying coefficients can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future. Using `summary = FALSE` will return draws of each coefficient time series from the model's empirical Bayesian posterior distribution (you can control the number of draws that are returned using the `times` argument):
 ```{r}
-functional_coefs <- fts_coefs(mod)
+functional_coefs <- fts_coefs(mod,
+                              summary = FALSE,
+                              times = 10)
 functional_coefs
 ```
 
@@ -156,14 +159,9 @@ ggplot(
   data = functional_coefs,
   aes(x = year,
       y = .estimate,
-      colour = .basis)
+      colour = .basis,
+      group = .realisation)
 ) +
-  geom_ribbon(
-    mapping = aes(ymax = .estimate + 2 * .se,
-                  ymin = .estimate - 2 * .se,
-                  fill = .basis),
-    show.legend = FALSE
-  ) +
   geom_line(
     show.legend = FALSE
   ) +
@@ -178,7 +176,16 @@ ggplot(
   )
 ```
 
-Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. More on that to come!
+Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
+```{r}
+functional_fc <- forecast(
+  object = functional_coefs,
+  h = 5,
+  times = 5,
+  model = ETS()
+)
+functional_fc
+```
 
 ## Getting help
 If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/nicholasjclark/ffc/issues)

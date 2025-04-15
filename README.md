@@ -124,25 +124,25 @@ summary(mod)
 #> 
 #> Formula:
 #> deaths ~ sex + offset(log(population)) + s(year, by = fts_bs_s_age_bysexfemale_1, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_2, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_3, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_4, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_5, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_6, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_7, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_8, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_9, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_1, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_2, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_3, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_4, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_5, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_6, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_7, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_8, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_s_age_bysexmale_9, 
-#>     bs = "cr", k = 10, id = 1) + s(year, by = fts_bs_fts_age1_mean, 
-#>     bs = "cr", k = 10, id = 1)
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_2, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_3, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_4, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_5, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_6, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_7, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_8, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_9, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_1, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_2, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_3, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_4, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_5, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_6, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_7, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_8, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_9, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_fts_age1_mean, 
+#>     bs = "cr", k = 10, m = 2, id = 1)
 #> 
 #> Parametric coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)    
@@ -252,29 +252,35 @@ plot_slopes(
              linetype = 'dashed')
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" /> The
-time-varying coefficients (and their Standard Errors) can be extracted
-into a `tidy` format using `fts_coefs()`, which will facilitate the use
-of time series models to enable efficient forecasting of the entire
-curve into the future
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+
+The time-varying coefficients can be extracted into a `tidy` format
+using `fts_coefs()`, which will facilitate the use of time series models
+to enable efficient forecasting of the entire curve into the future.
+Using `summary = FALSE` will return draws of each coefficient time
+series from the model’s empirical Bayesian posterior distribution (you
+can control the number of draws that are returned using the `times`
+argument):
 
 ``` r
-functional_coefs <- fts_coefs(mod)
+functional_coefs <- fts_coefs(mod,
+                              summary = FALSE,
+                              times = 10)
 functional_coefs
-#> # A tibble: 779 × 5
-#>    .basis                     .time .estimate     .se  year
-#>    <chr>                      <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77 0.00194  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.76 0.00170  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.76 0.00150  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.76 0.00136  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.76 0.00128  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.76 0.00123  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.76 0.00120  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.75 0.00120  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75 0.00121  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.75 0.00122  1989
-#> # ℹ 769 more rows
+#> # A tibble: 7,790 × 5
+#>    .basis                     .time .estimate .realisation  year
+#>    <chr>                      <int>     <dbl>        <int> <int>
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.83            1  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.83            1  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.83            1  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.83            1  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.83            1  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.82            1  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.82            1  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.81            1  1987
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.80            1  1988
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.79            1  1989
+#> # ℹ 7,780 more rows
 ```
 
 There is no automatic plotting function yet to visualise these
@@ -286,14 +292,9 @@ ggplot(
   data = functional_coefs,
   aes(x = year,
       y = .estimate,
-      colour = .basis)
+      colour = .basis,
+      group = .realisation)
 ) +
-  geom_ribbon(
-    mapping = aes(ymax = .estimate + 2 * .se,
-                  ymin = .estimate - 2 * .se,
-                  fill = .basis),
-    show.legend = FALSE
-  ) +
   geom_line(
     show.legend = FALSE
   ) +
@@ -312,7 +313,37 @@ ggplot(
 
 Clearly there is a lot of structure and dependence here, suggesting that
 a dynamic factor model fitted to these coefficient time series would be
-valuable for creating functional forecasts. More on that to come!
+valuable for creating functional forecasts. But for now we can apply any
+model from the `fable` 📦 to these replicate time series and generate
+future forecast realisations, which can be summarised to approximate the
+full uncertainty in our coefficient forecast distributions. Again here
+you can control the number of forecast paths that are simulated from the
+underlying time series models using the `times` argument
+
+``` r
+functional_fc <- forecast(
+  object = functional_coefs,
+  h = 5,
+  times = 5,
+  model = ETS()
+)
+functional_fc
+#> # A tsibble: 4,750 x 6 [1Y]
+#> # Key:       .basis, .realisation, .model, .rep [950]
+#>    .basis               .realisation .model .time .rep    .sim
+#>    <chr>                       <int> <chr>  <dbl> <chr>  <dbl>
+#>  1 fts_bs_fts_age1_mean            1 ETS     2021 1     -0.394
+#>  2 fts_bs_fts_age1_mean            1 ETS     2022 1     -0.406
+#>  3 fts_bs_fts_age1_mean            1 ETS     2023 1     -0.417
+#>  4 fts_bs_fts_age1_mean            1 ETS     2024 1     -0.425
+#>  5 fts_bs_fts_age1_mean            1 ETS     2025 1     -0.431
+#>  6 fts_bs_fts_age1_mean            1 ETS     2021 2     -0.401
+#>  7 fts_bs_fts_age1_mean            1 ETS     2022 2     -0.422
+#>  8 fts_bs_fts_age1_mean            1 ETS     2023 2     -0.439
+#>  9 fts_bs_fts_age1_mean            1 ETS     2024 2     -0.456
+#> 10 fts_bs_fts_age1_mean            1 ETS     2025 2     -0.470
+#> # ℹ 4,740 more rows
+```
 
 ## Getting help
 

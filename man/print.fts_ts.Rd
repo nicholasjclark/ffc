@@ -14,3 +14,6 @@
 \description{
 Print an fts_ts tibble
 }
+\author{
+Nicholas J Clark
+}

@@ -24,7 +24,8 @@ Imports:
     dplyr,
     tibble,
     purrr,
-    insight
+    insight,
+    fabletools
 Suggests: 
     testthat (>= 3.0.0),
     tsibble,

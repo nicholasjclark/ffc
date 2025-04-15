@@ -6,6 +6,13 @@
 #' @name fts_coefs.ffc_gam
 #' @importFrom mgcv predict.gam predict.bam
 #' @param object \code{list} object of class \code{ffc_gam}. See [ffc_gam()]
+#' @param summary `Logical`. Should summary statistics of the coefficient
+#' time series be returned instead of realized curves? Default is `TRUE`. If
+#' `FALSE`, replicate realisations of each basis coefficient time series will
+#' be returned
+#' @param times A positive `integer` specifying the number of time series
+#' realisation paths to simulate from the fitted model. Ignored if
+#' `summary = FALSE`
 #' @param ... Ignored
 #' @details This function creates a `tidy` time series of basis function coefficients
 #' from all `fts()` terms that were supplied to the original model
@@ -20,9 +27,12 @@ fts_coefs <- function(object, ...) {
 
 #' @rdname fts_coefs.ffc_gam
 #' @method fts_coefs ffc_gam
+#' @author Nicholas J Clark
 #' @export
 fts_coefs.ffc_gam <- function(
     object,
+    summary = TRUE,
+    times = 100,
     ...) {
   if (is.null(object$fts_smooths)) {
     message("No functional smooths using fts() were included in this model")
@@ -81,37 +91,130 @@ fts_coefs.ffc_gam <- function(
         }
 
         # Return in tidy format
-        dat <- data.frame(
-          .basis = by_var,
-          .time = unique_times,
-          .estimate = apply(preds, 2, mean),
-          .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x)))
-        )
-        dat$time_var <- unique_times
-        colnames(dat) <- c(
-          ".basis",
-          ".time",
-          ".estimate",
-          ".se",
-          time_var
-        )
+        if(summary) {
+          dat <- data.frame(
+            .basis = by_var,
+            .time = unique_times,
+            .estimate = apply(preds, 2, mean),
+            .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x)))
+          )
+          dat$time_var <- unique_times
+          colnames(dat) <- c(
+            ".basis",
+            ".time",
+            ".estimate",
+            ".se",
+            time_var
+          )
+        } else {
+          validate_pos_integer(times)
+          dat <- do.call(
+            rbind,
+            lapply(1:times, function(x){
+              repdat <- data.frame(
+                .basis = by_var,
+                .time = unique_times,
+                .estimate = preds[x, ],
+                .rep = x)
+              repdat$time_var <- unique_times
+              colnames(repdat) <- c(
+                ".basis",
+                ".time",
+                ".estimate",
+                ".realisation",
+                time_var
+              )
+              repdat
+            })
+          )
+        }
+
         dat
       })
     )
     class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
+    attr(fts_preds, 'summarized') <- isTRUE(summary)
     return(fts_preds)
   }
+}
+
+#' Forecasting functional basis coefficients
+#'
+#' @aliases forecast
+#' @importFrom fabletools forecast
+#' @param object An object of class `fts_ts` containing time-varying
+#' basis function coefficients extracted from an `ffc_gam` object
+#' @param model A valid model definition from the \pkg{fable} package
+#' (i.e. `ETS()`, `ARIMA()` etc...)
+#' @param h A positive `integer` specifying the length of the forecast
+#' horizon
+#' @param times A positive `integer` specifying the number of forecast
+#' realisation paths to simulate from the fitted forecast `model`
+#' @param ... Ignored
+#' @details Basis function coefficient time series will be used as input
+#' to the specified `model` to train a forecasting model that will then be
+#' extrapolated `h` timesteps into the future. A total of `times` forecast realisations
+#' will be returned for each basis coefficient
+#' @return A `tsibble` object containing the forecast prediction (`.sim`) for each
+#' replicate realisation (`.rep`) at each timestep in the forecast horizon `h`
+#' @export forecast
+#' @author Nicholas J Clark
+#' @export
+forecast.fts_ts = function(
+    object,
+    model = ETS(),
+    h = 1,
+    times = 10,
+    ...){
+
+  insight::check_if_installed("fable")
+
+  # Check arguments
+  validate_pos_integer(h)
+  mod_name <- deparse(substitute(model))
+  mod_name <- gsub(
+    "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
+    "",
+    mod_name,
+    perl = TRUE
+  )
+
+  # Convert time-varying coefficients to tsibble
+  object_tsbl <- fts_ts_2_tsbl(object)
+
+  # Fit model and forecast
+  object_tsbl %>%
+
+    # Fit the time forecasting model(s) to each basis coefficient
+    # time series
+    fabletools::model(
+      do.call(
+        what = `::`,
+        args = list("fable", mod_name)
+      )(.estimate)
+    ) %>%
+
+    # Simulate 10 future paths for each coefficient time series
+    fabletools::generate(
+      h = h,
+      times = times
+    ) %>%
+
+    # Tidy the names
+    dplyr::mutate(.model = mod_name)
 }
 
 #' Print an fts_ts tibble
 #'
 #' @param x An object of class `fts_ts`
 #' @param ... Ignored
+#' @author Nicholas J Clark
 #' @export
 print.fts_ts <- function(x, ...) {
   NextMethod()
 }
 
+#' @author Nicholas J Clark
 #' @export
 format.fts_ts <- function(
     x, ...,
@@ -124,9 +227,18 @@ format.fts_ts <- function(
 #' @noRd
 fts_ts_2_tsbl <- function(x) {
   insight::check_if_installed("tsibble")
-  tsibble::as_tsibble(
-    functional_ts,
-    key = .basis,
-    index = .time
-  )
+  if(attr(x, 'summarized')){
+    out <- tsibble::as_tsibble(
+      x,
+      key = .basis,
+      index = .time
+    )
+  } else {
+    out <- tsibble::as_tsibble(
+      x,
+      key = c(.basis, .realisation),
+      index = .time
+    )
+  }
+  return(out)
 }

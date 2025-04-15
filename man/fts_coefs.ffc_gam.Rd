@@ -7,12 +7,21 @@
 \usage{
 fts_coefs(object, ...)
 
-\method{fts_coefs}{ffc_gam}(object, ...)
+\method{fts_coefs}{ffc_gam}(object, summary = TRUE, times = 100, ...)
 }
 \arguments{
 \item{object}{\code{list} object of class \code{ffc_gam}. See \code{\link[=ffc_gam]{ffc_gam()}}}
 
 \item{...}{Ignored}
+
+\item{summary}{\code{Logical}. Should summary statistics of the coefficient
+time series be returned instead of realized curves? Default is \code{TRUE}. If
+\code{FALSE}, replicate realisations of each basis coefficient time series will
+be returned}
+
+\item{times}{A positive \code{integer} specifying the number of time series
+realisation paths to simulate from the fitted model. Ignored if
+\code{summary = FALSE}}
 }
 \value{
 A \code{fts_ts} object containing the point estimates and their standard errors
