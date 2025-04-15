@@ -45,37 +45,45 @@ pak::pak("nicholasjclark/ffc")
 Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia
 ```{r, message=FALSE, warning=FALSE}
 library(ffc)
-library(ggplot2); theme_set(theme_bw())
-data('qld_mortality')
+library(ggplot2)
+theme_set(theme_bw())
+data("qld_mortality")
 head(qld_mortality, 15)
 ```
 
 Visualise the observed mortality curves over time using the log10 scale
 ```{r, warning=FALSE}
-ggplot(data = qld_mortality,
-       aes(x = age,
-           y = deaths / population,
-           group = year,
-           colour = year)) +
+ggplot(
+  data = qld_mortality,
+  aes(
+    x = age,
+    y = deaths / population,
+    group = year,
+    colour = year
+  )
+) +
   geom_line() +
-  facet_wrap(~ sex) +
+  facet_wrap(~sex) +
   scale_colour_viridis_c() +
-  labs(y = 'Observed log(Mortality)') +
+  labs(y = "Observed log(Mortality)") +
   scale_y_log10()
 ```
 
 Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death function with a set of `k = 10` thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. In this model we also allow the time-varying effects to vary among sexes, while ensuring they can be efficiently learned by linking their smoothing parameters. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
 ```{r}
 mod <- ffc_gam(
-  deaths ~ 
+  deaths ~
     offset(log(population)) +
-    sex + 
-    fts(age, k = 10, bs = 'cr', by = sex,
-        time_bs = 'cr', time_k = 10),
-  time = 'year',
+    sex +
+    fts(
+      age,
+      k = 10, bs = "cr", by = sex,
+      time_bs = "cr", time_k = 10
+    ),
+  time = "year",
   data = qld_mortality,
   family = poisson(),
-  engine = 'bam'
+  engine = "bam"
 )
 ```
 
@@ -91,18 +99,22 @@ newdat$population <- 1
 newdat$preds <- predict(
   mod,
   newdata = newdat,
-  type = 'response'
+  type = "response"
 )
 
-ggplot(data = newdat,
-       aes(x = age,
-           y = preds,
-           group = year,
-           colour = year)) +
+ggplot(
+  data = newdat,
+  aes(
+    x = age,
+    y = preds,
+    group = year,
+    colour = year
+  )
+) +
   geom_line() +
-  facet_wrap(~ sex) +
+  facet_wrap(~sex) +
   scale_colour_viridis_c() +
-  labs(y = 'Expected log10(Mortality)') +
+  labs(y = "Expected log10(Mortality)") +
   scale_y_log10()
 ```
 
@@ -111,17 +123,19 @@ Using support from the `marginaleffects` 📦, we can make easily predict change
 library(marginaleffects)
 plot_predictions(
   mod,
-  by = c('year', 'sex'),
+  by = c("year", "sex"),
   newdata = datagrid(
     age = 17,
     year = unique,
     sex = unique,
     population = 1
   ),
-  type = 'response'
+  type = "response"
 ) +
-  labs(x = 'Year',
-       y = 'Expected log10(Mortality)') +
+  labs(
+    x = "Year",
+    y = "Expected log10(Mortality)"
+  ) +
   scale_y_log10()
 ```
 
@@ -129,27 +143,33 @@ And here are the slopes of this change
 ```{r, warning=FALSE}
 plot_slopes(
   mod,
-  variables = 'year',
-  by = c('year', 'sex'),
+  variables = "year",
+  by = c("year", "sex"),
   newdata = datagrid(
     age = 17,
     year = unique,
     sex = unique,
     population = 1
   ),
-  type = 'response'
+  type = "response"
 ) +
-  labs(x = 'Year',
-       y = '1st derivative of mortality rate change') +
-  geom_hline(yintercept = 0,
-             linetype = 'dashed')
+  labs(
+    x = "Year",
+    y = "1st derivative of mortality rate change"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  )
 ```
 
 The time-varying coefficients can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future. Using `summary = FALSE` will return draws of each coefficient time series from the model's empirical Bayesian posterior distribution (you can control the number of draws that are returned using the `times` argument):
 ```{r}
-functional_coefs <- fts_coefs(mod,
-                              summary = FALSE,
-                              times = 10)
+functional_coefs <- fts_coefs(
+  mod,
+  summary = FALSE,
+  times = 10
+)
 functional_coefs
 ```
 
@@ -157,22 +177,24 @@ There is no automatic plotting function yet to visualise these time-varying coef
 ```{r}
 ggplot(
   data = functional_coefs,
-  aes(x = year,
-      y = .estimate,
-      colour = .basis,
-      group = .realisation)
+  aes(
+    x = year,
+    y = .estimate,
+    colour = .basis,
+    group = .realisation
+  )
 ) +
   geom_line(
     show.legend = FALSE
   ) +
   facet_wrap(
-    ~.basis, 
-    scales = 'free_y',
+    ~.basis,
+    scales = "free_y",
     ncol = 4
   ) +
   labs(
-    y = 'Coefficient estimate',
-    x = 'Year'
+    y = "Coefficient estimate",
+    x = "Year"
   )
 ```
 

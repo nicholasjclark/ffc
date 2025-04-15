@@ -4,5 +4,8 @@
 utils::globalVariables(c(
   ".basis",
   ".time",
+  ".estimate",
+  ".realisation",
+  ".model",
   "functional_ts"
 ))

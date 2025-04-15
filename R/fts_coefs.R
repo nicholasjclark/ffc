@@ -91,7 +91,7 @@ fts_coefs.ffc_gam <- function(
         }
 
         # Return in tidy format
-        if(summary) {
+        if (summary) {
           dat <- data.frame(
             .basis = by_var,
             .time = unique_times,
@@ -110,12 +110,13 @@ fts_coefs.ffc_gam <- function(
           validate_pos_integer(times)
           dat <- do.call(
             rbind,
-            lapply(1:times, function(x){
+            lapply(1:times, function(x) {
               repdat <- data.frame(
                 .basis = by_var,
                 .time = unique_times,
                 .estimate = preds[x, ],
-                .rep = x)
+                .rep = x
+              )
               repdat$time_var <- unique_times
               colnames(repdat) <- c(
                 ".basis",
@@ -133,7 +134,7 @@ fts_coefs.ffc_gam <- function(
       })
     )
     class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
-    attr(fts_preds, 'summarized') <- isTRUE(summary)
+    attr(fts_preds, "summarized") <- isTRUE(summary)
     return(fts_preds)
   }
 }
@@ -160,13 +161,12 @@ fts_coefs.ffc_gam <- function(
 #' @export forecast
 #' @author Nicholas J Clark
 #' @export
-forecast.fts_ts = function(
+forecast.fts_ts <- function(
     object,
     model = ETS(),
     h = 1,
     times = 10,
-    ...){
-
+    ...) {
   insight::check_if_installed("fable")
 
   # Check arguments
@@ -184,7 +184,6 @@ forecast.fts_ts = function(
 
   # Fit model and forecast
   object_tsbl %>%
-
     # Fit the time forecasting model(s) to each basis coefficient
     # time series
     fabletools::model(
@@ -193,13 +192,11 @@ forecast.fts_ts = function(
         args = list("fable", mod_name)
       )(.estimate)
     ) %>%
-
     # Simulate 10 future paths for each coefficient time series
     fabletools::generate(
       h = h,
       times = times
     ) %>%
-
     # Tidy the names
     dplyr::mutate(.model = mod_name)
 }
@@ -227,7 +224,7 @@ format.fts_ts <- function(
 #' @noRd
 fts_ts_2_tsbl <- function(x) {
   insight::check_if_installed("tsibble")
-  if(attr(x, 'summarized')){
+  if (attr(x, "summarized")) {
     out <- tsibble::as_tsibble(
       x,
       key = .basis,

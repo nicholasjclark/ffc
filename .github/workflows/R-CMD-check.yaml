@@ -52,6 +52,7 @@ jobs:
           dependencies: NA
           extra-packages:  |
              any::rcmdcheck
+             testthat
              usethis
              fable
              tsibble

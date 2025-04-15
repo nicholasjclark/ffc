@@ -48,8 +48,9 @@ Australia
 
 ``` r
 library(ffc)
-library(ggplot2); theme_set(theme_bw())
-data('qld_mortality')
+library(ggplot2)
+theme_set(theme_bw())
+data("qld_mortality")
 head(qld_mortality, 15)
 #>    year age    sex deaths population
 #> 1  1980   0 female    190   17699.81
@@ -72,15 +73,19 @@ head(qld_mortality, 15)
 Visualise the observed mortality curves over time using the log10 scale
 
 ``` r
-ggplot(data = qld_mortality,
-       aes(x = age,
-           y = deaths / population,
-           group = year,
-           colour = year)) +
+ggplot(
+  data = qld_mortality,
+  aes(
+    x = age,
+    y = deaths / population,
+    group = year,
+    colour = year
+  )
+) +
   geom_line() +
-  facet_wrap(~ sex) +
+  facet_wrap(~sex) +
   scale_colour_viridis_c() +
-  labs(y = 'Observed log(Mortality)') +
+  labs(y = "Observed log(Mortality)") +
   scale_y_log10()
 ```
 
@@ -100,15 +105,18 @@ inference.
 
 ``` r
 mod <- ffc_gam(
-  deaths ~ 
+  deaths ~
     offset(log(population)) +
-    sex + 
-    fts(age, k = 10, bs = 'cr', by = sex,
-        time_bs = 'cr', time_k = 10),
-  time = 'year',
+    sex +
+    fts(
+      age,
+      k = 10, bs = "cr", by = sex,
+      time_bs = "cr", time_k = 10
+    ),
+  time = "year",
   data = qld_mortality,
   family = poisson(),
-  engine = 'bam'
+  engine = "bam"
 )
 ```
 
@@ -189,18 +197,22 @@ newdat$population <- 1
 newdat$preds <- predict(
   mod,
   newdata = newdat,
-  type = 'response'
+  type = "response"
 )
 
-ggplot(data = newdat,
-       aes(x = age,
-           y = preds,
-           group = year,
-           colour = year)) +
+ggplot(
+  data = newdat,
+  aes(
+    x = age,
+    y = preds,
+    group = year,
+    colour = year
+  )
+) +
   geom_line() +
-  facet_wrap(~ sex) +
+  facet_wrap(~sex) +
   scale_colour_viridis_c() +
-  labs(y = 'Expected log10(Mortality)') +
+  labs(y = "Expected log10(Mortality)") +
   scale_y_log10()
 ```
 
@@ -215,17 +227,19 @@ over the study period
 library(marginaleffects)
 plot_predictions(
   mod,
-  by = c('year', 'sex'),
+  by = c("year", "sex"),
   newdata = datagrid(
     age = 17,
     year = unique,
     sex = unique,
     population = 1
   ),
-  type = 'response'
+  type = "response"
 ) +
-  labs(x = 'Year',
-       y = 'Expected log10(Mortality)') +
+  labs(
+    x = "Year",
+    y = "Expected log10(Mortality)"
+  ) +
   scale_y_log10()
 ```
 
@@ -236,20 +250,24 @@ And here are the slopes of this change
 ``` r
 plot_slopes(
   mod,
-  variables = 'year',
-  by = c('year', 'sex'),
+  variables = "year",
+  by = c("year", "sex"),
   newdata = datagrid(
     age = 17,
     year = unique,
     sex = unique,
     population = 1
   ),
-  type = 'response'
+  type = "response"
 ) +
-  labs(x = 'Year',
-       y = '1st derivative of mortality rate change') +
-  geom_hline(yintercept = 0,
-             linetype = 'dashed')
+  labs(
+    x = "Year",
+    y = "1st derivative of mortality rate change"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  )
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
@@ -263,23 +281,25 @@ can control the number of draws that are returned using the `times`
 argument):
 
 ``` r
-functional_coefs <- fts_coefs(mod,
-                              summary = FALSE,
-                              times = 10)
+functional_coefs <- fts_coefs(
+  mod,
+  summary = FALSE,
+  times = 10
+)
 functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis                     .time .estimate .realisation  year
 #>    <chr>                      <int>     <dbl>        <int> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.83            1  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.83            1  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.83            1  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.83            1  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.83            1  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.82            1  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.82            1  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.81            1  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.80            1  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.79            1  1989
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.85            1  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.84            1  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.82            1  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.81            1  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.80            1  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.78            1  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.77            1  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.76            1  1987
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75            1  1988
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.74            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -290,22 +310,24 @@ get this done
 ``` r
 ggplot(
   data = functional_coefs,
-  aes(x = year,
-      y = .estimate,
-      colour = .basis,
-      group = .realisation)
+  aes(
+    x = year,
+    y = .estimate,
+    colour = .basis,
+    group = .realisation
+  )
 ) +
   geom_line(
     show.legend = FALSE
   ) +
   facet_wrap(
-    ~.basis, 
-    scales = 'free_y',
+    ~.basis,
+    scales = "free_y",
     ncol = 4
   ) +
   labs(
-    y = 'Coefficient estimate',
-    x = 'Year'
+    y = "Coefficient estimate",
+    x = "Year"
   )
 ```
 
@@ -332,16 +354,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis               .realisation .model .time .rep    .sim
 #>    <chr>                       <int> <chr>  <dbl> <chr>  <dbl>
-#>  1 fts_bs_fts_age1_mean            1 ETS     2021 1     -0.394
-#>  2 fts_bs_fts_age1_mean            1 ETS     2022 1     -0.406
-#>  3 fts_bs_fts_age1_mean            1 ETS     2023 1     -0.417
-#>  4 fts_bs_fts_age1_mean            1 ETS     2024 1     -0.425
-#>  5 fts_bs_fts_age1_mean            1 ETS     2025 1     -0.431
-#>  6 fts_bs_fts_age1_mean            1 ETS     2021 2     -0.401
-#>  7 fts_bs_fts_age1_mean            1 ETS     2022 2     -0.422
-#>  8 fts_bs_fts_age1_mean            1 ETS     2023 2     -0.439
-#>  9 fts_bs_fts_age1_mean            1 ETS     2024 2     -0.456
-#> 10 fts_bs_fts_age1_mean            1 ETS     2025 2     -0.470
+#>  1 fts_bs_fts_age1_mean            1 ETS     2021 1     -0.426
+#>  2 fts_bs_fts_age1_mean            1 ETS     2022 1     -0.448
+#>  3 fts_bs_fts_age1_mean            1 ETS     2023 1     -0.470
+#>  4 fts_bs_fts_age1_mean            1 ETS     2024 1     -0.490
+#>  5 fts_bs_fts_age1_mean            1 ETS     2025 1     -0.510
+#>  6 fts_bs_fts_age1_mean            1 ETS     2021 2     -0.426
+#>  7 fts_bs_fts_age1_mean            1 ETS     2022 2     -0.446
+#>  8 fts_bs_fts_age1_mean            1 ETS     2023 2     -0.465
+#>  9 fts_bs_fts_age1_mean            1 ETS     2024 2     -0.482
+#> 10 fts_bs_fts_age1_mean            1 ETS     2025 2     -0.497
 #> # ℹ 4,740 more rows
 ```
 
