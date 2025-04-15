@@ -23,6 +23,7 @@ Imports:
     withr,
     dplyr,
     tibble,
+    magrittr,
     purrr,
     insight,
     fabletools
