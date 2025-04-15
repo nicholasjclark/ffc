@@ -49,7 +49,7 @@ be visualized and / or forecasted ahead</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">fts_coefs</span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ffc_gam'</span></span>
-<span><span class="fu">fts_coefs</span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">fts_coefs</span><span class="op">(</span><span class="va">object</span>, summary <span class="op">=</span> <span class="cn">TRUE</span>, times <span class="op">=</span> <span class="fl">100</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -62,6 +62,19 @@ be visualized and / or forecasted ahead</p>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Ignored</p></dd>
+
+
+<dt id="arg-summary">summary<a class="anchor" aria-label="anchor" href="#arg-summary"></a></dt>
+<dd><p><code>Logical</code>. Should summary statistics of the coefficient
+time series be returned instead of realized curves? Default is <code>TRUE</code>. If
+<code>FALSE</code>, replicate realisations of each basis coefficient time series will
+be returned</p></dd>
+
+
+<dt id="arg-times">times<a class="anchor" aria-label="anchor" href="#arg-times"></a></dt>
+<dd><p>A positive <code>integer</code> specifying the number of time series
+realisation paths to simulate from the fitted model. Ignored if
+<code>summary = FALSE</code></p></dd>
 
 </dl></div>
     <div id="value">

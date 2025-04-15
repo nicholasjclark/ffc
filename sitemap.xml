@@ -7,11 +7,13 @@
 <url><loc>/index.html</loc></url>
 <url><loc>/reference/ffc-package.html</loc></url>
 <url><loc>/reference/ffc_gam.html</loc></url>
+<url><loc>/reference/forecast.fts_ts.html</loc></url>
 <url><loc>/reference/fts.html</loc></url>
 <url><loc>/reference/fts_coefs.ffc_gam.html</loc></url>
 <url><loc>/reference/growth_data.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/model.frame.ffc_gam.html</loc></url>
+<url><loc>/reference/pipe.html</loc></url>
 <url><loc>/reference/predict.ffc_gam.html</loc></url>
 <url><loc>/reference/print.fts_ts.html</loc></url>
 <url><loc>/reference/qld_mortality.html</loc></url>
