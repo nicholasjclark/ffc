@@ -294,7 +294,7 @@
 <p><img src="reference/figures/README-unnamed-chunk-10-1.png" width="100%"></p>
 <p>Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the <code>fable</code> 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the <code>times</code> argument</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">functional_fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/forecast.fts_ts.html">forecast</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">functional_fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">functional_coefs</span>,</span>
 <span>  h <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">5</span>,</span>
