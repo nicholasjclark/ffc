@@ -2,7 +2,6 @@
 % Please edit documentation in R/fts_coefs.R
 \name{forecast.fts_ts}
 \alias{forecast.fts_ts}
-\alias{forecast}
 \title{Forecasting functional basis coefficients}
 \usage{
 \method{forecast}{fts_ts}(object, model = ETS(), h = 1, times = 10, ...)

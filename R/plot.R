@@ -8,7 +8,6 @@
 #' @param object An object of class `fts_ts` containing time-varying
 #' basis function coefficients extracted from an `ffc_gam` object
 #' @param ... Ignored
-#' @export autoplot
 #' @author Nicholas J Clark
 #' @export
 autoplot.fts_ts <- function(object, ...) {

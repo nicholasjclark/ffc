@@ -10,10 +10,17 @@ mgcv::te
 #' @importFrom mgcv gam
 mgcv::gam
 
-
 #' @export
 #' @importFrom mgcv bam
 mgcv::bam
+
+#' @importFrom ggplot2 autoplot
+#' @export
+ggplot2::autoplot
+
+#' @importFrom generics forecast
+#' @export
+generics::forecast
 
 #' Pipe operator
 #'

@@ -142,7 +142,6 @@ fts_coefs.ffc_gam <- function(
 
 #' Forecasting functional basis coefficients
 #'
-#' @aliases forecast
 #' @importFrom fabletools forecast
 #' @param object An object of class `fts_ts` containing time-varying
 #' basis function coefficients extracted from an `ffc_gam` object
@@ -160,7 +159,6 @@ fts_coefs.ffc_gam <- function(
 #' @return A `tsibble` object containing the forecast prediction (`.sim`) for each
 #' replicate realisation (`.rep`) at each timestep in the forecast horizon `h`
 #' @seealso [predict()], [fts()]
-#' @export forecast
 #' @author Nicholas J Clark
 #' @export
 forecast.fts_ts <- function(

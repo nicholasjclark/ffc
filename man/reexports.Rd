@@ -7,6 +7,8 @@
 \alias{te}
 \alias{gam}
 \alias{bam}
+\alias{autoplot}
+\alias{forecast}
 \title{Objects exported from other packages}
 \keyword{internal}
 \description{
@@ -14,6 +16,10 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
+  \item{generics}{\code{\link[generics]{forecast}}}
+
+  \item{ggplot2}{\code{\link[ggplot2]{autoplot}}}
+
   \item{mgcv}{\code{\link[mgcv]{bam}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{s}}, \code{\link[mgcv]{te}}}
 }}
 
