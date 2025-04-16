@@ -75,14 +75,21 @@ ffc_gam <- function(
   }
 
   # Update formula and data by checking for any fts() terms
+  dots <- list(...)
+  if ("knots" %in% names(dots)) {
+    knots <- dots$knots
+  } else {
+    knots <- NULL
+  }
+
   interpreted <- interpret_ffc(
     formula = formula,
     data = data,
-    time_var = time
+    time_var = time,
+    knots = knots
   )
 
   # Fit the model using the specified engine
-  dots <- list(...)
   fit_args <- list(
     formula = interpreted$formula,
     family = family,
@@ -195,10 +202,10 @@ strip_offset <- function(x) {
 #' @noRd
 ffc_gam_setup <- function(
     formula,
-    knots,
+    knots = NULL,
     family = gaussian(),
     dat = list()) {
-  if (missing(knots)) {
+  if (is.null(knots)) {
     out <- init_gam(
       formula(formula),
       data = dat,

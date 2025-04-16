@@ -290,16 +290,16 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis                     .time .estimate .realisation  year
 #>    <chr>                      <int>     <dbl>        <int> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77            1  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.76            1  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.74            1  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.73            1  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.73            1  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.72            1  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.72            1  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.72            1  1987
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.83            1  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.82            1  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.81            1  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.80            1  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.78            1  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.77            1  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.75            1  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.74            1  1987
 #>  9 fts_bs_s_age_bysexfemale_1  1988     -3.72            1  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.72            1  1989
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.70            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -333,16 +333,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis        .realisation .model .time .rep    .sim
 #>    <chr>                <int> <chr>  <dbl> <chr>  <dbl>
-#>  1 fts_age1_mean            1 ETS     2021 1     -0.415
-#>  2 fts_age1_mean            1 ETS     2022 1     -0.426
-#>  3 fts_age1_mean            1 ETS     2023 1     -0.433
-#>  4 fts_age1_mean            1 ETS     2024 1     -0.442
-#>  5 fts_age1_mean            1 ETS     2025 1     -0.451
-#>  6 fts_age1_mean            1 ETS     2021 2     -0.416
-#>  7 fts_age1_mean            1 ETS     2022 2     -0.433
-#>  8 fts_age1_mean            1 ETS     2023 2     -0.447
-#>  9 fts_age1_mean            1 ETS     2024 2     -0.457
-#> 10 fts_age1_mean            1 ETS     2025 2     -0.465
+#>  1 fts_age1_mean            1 ETS     2021 1     -0.391
+#>  2 fts_age1_mean            1 ETS     2022 1     -0.402
+#>  3 fts_age1_mean            1 ETS     2023 1     -0.414
+#>  4 fts_age1_mean            1 ETS     2024 1     -0.422
+#>  5 fts_age1_mean            1 ETS     2025 1     -0.432
+#>  6 fts_age1_mean            1 ETS     2021 2     -0.394
+#>  7 fts_age1_mean            1 ETS     2022 2     -0.409
+#>  8 fts_age1_mean            1 ETS     2023 2     -0.426
+#>  9 fts_age1_mean            1 ETS     2024 2     -0.440
+#> 10 fts_age1_mean            1 ETS     2025 2     -0.457
 #> # ℹ 4,740 more rows
 ```
 

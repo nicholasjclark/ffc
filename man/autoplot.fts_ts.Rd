@@ -8,10 +8,7 @@
 }
 \arguments{
 \item{object}{An object of class \code{fts_ts} containing time-varying
-basis function coefficients extracted from an \code{ffc_gam} object}
-
-\item{...}{Further arguments passed to \code{\link[ggplot2:geom_path]{ggplot2::geom_line()}},
-which can be used to specify fixed aesthetics such as
+basis function coefficients extracted from an \code{ffc_gam} object
 \code{linewidth = 3}}
 }
 \description{

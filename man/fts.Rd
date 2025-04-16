@@ -6,6 +6,7 @@
 \usage{
 fts(
   ...,
+  mean_only = FALSE,
   k = NA,
   time_k = 10,
   bs = "cr",
@@ -22,6 +23,11 @@ fts(
 \item{...}{a list of variables that are the covariates that this smooth is a function of.
 Transformations whose form depends on the values of the data are best avoided here:
 e.g. \code{fts(log(x), z)} is fine, but \code{fts(I(x / sd(x)), z)} is not.}
+
+\item{mean_only}{\code{Logical} indicating whether to only include a single basis function
+to be modelled as time-varying. This can be helpful if you wish to include a temporal
+trend that can then be forecasted ahead using appropriate time series models.
+Default is \code{FALSE}}
 
 \item{k}{the dimension(s) of the bases used to represent the smooth term.
 If not supplied then set either to \code{10} (if only a single covariate is supplied) or

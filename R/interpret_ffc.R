@@ -7,7 +7,8 @@ interpret_ffc <- function(
     data,
     time_var = "time",
     gam_init = list(),
-    newdata = NULL) {
+    newdata = NULL,
+    knots = NULL) {
   # Tibbles often get rearranged by mgcv in very strange ways; grouping?
   # best to convert to plain-Jane data.frames first
   if (inherits(data, "tbl_df")) {
@@ -54,7 +55,8 @@ interpret_ffc <- function(
         formula = formula,
         time_var = time_var,
         gam_init = gam_init[[i]],
-        newdata = newdata
+        newdata = newdata,
+        knots = knots
       )
       gam_init[[i]] <- fts_forms$gam_init
 
@@ -99,12 +101,14 @@ dyn_to_spline <- function(
     formula,
     time_var = "time",
     gam_init = NULL,
-    newdata = newdata) {
+    newdata = newdata,
+    knots = NULL) {
   # Extract key basis information
   label <- term$label
   time_k <- term$time_k
   time_bs <- term$time_bs
   time_m <- term$time_m
+  mean_only <- term$mean_only
 
   # Initialise a gam object so the basis functions can be evaluated
   # and extracted; just use some Gaussian outcome here as all we need
@@ -116,7 +120,8 @@ dyn_to_spline <- function(
     )
     gam_init <- ffc_gam_setup(
       myform,
-      dat = data
+      dat = data,
+      knots = knots
     )
 
     # Design matrix will contain the evaluated basis functions
@@ -154,6 +159,16 @@ dyn_to_spline <- function(
         "_mean"
       )
     )
+  }
+
+  if (mean_only) {
+    X <- X[, grepl(paste0(
+      label,
+      term_id,
+      "_mean"
+    ), colnames(X)),
+    drop = FALSE
+    ]
   }
 
   # Begin building the updated formula
