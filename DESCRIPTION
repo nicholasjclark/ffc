@@ -16,21 +16,18 @@ Depends:
 Imports: 
     mgcv,
     methods,
-    cli,
     glue,
     lifecycle,
     rlang (>= 0.4.5),
-    withr,
     ggplot2 (>= 3.0.0),
     dplyr (>= 1.0.0),
-    tibble (>= 1.4.1),
+    tsibble,
     magrittr,
     purrr,
     insight,
     fabletools
 Suggests: 
     testthat (>= 3.0.0),
-    fable (>= 0.2.0),
     fable (>= 0.2.0),
     ggborderline,
     rmarkdown,

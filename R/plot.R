@@ -7,7 +7,7 @@
 #' @importFrom rlang sym expr eval_tidy
 #' @param object An object of class `fts_ts` containing time-varying
 #' basis function coefficients extracted from an `ffc_gam` object
-#' `linewidth = 3`
+#' @param ... Ignored
 #' @export autoplot
 #' @author Nicholas J Clark
 #' @export

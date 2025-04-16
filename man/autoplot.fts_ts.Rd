@@ -8,8 +8,9 @@
 }
 \arguments{
 \item{object}{An object of class \code{fts_ts} containing time-varying
-basis function coefficients extracted from an \code{ffc_gam} object
-\code{linewidth = 3}}
+basis function coefficients extracted from an \code{ffc_gam} object}
+
+\item{...}{Ignored}
 }
 \description{
 Produces a time series plot of basis function coefficients from \code{fts_ts} objects
