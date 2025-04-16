@@ -162,7 +162,7 @@
 <span><span class="co">#&gt;     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_7, </span></span>
 <span><span class="co">#&gt;     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_8, </span></span>
 <span><span class="co">#&gt;     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_9, </span></span>
-<span><span class="co">#&gt;     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_fts_age1_mean, </span></span>
+<span><span class="co">#&gt;     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_age1_mean, </span></span>
 <span><span class="co">#&gt;     bs = "cr", k = 10, m = 2, id = 1)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric coefficients:</span></span>
@@ -192,7 +192,7 @@
 <span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   7.212  8.290 232175  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8   6.715  7.792 394476  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9   4.403  5.210 125249  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_fts_age1_mean       8.197  8.724   9509  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_age1_mean              8.197  8.724   9509  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -277,40 +277,20 @@
 <span><span class="co">#&gt; # A tibble: 7,790 × 5</span></span>
 <span><span class="co">#&gt;    .basis                     .time .estimate .realisation  year</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;                      &lt;int&gt;     &lt;dbl&gt;        &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1  1980     -3.85            1  1980</span></span>
-<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1  1981     -3.84            1  1981</span></span>
-<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1  1982     -3.82            1  1982</span></span>
-<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1  1983     -3.81            1  1983</span></span>
-<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1  1984     -3.80            1  1984</span></span>
-<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1  1985     -3.78            1  1985</span></span>
-<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1  1986     -3.77            1  1986</span></span>
-<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1  1987     -3.76            1  1987</span></span>
-<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1  1988     -3.75            1  1988</span></span>
-<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1  1989     -3.74            1  1989</span></span>
+<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1  1980     -3.77            1  1980</span></span>
+<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1  1981     -3.76            1  1981</span></span>
+<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1  1982     -3.74            1  1982</span></span>
+<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1  1983     -3.73            1  1983</span></span>
+<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1  1984     -3.73            1  1984</span></span>
+<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1  1985     -3.72            1  1985</span></span>
+<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1  1986     -3.72            1  1986</span></span>
+<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1  1987     -3.72            1  1987</span></span>
+<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1  1988     -3.72            1  1988</span></span>
+<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1  1989     -3.72            1  1989</span></span>
 <span><span class="co">#&gt; # ℹ 7,780 more rows</span></span></code></pre></div>
-<p>There is no automatic plotting function yet to visualise these time-varying coefficients, but for now we can use a bit of <code>ggplot</code> to get this done</p>
+<p>The basis function coefficient time series can be plotted using <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">functional_coefs</span>,</span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
-<span>    x <span class="op">=</span> <span class="va">year</span>,</span>
-<span>    y <span class="op">=</span> <span class="va">.estimate</span>,</span>
-<span>    colour <span class="op">=</span> <span class="va">.basis</span>,</span>
-<span>    group <span class="op">=</span> <span class="va">.realisation</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
-<span>    show.legend <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span></span>
-<span>    <span class="op">~</span><span class="va">.basis</span>,</span>
-<span>    scales <span class="op">=</span> <span class="st">"free_y"</span>,</span>
-<span>    ncol <span class="op">=</span> <span class="fl">4</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    y <span class="op">=</span> <span class="st">"Coefficient estimate"</span>,</span>
-<span>    x <span class="op">=</span> <span class="st">"Year"</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">functional_coefs</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-10-1.png" width="100%"></p>
 <p>Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the <code>fable</code> 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the <code>times</code> argument</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -323,18 +303,18 @@
 <span><span class="va">functional_fc</span></span>
 <span><span class="co">#&gt; # A tsibble: 4,750 x 6 [1Y]</span></span>
 <span><span class="co">#&gt; # Key:       .basis, .realisation, .model, .rep [950]</span></span>
-<span><span class="co">#&gt;    .basis               .realisation .model .time .rep    .sim</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;                       &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_bs_fts_age1_mean            1 ETS     2021 1     -0.426</span></span>
-<span><span class="co">#&gt;  2 fts_bs_fts_age1_mean            1 ETS     2022 1     -0.448</span></span>
-<span><span class="co">#&gt;  3 fts_bs_fts_age1_mean            1 ETS     2023 1     -0.470</span></span>
-<span><span class="co">#&gt;  4 fts_bs_fts_age1_mean            1 ETS     2024 1     -0.490</span></span>
-<span><span class="co">#&gt;  5 fts_bs_fts_age1_mean            1 ETS     2025 1     -0.510</span></span>
-<span><span class="co">#&gt;  6 fts_bs_fts_age1_mean            1 ETS     2021 2     -0.426</span></span>
-<span><span class="co">#&gt;  7 fts_bs_fts_age1_mean            1 ETS     2022 2     -0.446</span></span>
-<span><span class="co">#&gt;  8 fts_bs_fts_age1_mean            1 ETS     2023 2     -0.465</span></span>
-<span><span class="co">#&gt;  9 fts_bs_fts_age1_mean            1 ETS     2024 2     -0.482</span></span>
-<span><span class="co">#&gt; 10 fts_bs_fts_age1_mean            1 ETS     2025 2     -0.497</span></span>
+<span><span class="co">#&gt;    .basis        .realisation .model .time .rep    .sim</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;                &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 fts_age1_mean            1 ETS     2021 1     -0.415</span></span>
+<span><span class="co">#&gt;  2 fts_age1_mean            1 ETS     2022 1     -0.426</span></span>
+<span><span class="co">#&gt;  3 fts_age1_mean            1 ETS     2023 1     -0.433</span></span>
+<span><span class="co">#&gt;  4 fts_age1_mean            1 ETS     2024 1     -0.442</span></span>
+<span><span class="co">#&gt;  5 fts_age1_mean            1 ETS     2025 1     -0.451</span></span>
+<span><span class="co">#&gt;  6 fts_age1_mean            1 ETS     2021 2     -0.416</span></span>
+<span><span class="co">#&gt;  7 fts_age1_mean            1 ETS     2022 2     -0.433</span></span>
+<span><span class="co">#&gt;  8 fts_age1_mean            1 ETS     2023 2     -0.447</span></span>
+<span><span class="co">#&gt;  9 fts_age1_mean            1 ETS     2024 2     -0.457</span></span>
+<span><span class="co">#&gt; 10 fts_age1_mean            1 ETS     2025 2     -0.465</span></span>
 <span><span class="co">#&gt; # ℹ 4,740 more rows</span></span></code></pre></div>
 </div>
 <div class="section level2">

@@ -59,7 +59,7 @@ basis function coefficients extracted from an <code>ffc_gam</code> object</p></d
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>A valid model definition from the <span class="pkg">fable</span> package
-(i.e. <code>ETS()</code>, <code>ARIMA()</code> etc...)</p></dd>
+(i.e. <code>ETS()</code>, <code>ARIMA()</code>, <code>NAIVE()</code>, etc...)</p></dd>
 
 
 <dt id="arg-h">h<a class="anchor" aria-label="anchor" href="#arg-h"></a></dt>
@@ -87,6 +87,10 @@ replicate realisation (<code>.rep</code>) at each timestep in the forecast horiz
 to the specified <code>model</code> to train a forecasting model that will then be
 extrapolated <code>h</code> timesteps into the future. A total of <code>times</code> forecast realisations
 will be returned for each basis coefficient</p>
+    </div>
+    <div id="see-also">
+    <h2>See also</h2>
+    <div class="dont-index"><p><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>, <code><a href="fts.html">fts()</a></code></p></div>
     </div>
     <div id="author">
     <h2>Author</h2>
