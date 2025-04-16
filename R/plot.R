@@ -56,7 +56,7 @@ autoplot.fts_ts <- function(object, ...) {
     )
 
     p <- p +
-      do.call("geom_line", line_args) +
+      geom_line(show.legend = FALSE) +
       scale_colour_viridis_d(
         option = "C",
         end = 0.85

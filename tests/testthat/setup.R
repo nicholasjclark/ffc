@@ -63,7 +63,7 @@ example_mod2 <- ffc_gam(
     # ahead just like any other fts basis :)
     fts(
       time, mean_only = TRUE,
-      time_k = 15, time_bs = 'bs', time_m = 1
+      time_k = 20, time_bs = 'bs', time_m = 1
     ),
 
   # Supply some knots to ensure they are picked up correctly
