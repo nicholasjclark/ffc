@@ -19,17 +19,22 @@ Imports:
     cli,
     glue,
     lifecycle,
-    rlang,
+    rlang (>= 0.4.5),
     withr,
-    dplyr,
-    tibble,
+    ggplot2 (>= 3.0.0),
+    dplyr (>= 1.0.0),
+    tibble (>= 1.4.1),
     magrittr,
     purrr,
     insight,
     fabletools
 Suggests: 
     testthat (>= 3.0.0),
-    tsibble,
-    fable,
-    ggborderline
+    fable (>= 0.2.0),
+    fable (>= 0.2.0),
+    ggborderline,
+    rmarkdown,
+    knitr
 LazyData: true
+VignetteBuilder: 
+    knitr
