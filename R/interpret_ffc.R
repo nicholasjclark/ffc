@@ -149,7 +149,6 @@ dyn_to_spline <- function(
     colnames(X) <- c(
       orig_names,
       paste0(
-        "fts_bs_",
         label,
         term_id,
         "_mean"

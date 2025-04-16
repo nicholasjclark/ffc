@@ -19,6 +19,15 @@ test_that("fts_coefs() works correctly", {
   functional_coefs <- fts_coefs(example_mod)
   expect_true(inherits(functional_coefs, "fts_ts"))
   expect_true(inherits(functional_coefs, "tbl_df"))
+  expect_true(
+    all.equal(
+      attr(functional_coefs, 'time_var'),
+      example_mod$time_var
+    )
+  )
+  expect_true(
+    attr(functional_coefs, 'summarized')
+  )
 
   # Times should match exactly to those included in the object
   expect_true(
@@ -35,6 +44,46 @@ test_that("fts_coefs() works correctly", {
     )
   )
 
+  # Plot should return a ggplot
+  expect_ggplot(
+    autoplot(functional_coefs)
+  )
+
   # SEs should not be negative
   expect_range(functional_coefs$.se, lower = 0)
+
+  # Also need to test outputs when summary = FALSE
+  functional_coefs <- fts_coefs(example_mod,
+                                summary = FALSE,
+                                times = 3)
+  expect_true(inherits(functional_coefs, "fts_ts"))
+  expect_true(inherits(functional_coefs, "tbl_df"))
+  expect_true(
+    all.equal(
+      attr(functional_coefs, 'time_var'),
+      example_mod$time_var
+    )
+  )
+  expect_false(
+    attr(functional_coefs, 'summarized')
+  )
+  expect_true(
+    length(
+      unique(functional_coefs$.realisation) == 3)
+  )
+  expect_true(
+    all.equal(
+      sort(unique(functional_coefs$.time)),
+      sort(unique(example_mod$model[[example_mod$time_var]]))
+    )
+  )
+  expect_true(
+    all.equal(
+      sort(unique(functional_coefs[[example_mod$time_var]])),
+      sort(unique(example_mod$model[[example_mod$time_var]]))
+    )
+  )
+  expect_ggplot(
+    autoplot(functional_coefs)
+  )
 })

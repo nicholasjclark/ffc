@@ -149,7 +149,7 @@ summary(mod)
 #>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_7, 
 #>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_8, 
 #>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexmale_9, 
-#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_fts_age1_mean, 
+#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_age1_mean, 
 #>     bs = "cr", k = 10, m = 2, id = 1)
 #> 
 #> Parametric coefficients:
@@ -179,7 +179,7 @@ summary(mod)
 #> s(year):fts_bs_s_age_bysexmale_7   7.212  8.290 232175  <2e-16 ***
 #> s(year):fts_bs_s_age_bysexmale_8   6.715  7.792 394476  <2e-16 ***
 #> s(year):fts_bs_s_age_bysexmale_9   4.403  5.210 125249  <2e-16 ***
-#> s(year):fts_bs_fts_age1_mean       8.197  8.724   9509  <2e-16 ***
+#> s(year):fts_age1_mean              8.197  8.724   9509  <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
@@ -290,45 +290,24 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis                     .time .estimate .realisation  year
 #>    <chr>                      <int>     <dbl>        <int> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.85            1  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.84            1  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.82            1  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.81            1  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.80            1  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.78            1  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.77            1  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.76            1  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.75            1  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.74            1  1989
+#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.77            1  1980
+#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.76            1  1981
+#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.74            1  1982
+#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.73            1  1983
+#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.73            1  1984
+#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.72            1  1985
+#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.72            1  1986
+#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.72            1  1987
+#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.72            1  1988
+#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.72            1  1989
 #> # ℹ 7,780 more rows
 ```
 
-There is no automatic plotting function yet to visualise these
-time-varying coefficients, but for now we can use a bit of `ggplot` to
-get this done
+The basis function coefficient time series can be plotted using
+`autoplot()`
 
 ``` r
-ggplot(
-  data = functional_coefs,
-  aes(
-    x = year,
-    y = .estimate,
-    colour = .basis,
-    group = .realisation
-  )
-) +
-  geom_line(
-    show.legend = FALSE
-  ) +
-  facet_wrap(
-    ~.basis,
-    scales = "free_y",
-    ncol = 4
-  ) +
-  labs(
-    y = "Coefficient estimate",
-    x = "Year"
-  )
+autoplot(functional_coefs)
 ```
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
@@ -352,18 +331,18 @@ functional_fc <- forecast(
 functional_fc
 #> # A tsibble: 4,750 x 6 [1Y]
 #> # Key:       .basis, .realisation, .model, .rep [950]
-#>    .basis               .realisation .model .time .rep    .sim
-#>    <chr>                       <int> <chr>  <dbl> <chr>  <dbl>
-#>  1 fts_bs_fts_age1_mean            1 ETS     2021 1     -0.426
-#>  2 fts_bs_fts_age1_mean            1 ETS     2022 1     -0.448
-#>  3 fts_bs_fts_age1_mean            1 ETS     2023 1     -0.470
-#>  4 fts_bs_fts_age1_mean            1 ETS     2024 1     -0.490
-#>  5 fts_bs_fts_age1_mean            1 ETS     2025 1     -0.510
-#>  6 fts_bs_fts_age1_mean            1 ETS     2021 2     -0.426
-#>  7 fts_bs_fts_age1_mean            1 ETS     2022 2     -0.446
-#>  8 fts_bs_fts_age1_mean            1 ETS     2023 2     -0.465
-#>  9 fts_bs_fts_age1_mean            1 ETS     2024 2     -0.482
-#> 10 fts_bs_fts_age1_mean            1 ETS     2025 2     -0.497
+#>    .basis        .realisation .model .time .rep    .sim
+#>    <chr>                <int> <chr>  <dbl> <chr>  <dbl>
+#>  1 fts_age1_mean            1 ETS     2021 1     -0.415
+#>  2 fts_age1_mean            1 ETS     2022 1     -0.426
+#>  3 fts_age1_mean            1 ETS     2023 1     -0.433
+#>  4 fts_age1_mean            1 ETS     2024 1     -0.442
+#>  5 fts_age1_mean            1 ETS     2025 1     -0.451
+#>  6 fts_age1_mean            1 ETS     2021 2     -0.416
+#>  7 fts_age1_mean            1 ETS     2022 2     -0.433
+#>  8 fts_age1_mean            1 ETS     2023 2     -0.447
+#>  9 fts_age1_mean            1 ETS     2024 2     -0.457
+#> 10 fts_age1_mean            1 ETS     2025 2     -0.465
 #> # ℹ 4,740 more rows
 ```
 

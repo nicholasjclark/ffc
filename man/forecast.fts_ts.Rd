@@ -12,7 +12,7 @@
 basis function coefficients extracted from an \code{ffc_gam} object}
 
 \item{model}{A valid model definition from the \pkg{fable} package
-(i.e. \code{ETS()}, \code{ARIMA()} etc...)}
+(i.e. \code{ETS()}, \code{ARIMA()}, \code{NAIVE()}, etc...)}
 
 \item{h}{A positive \code{integer} specifying the length of the forecast
 horizon}
@@ -34,6 +34,9 @@ Basis function coefficient time series will be used as input
 to the specified \code{model} to train a forecasting model that will then be
 extrapolated \code{h} timesteps into the future. A total of \code{times} forecast realisations
 will be returned for each basis coefficient
+}
+\seealso{
+\code{\link[=predict]{predict()}}, \code{\link[=fts]{fts()}}
 }
 \author{
 Nicholas J Clark

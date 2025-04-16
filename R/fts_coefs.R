@@ -134,6 +134,7 @@ fts_coefs.ffc_gam <- function(
       })
     )
     class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
+    attr(fts_preds, "time_var") <- time_var
     attr(fts_preds, "summarized") <- isTRUE(summary)
     return(fts_preds)
   }
@@ -146,7 +147,7 @@ fts_coefs.ffc_gam <- function(
 #' @param object An object of class `fts_ts` containing time-varying
 #' basis function coefficients extracted from an `ffc_gam` object
 #' @param model A valid model definition from the \pkg{fable} package
-#' (i.e. `ETS()`, `ARIMA()` etc...)
+#' (i.e. `ETS()`, `ARIMA()`, `NAIVE()`, etc...)
 #' @param h A positive `integer` specifying the length of the forecast
 #' horizon
 #' @param times A positive `integer` specifying the number of forecast
@@ -158,6 +159,7 @@ fts_coefs.ffc_gam <- function(
 #' will be returned for each basis coefficient
 #' @return A `tsibble` object containing the forecast prediction (`.sim`) for each
 #' replicate realisation (`.rep`) at each timestep in the forecast horizon `h`
+#' @seealso [predict()], [fts()]
 #' @export forecast
 #' @author Nicholas J Clark
 #' @export

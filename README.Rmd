@@ -173,29 +173,9 @@ functional_coefs <- fts_coefs(
 functional_coefs
 ```
 
-There is no automatic plotting function yet to visualise these time-varying coefficients, but for now we can use a bit of `ggplot` to get this done
+The basis function coefficient time series can be plotted using `autoplot()`
 ```{r}
-ggplot(
-  data = functional_coefs,
-  aes(
-    x = year,
-    y = .estimate,
-    colour = .basis,
-    group = .realisation
-  )
-) +
-  geom_line(
-    show.legend = FALSE
-  ) +
-  facet_wrap(
-    ~.basis,
-    scales = "free_y",
-    ncol = 4
-  ) +
-  labs(
-    y = "Coefficient estimate",
-    x = "Year"
-  )
+autoplot(functional_coefs)
 ```
 
 Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
