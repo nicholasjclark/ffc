@@ -48,6 +48,7 @@ ffc models"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">fts</span><span class="op">(</span></span>
 <span>  <span class="va">...</span>,</span>
+<span>  mean_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  k <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  time_k <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  bs <span class="op">=</span> <span class="st">"cr"</span>,</span>
@@ -69,6 +70,13 @@ ffc models"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/
 <dd><p>a list of variables that are the covariates that this smooth is a function of.
 Transformations whose form depends on the values of the data are best avoided here:
 e.g. <code>fts(log(x), z)</code> is fine, but <code>fts(I(x / sd(x)), z)</code> is not.</p></dd>
+
+
+<dt id="arg-mean-only">mean_only<a class="anchor" aria-label="anchor" href="#arg-mean-only"></a></dt>
+<dd><p><code>Logical</code> indicating whether to only include a single basis function
+to be modelled as time-varying. This can be helpful if you wish to include a temporal
+trend that can then be forecasted ahead using appropriate time series models.
+Default is <code>FALSE</code></p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
