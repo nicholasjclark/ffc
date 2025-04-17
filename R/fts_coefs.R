@@ -170,13 +170,17 @@ forecast.fts_ts <- function(
 
   # Check arguments
   validate_pos_integer(h)
-  mod_name <- deparse(substitute(model))
-  mod_name <- gsub(
-    "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
-    "",
-    mod_name,
-    perl = TRUE
-  )
+  if(is.character(model)) {
+    mod_name <- model
+  } else {
+    mod_name <- deparse(substitute(model))
+    mod_name <- gsub(
+      "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
+      "",
+      mod_name,
+      perl = TRUE
+    )
+  }
 
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
