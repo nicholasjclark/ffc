@@ -142,7 +142,6 @@ fts_coefs.ffc_gam <- function(
 
 #' Forecasting functional basis coefficients
 #'
-#' @importFrom fabletools forecast
 #' @param object An object of class `fts_ts` containing time-varying
 #' basis function coefficients extracted from an `ffc_gam` object
 #' @param model A valid model definition from the \pkg{fable} package
@@ -184,7 +183,7 @@ forecast.fts_ts <- function(
 
   # Fit model and forecast
   object_tsbl %>%
-    # Fit the time forecasting model(s) to each basis coefficient
+    # Fit the forecasting model(s) to each basis coefficient
     # time series
     fabletools::model(
       do.call(
@@ -192,7 +191,7 @@ forecast.fts_ts <- function(
         args = list("fable", mod_name)
       )(.estimate)
     ) %>%
-    # Simulate 10 future paths for each coefficient time series
+    # Simulate future paths for each coefficient time series
     fabletools::generate(
       h = h,
       times = times
