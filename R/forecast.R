@@ -1,0 +1,529 @@
+#' Forecasting functional basis coefficients
+#'
+#' @param object An object of class `fts_ts` containing time-varying
+#' basis function coefficients extracted from an `ffc_gam` object
+#' @param model A valid model definition from the \pkg{fable} package
+#' (i.e. `ETS()`, `ARIMA()`, `NAIVE()`, etc...)
+#' @param h A positive `integer` specifying the length of the forecast
+#' horizon
+#' @param times A positive `integer` specifying the number of forecast
+#' realisation paths to simulate from the fitted forecast `model`
+#' @param ... Ignored
+#' @details Basis function coefficient time series will be used as input
+#' to the specified `model` to train a forecasting model that will then be
+#' extrapolated `h` timesteps into the future. A total of `times` forecast realisations
+#' will be returned for each basis coefficient
+#' @return A `tsibble` object containing the forecast prediction (`.sim`) for each
+#' replicate realisation (`.rep`) at each timestep in the forecast horizon `h`
+#' @seealso [predict()], [fts()]
+#' @author Nicholas J Clark
+#' @export
+forecast.fts_ts <- function(
+    object,
+    model = ETS(),
+    h = 1,
+    times = 10,
+    ...) {
+  insight::check_if_installed("fable")
+
+  # Check arguments
+  validate_pos_integer(h)
+  if(is.character(model)) {
+    mod_name <- model
+  } else {
+    mod_name <- deparse(substitute(model))
+    mod_name <- gsub(
+      "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
+      "",
+      mod_name,
+      perl = TRUE
+    )
+  }
+
+  # Convert time-varying coefficients to tsibble
+  object_tsbl <- fts_ts_2_tsbl(object)
+
+  # Fit model and forecast
+  object_tsbl %>%
+    # Fit the forecasting model(s) to each basis coefficient
+    # time series
+    fabletools::model(
+      do.call(
+        what = `::`,
+        args = list("fable", mod_name)
+      )(.estimate)
+    ) %>%
+    # Simulate future paths for each coefficient time series
+    fabletools::generate(
+      h = h,
+      times = times
+    ) %>%
+    # Tidy the names
+    dplyr::mutate(.model = mod_name)
+}
+
+#' Forecasting `ffc_gam` models
+#'
+#' @inheritParams forecast.fts_ts
+#' @param object An object of class `ffc_gam`. See [ffc_gam()]
+#' @param newdata `dataframe` or `list` of test data containing the
+#' same variables that were included in the original `data` used to fit the
+#' model. The covariate information in `newdata`, along with the temporal information
+#' indexed by the `time` variable in the original call to `ffc_gam()`, will be used to
+#' generate forecasts from the fitted model equations
+#' @param type When this has the value `link` (default) the linear predictor is calculated
+#' on the link scale. If `expected` is used, predictions reflect the expectation
+#' of the response (the mean) but ignore uncertainty in the observation process.
+#' When `response` is used, the predictions take uncertainty in the observation
+#' process into account to return predictions on the outcome scale
+#' @param n_draws A positive `integer` specifying the number of basis coefficient
+#' realisation paths to simulate from the fitted time-varying `fts()` splines
+#' @param n_sims A positive `integer` specifying the number of simulation paths to compute
+#' from each basis coefficient time series model when creating the basis coefficient
+#' forecast distributions
+#' @param summary Should summary statistics be returned instead of the raw values?
+#' Default is `TRUE`
+#' @param robust If `FALSE` (the default) the mean is used as the measure of
+#' central tendency and the standard deviation as the measure of variability.
+#' If `TRUE`, the median and the median absolute deviation (MAD) are applied instead.
+#' Only used if `summary` is `TRUE`
+#' @param probs The percentiles to be computed by the `quantile()` function.
+#' Only used if `summary` is `TRUE`
+#' @param ... ignored
+#' @details Computes forecast distributions from fitted `ffc_gam` objects
+#' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
+#' @return Predicted values on the appropriate scale.
+#' If `summary == FALSE`, the output is a matrix. If `summary == TRUE`, the output
+#' is a tidy `tbl_df / data.frame`
+#' @author Nicholas J Clark
+#' @export
+forecast.ffc_gam = function(
+    object,
+    newdata,
+    type = 'link',
+    n_draws = 10,
+    n_sims = 10,
+    model = ETS(),
+    summary = TRUE,
+    robust = FALSE,
+    probs = c(0.025, 0.975),
+    ...){
+
+  type <- match.arg(
+    arg = type,
+    choices = c(
+      "link",
+      "expected",
+      "response"
+    )
+  )
+  validate_pos_integer(n_draws)
+  validate_pos_integer(n_sims)
+  if (length(probs) != 2L) {
+    stop("argument 'probs' must be a vector of length 2",
+         call. = FALSE)
+  }
+  validate_proportional(min(probs))
+  validate_proportional(max(probs))
+
+  object = mod
+  newdata = qld_test
+  n_draws = 5
+  n_sims = 10
+  model = 'ETS'
+
+  # Extract the full linear predictor matrix
+  orig_lpmat <- predict(
+    object,
+    newdata = newdata,
+    type = 'lpmatrix'
+  )
+
+  # Take full draws of beta coefficients
+  orig_betas <- mgcv::rmvn(
+    n = n_draws * n_sims,
+    mu = coef(object),
+    V = vcov(object)
+  )
+
+  if(is.null(object$gam_init)) {
+
+    # No need to modify lpmatrix if there were no
+    # fts() terms in the model
+    full_linpreds <- matrix(
+      as.vector(
+        t(apply(
+          as.matrix(orig_betas),
+          1,
+          function(row) orig_lpmat %*% row +
+            attr(orig_lpmat, 'model.offset')
+        ))
+      ),
+      nrow = NROW(orig_betas)
+    )
+
+  } else {
+    # Determine horizon (assuming equal time gaps)
+    time_var <- object$time_var
+
+    interpreted <- ffc:::interpret_ffc(
+      formula = object$orig_formula,
+      data = newdata,
+      newdata = newdata,
+      gam_init = object$gam_init,
+      time_var = object$time_var
+    )
+
+    fc_horizons <- interpreted$data[[time_var]] -
+      max(object$model[[time_var]])
+
+    max_horizon <- max(fc_horizons)
+
+    # Extract functional basis coefficient time series
+    functional_coefs <- fts_coefs(
+      object,
+      summary = FALSE,
+      times = n_draws
+    )
+
+    # Validate model choice
+    if(is.character(model)) {
+      mod_name <- model
+    } else {
+      mod_name <- deparse(substitute(model))
+      mod_name <- gsub(
+        "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
+        "",
+        mod_name,
+        perl = TRUE
+      )
+    }
+
+    # Fit the time series model to the basis coefficients
+    # and generate basis coefficient forecasts
+    functional_fc <- forecast(
+      object = functional_coefs,
+      h = max_horizon,
+      times = n_sims,
+      model = mod_name
+    )
+
+    # Only need to return forecasts for those times that are
+    # in newdata
+    functional_fc <- functional_fc %>%
+      dplyr::filter(
+        .time %in% unique(interpreted$data[[time_var]])
+      )
+
+    # Which coefficients in lpmatrix are associated with fts objects?
+    smooth_names <- unlist(
+      purrr::map(object$smooth, 'label'),
+      use.names = FALSE
+    )
+
+    fts_names <- grep(
+      ':fts_',
+      smooth_names,
+      fixed = TRUE
+    )
+
+    fts_coefs <- unlist(
+      purrr::map(
+        object$smooth[fts_names],
+        \ (x) x$first.para : x$last.para
+      ),
+      use.names = FALSE
+    )
+
+    # Drop these columns from the lpmatrix and the betas
+    intermed_lpmat <- orig_lpmat[, -fts_coefs, drop = FALSE]
+    intermed_betas <- orig_betas[, -fts_coefs, drop = FALSE]
+
+    # Calculate intermediate linear predictors
+    intermed_linpreds <- matrix(
+      as.vector(
+        t(apply(
+          as.matrix(intermed_betas),
+          1,
+          function(row) intermed_lpmat %*% row +
+            attr(orig_lpmat, 'model.offset')
+        ))
+      ),
+      nrow = NROW(intermed_betas)
+    )
+
+    # Join forecasts to the basis function evaluations
+    fts_fc <- data.frame(
+      interpreted$data[grep('fts_', colnames(interpreted$data))]
+    ) %>%
+      dplyr::bind_cols(
+        data.frame(.time = interpreted$data[[time_var]],
+                   .row = 1:length(interpreted$data[[1]]))
+      ) %>%
+      tidyr::pivot_longer(
+        cols = !contains(c(".time",
+                           ".row")),
+        names_to = ".basis",
+        values_to = '.evaluation'
+      ) %>%
+      dplyr::left_join(
+        functional_fc,
+        dplyr::join_by(.time, .basis),
+        relationship = "many-to-many"
+      ) %>%
+
+      # Calculate prediction
+      dplyr::mutate(.pred = .evaluation * .sim) %>%
+
+      # Now take 'draws' of the betas
+      dplyr::select(
+        .basis, .time, .realisation, .rep, .pred, .row
+      ) %>%
+
+      # Pivot back to wide format
+      tidyr::pivot_wider(
+        names_from = .basis,
+        values_from = .pred
+      ) %>%
+      dplyr::arrange(.row) %>%
+      dplyr::mutate(.draw = paste0(.realisation, '_', .rep)) %>%
+      dplyr::select(-.time,
+                    -.realisation,
+                    -.rep)
+
+    # Should now have n_draws * n_sims draws for each row of newdata
+    if(!NROW(orig_lpmat) * n_draws * n_sims == NROW(fts_fc)){
+      stop('Wrong dimensions in forecast coefs; need to check on this')
+    }
+
+    # Should also have same ncols as number of fts basis functions
+    if(
+      !NCOL(fts_fc) - 2 ==
+      NCOL(interpreted$data[
+        grep('fts_',
+             colnames(interpreted$data))])
+    ){
+      stop('Wrong dimensions in forecast coefs; need to check on this')
+    }
+
+    # If dimensions correct, take rowsums for each draw
+    fc_linpreds <- fts_fc %>%
+      dplyr::select(-c(.draw, .row)) %>%
+      rowSums()
+
+    # Add the draw-specific row predictions to the
+    # intermediate prediction matrix
+    unique_draws <- unique(fts_fc$.draw)
+    full_linpreds <- do.call(
+      rbind,
+      lapply(
+        unique_draws,
+        function(x){
+          fc_linpreds[which(fts_fc$.draw == x)]
+        }
+      )
+    ) +
+      intermed_linpreds
+  }
+
+  # Now can proceed to send full_linpreds to the relevant
+  # invlink and rng functions for outcome-level predictions
+  if(type == 'link') preds <- full_linpreds
+
+  if(type == 'expected'){
+    preds <- posterior_epred(
+      object,
+      full_linpreds
+    )
+  }
+
+  if(type == 'response'){
+    preds <- posterior_predict(
+      object,
+      full_linpreds
+    )
+  }
+
+  # Summarise if necessary
+  if (summary) {
+    Qupper <- apply(preds, 2, quantile, probs = max(probs), na.rm = TRUE)
+    Qlower <- apply(preds, 2, quantile, probs = min(probs), na.rm = TRUE)
+
+    if (robust) {
+      estimates <- apply(preds, 2, median, na.rm = TRUE)
+      errors <- apply(abs(preds - estimates), 2, median, na.rm = TRUE)
+    } else {
+      estimates <- apply(preds, 2, mean, na.rm = TRUE)
+      errors <- apply(preds, 2, sd, na.rm = TRUE)
+    }
+
+    out <- data.frame(
+      cbind(estimates, errors, Qlower, Qupper)
+    )
+    colnames(out) <- c(
+      '.estimate',
+      '.error',
+      paste0('.q', 100 * min(probs)),
+      paste0('.q', 100 * max(probs))
+    )
+    class(out) <- c('tbl_df', 'tbl', 'data.frame')
+
+  } else {
+    out <- preds
+  }
+
+  return(out)
+}
+
+#' Posterior expectations
+#' @noRd
+posterior_epred = function(object,
+                           linpreds){
+
+  # invlink function
+  invlink_fun <- get_family_invlink(object)
+
+  # Compute expectations
+  expected_pred_vec <- invlink_fun(
+    eta = as.vector(linpreds)
+  )
+
+  # Convert back to matrix
+  out <- matrix(expected_pred_vec,
+                nrow = NROW(linpreds))
+  return(out)
+}
+
+#' Posterior predictions
+#' @noRd
+posterior_predict = function(object,
+                             linpreds){
+  # rd function if available
+  rd_fun <- get_family_rd(object)
+
+  # invlink function
+  invlink_fun <- get_family_invlink(object)
+
+  # Dispersion parameter
+  scale_p <- object[["sig2"]]
+  if (is.null(scale)) {
+    scale_p <- summary(object)[["dispersion"]]
+  }
+  scale_p <- rep(scale_p, length(linpreds))
+
+  # weights
+  weights <- rep(1, length(linpreds))
+
+  # Compute expectations
+  expected_pred_vec <- invlink_fun(
+    eta = as.vector(linpreds)
+  )
+
+  # Now compute response predictions
+  response_pred_vec <- rd_fun(
+    mu = expected_pred_vec,
+    wt = weights,
+    scale = scale_p
+  )
+
+  # Convert back to matrix
+  out <- matrix(response_pred_vec,
+                nrow = NROW(linpreds))
+  return(out)
+}
+
+#' Functions to enable random number generation from mgcv
+#' gam / bam objects. Code is modified from severa internal functions written
+#' by Gavin Simpson for the gratia R package, which in turn were modified from
+#' original code written by Simon Wood for the mgcv R package
+#' @importFrom mgcv fix.family.rd
+#' @noRd
+fix_family_rd <- function(family, ...) {
+  # try to fix up the family used by mgcv to add the $rd component
+  # for random deviate sampling
+
+  # try the obvious thing first and see if mgcv::fix.family.rd() already handles
+  # family
+  fam <- mgcv::fix.family.rd(family)
+
+  # if `family` contains a NULL rd we move on, if it is non-null return early
+  # as it doesn't need fixing
+  if (!is.null(fam$rd)) {
+    return(fam)
+  }
+
+  # handle special cases
+  fn <- fam[['family']]
+
+  # handle multivariate normal
+  if (identical(fn, "Multivariate normal")) {
+    # note: mgcv::mvn is documented to ignore prior weights
+    # if we ever need to handle weights to scale V, see this post on CV
+    # https://stats.stackexchange.com/a/162885/1390
+    rd_mvn <- function(V) {
+      function(mu, wt, scale) { # function needs to take wt and scale
+        mgcv::rmvn(
+          n = nrow(mu),
+          mu = mu,
+          V = V
+        )
+      }
+    }
+    fam$rd <- rd_mvn(solve(crossprod(fam$data$R)))
+  }
+  if (identical(fn, "twlss")) {
+    # this uses some helpers to find the `a` and `b` used during fitting and
+    # also to convert what `predict()` etc returns (theta) to power parameter
+    rd_twlss <- function(a, b) {
+      function(mu, wt, scale) {
+        rtw(
+          mu = mu[, 1], # fitted(model) for twlss is on response scale!
+          p = theta_2_power(theta = mu[, 2], a, b),
+          phi = exp(mu[, 3])
+        )
+      }
+    }
+    tw_pars <- get_tw_ab(fam)
+    fam$rd <- rd_twlss(a = tw_pars[1], b = tw_pars[2])
+  }
+
+  # return modified family
+  fam
+}
+
+#' @importFrom mgcv fix.family.rd
+#' @noRd
+get_family_rd <- function(object) {
+  if (inherits(object, "glm")) {
+    fam <- family(object) # extract family
+  } else {
+    fam <- object[["family"]]
+  }
+  ## mgcv stores data simulation funs in `rd`
+  fam <- fix_family_rd(fam)
+  if (is.null(fam[["rd"]])) {
+    stop("Don't yet know how to simulate from family <",
+         fam[["family"]], ">",
+         call. = FALSE
+    )
+  }
+  fam[["rd"]]
+}
+
+#' @noRd
+get_family_invlink <- function(object) {
+  if (inherits(object, "glm")) {
+    fam <- family(object) # extract family
+  } else {
+    fam <- object[["family"]]
+  }
+  ## mgcv stores data simulation funs in `rd`
+  fam <- fix_family_rd(fam)
+  if (is.null(fam[["rd"]])) {
+    stop("Don't yet know how to simulate from family <",
+         fam[["family"]], ">",
+         call. = FALSE
+    )
+  }
+  fam[["linkinv"]]
+}
