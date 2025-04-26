@@ -2,6 +2,7 @@
 #'
 #'
 #' @importFrom mgcv predict.gam predict.bam
+#' @importFrom stats predict
 #' @inheritParams mgcv::predict.gam
 #' @param ... ignored
 #' @rdname predict.ffc_gam

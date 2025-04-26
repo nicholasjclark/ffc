@@ -28,17 +28,18 @@ forecast.fts_ts <- function(
 
   # Check arguments
   validate_pos_integer(h)
-  if(is.character(model)) {
-    mod_name <- model
-  } else {
-    mod_name <- deparse(substitute(model))
-    mod_name <- gsub(
-      "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
-      "",
-      mod_name,
-      perl = TRUE
-    )
-  }
+  mod_name <- deparse(substitute(model))
+  mod_name <- gsub(
+    "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
+    "",
+    mod_name,
+    perl = TRUE
+  )
+  mod_name <- gsub(
+    "[^A-Za-z0-9 ]",
+    "",
+    mod_name
+  )
 
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
@@ -64,6 +65,7 @@ forecast.fts_ts <- function(
 
 #' Forecasting `ffc_gam` models
 #'
+#' @importFrom stats median quantile
 #' @inheritParams forecast.fts_ts
 #' @param object An object of class `ffc_gam`. See [ffc_gam()]
 #' @param newdata `dataframe` or `list` of test data containing the
@@ -71,10 +73,10 @@ forecast.fts_ts <- function(
 #' model. The covariate information in `newdata`, along with the temporal information
 #' indexed by the `time` variable in the original call to `ffc_gam()`, will be used to
 #' generate forecasts from the fitted model equations
-#' @param type When this has the value `link` (default) the linear predictor is calculated
+#' @param type When this has the value `link`, the linear predictor is calculated
 #' on the link scale. If `expected` is used, predictions reflect the expectation
 #' of the response (the mean) but ignore uncertainty in the observation process.
-#' When `response` is used, the predictions take uncertainty in the observation
+#' When `response` is used (the default), the predictions take uncertainty in the observation
 #' process into account to return predictions on the outcome scale
 #' @param n_draws A positive `integer` specifying the number of basis coefficient
 #' realisation paths to simulate from the fitted time-varying `fts()` splines
@@ -97,18 +99,17 @@ forecast.fts_ts <- function(
 #' is a tidy `tbl_df / data.frame`
 #' @author Nicholas J Clark
 #' @export
-forecast.ffc_gam = function(
+forecast.ffc_gam <- function(
     object,
     newdata,
-    type = 'link',
+    type = "response",
     n_draws = 10,
     n_sims = 10,
     model = ETS(),
     summary = TRUE,
     robust = FALSE,
     probs = c(0.025, 0.975),
-    ...){
-
+    ...) {
   type <- match.arg(
     arg = type,
     choices = c(
@@ -121,22 +122,18 @@ forecast.ffc_gam = function(
   validate_pos_integer(n_sims)
   if (length(probs) != 2L) {
     stop("argument 'probs' must be a vector of length 2",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
   validate_proportional(min(probs))
   validate_proportional(max(probs))
 
-  object = mod
-  newdata = qld_test
-  n_draws = 5
-  n_sims = 10
-  model = 'ETS'
 
   # Extract the full linear predictor matrix
   orig_lpmat <- predict(
     object,
     newdata = newdata,
-    type = 'lpmatrix'
+    type = "lpmatrix"
   )
 
   # Take full draws of beta coefficients
@@ -146,8 +143,7 @@ forecast.ffc_gam = function(
     V = vcov(object)
   )
 
-  if(is.null(object$gam_init)) {
-
+  if (is.null(object$gam_init)) {
     # No need to modify lpmatrix if there were no
     # fts() terms in the model
     full_linpreds <- matrix(
@@ -155,18 +151,19 @@ forecast.ffc_gam = function(
         t(apply(
           as.matrix(orig_betas),
           1,
-          function(row) orig_lpmat %*% row +
-            attr(orig_lpmat, 'model.offset')
+          function(row) {
+            orig_lpmat %*% row +
+              attr(orig_lpmat, "model.offset")
+          }
         ))
       ),
       nrow = NROW(orig_betas)
     )
-
   } else {
     # Determine horizon (assuming equal time gaps)
     time_var <- object$time_var
 
-    interpreted <- ffc:::interpret_ffc(
+    interpreted <- interpret_ffc(
       formula = object$orig_formula,
       data = newdata,
       newdata = newdata,
@@ -187,17 +184,18 @@ forecast.ffc_gam = function(
     )
 
     # Validate model choice
-    if(is.character(model)) {
-      mod_name <- model
-    } else {
-      mod_name <- deparse(substitute(model))
-      mod_name <- gsub(
-        "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
-        "",
-        mod_name,
-        perl = TRUE
-      )
-    }
+    mod_name <- deparse(substitute(model))
+    mod_name <- gsub(
+      "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
+      "",
+      mod_name,
+      perl = TRUE
+    )
+    mod_name <- gsub(
+      "[^A-Za-z0-9 ]",
+      "",
+      mod_name
+    )
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
@@ -217,12 +215,12 @@ forecast.ffc_gam = function(
 
     # Which coefficients in lpmatrix are associated with fts objects?
     smooth_names <- unlist(
-      purrr::map(object$smooth, 'label'),
+      purrr::map(object$smooth, "label"),
       use.names = FALSE
     )
 
     fts_names <- grep(
-      ':fts_',
+      ":fts_",
       smooth_names,
       fixed = TRUE
     )
@@ -230,7 +228,7 @@ forecast.ffc_gam = function(
     fts_coefs <- unlist(
       purrr::map(
         object$smooth[fts_names],
-        \ (x) x$first.para : x$last.para
+        \(x) x$first.para:x$last.para
       ),
       use.names = FALSE
     )
@@ -245,8 +243,10 @@ forecast.ffc_gam = function(
         t(apply(
           as.matrix(intermed_betas),
           1,
-          function(row) intermed_lpmat %*% row +
-            attr(orig_lpmat, 'model.offset')
+          function(row) {
+            intermed_lpmat %*% row +
+              attr(orig_lpmat, "model.offset")
+          }
         ))
       ),
       nrow = NROW(intermed_betas)
@@ -254,56 +254,62 @@ forecast.ffc_gam = function(
 
     # Join forecasts to the basis function evaluations
     fts_fc <- data.frame(
-      interpreted$data[grep('fts_', colnames(interpreted$data))]
+      interpreted$data[grep("fts_", colnames(interpreted$data))]
     ) %>%
       dplyr::bind_cols(
-        data.frame(.time = interpreted$data[[time_var]],
-                   .row = 1:length(interpreted$data[[1]]))
+        data.frame(
+          .time = interpreted$data[[time_var]],
+          .row = 1:length(interpreted$data[[1]])
+        )
       ) %>%
       tidyr::pivot_longer(
-        cols = !contains(c(".time",
-                           ".row")),
+        cols = !tidyr::contains(c(
+          ".time",
+          ".row"
+        )),
         names_to = ".basis",
-        values_to = '.evaluation'
+        values_to = ".evaluation"
       ) %>%
       dplyr::left_join(
         functional_fc,
         dplyr::join_by(.time, .basis),
         relationship = "many-to-many"
       ) %>%
-
       # Calculate prediction
       dplyr::mutate(.pred = .evaluation * .sim) %>%
-
       # Now take 'draws' of the betas
       dplyr::select(
         .basis, .time, .realisation, .rep, .pred, .row
       ) %>%
-
       # Pivot back to wide format
       tidyr::pivot_wider(
         names_from = .basis,
         values_from = .pred
       ) %>%
       dplyr::arrange(.row) %>%
-      dplyr::mutate(.draw = paste0(.realisation, '_', .rep)) %>%
-      dplyr::select(-.time,
-                    -.realisation,
-                    -.rep)
+      dplyr::mutate(.draw = paste0(.realisation, "_", .rep)) %>%
+      dplyr::select(
+        -.time,
+        -.realisation,
+        -.rep
+      )
 
     # Should now have n_draws * n_sims draws for each row of newdata
-    if(!NROW(orig_lpmat) * n_draws * n_sims == NROW(fts_fc)){
-      stop('Wrong dimensions in forecast coefs; need to check on this')
+    if (!NROW(orig_lpmat) * n_draws * n_sims == NROW(fts_fc)) {
+      stop("Wrong dimensions in forecast coefs; need to check on this")
     }
 
     # Should also have same ncols as number of fts basis functions
-    if(
+    if (
       !NCOL(fts_fc) - 2 ==
-      NCOL(interpreted$data[
-        grep('fts_',
-             colnames(interpreted$data))])
-    ){
-      stop('Wrong dimensions in forecast coefs; need to check on this')
+        NCOL(interpreted$data[
+          grep(
+            "fts_",
+            colnames(interpreted$data)
+          )
+        ])
+    ) {
+      stop("Wrong dimensions in forecast coefs; need to check on this")
     }
 
     # If dimensions correct, take rowsums for each draw
@@ -318,7 +324,7 @@ forecast.ffc_gam = function(
       rbind,
       lapply(
         unique_draws,
-        function(x){
+        function(x) {
           fc_linpreds[which(fts_fc$.draw == x)]
         }
       )
@@ -328,16 +334,16 @@ forecast.ffc_gam = function(
 
   # Now can proceed to send full_linpreds to the relevant
   # invlink and rng functions for outcome-level predictions
-  if(type == 'link') preds <- full_linpreds
+  if (type == "link") preds <- full_linpreds
 
-  if(type == 'expected'){
+  if (type == "expected") {
     preds <- posterior_epred(
       object,
       full_linpreds
     )
   }
 
-  if(type == 'response'){
+  if (type == "response") {
     preds <- posterior_predict(
       object,
       full_linpreds
@@ -361,13 +367,12 @@ forecast.ffc_gam = function(
       cbind(estimates, errors, Qlower, Qupper)
     )
     colnames(out) <- c(
-      '.estimate',
-      '.error',
-      paste0('.q', 100 * min(probs)),
-      paste0('.q', 100 * max(probs))
+      ".estimate",
+      ".error",
+      paste0(".q", 100 * min(probs)),
+      paste0(".q", 100 * max(probs))
     )
-    class(out) <- c('tbl_df', 'tbl', 'data.frame')
-
+    class(out) <- c("tbl_df", "tbl", "data.frame")
   } else {
     out <- preds
   }
@@ -377,9 +382,8 @@ forecast.ffc_gam = function(
 
 #' Posterior expectations
 #' @noRd
-posterior_epred = function(object,
-                           linpreds){
-
+posterior_epred <- function(object,
+                            linpreds) {
   # invlink function
   invlink_fun <- get_family_invlink(object)
 
@@ -390,14 +394,15 @@ posterior_epred = function(object,
 
   # Convert back to matrix
   out <- matrix(expected_pred_vec,
-                nrow = NROW(linpreds))
+    nrow = NROW(linpreds)
+  )
   return(out)
 }
 
 #' Posterior predictions
 #' @noRd
-posterior_predict = function(object,
-                             linpreds){
+posterior_predict <- function(object,
+                              linpreds) {
   # rd function if available
   rd_fun <- get_family_rd(object)
 
@@ -428,7 +433,8 @@ posterior_predict = function(object,
 
   # Convert back to matrix
   out <- matrix(response_pred_vec,
-                nrow = NROW(linpreds))
+    nrow = NROW(linpreds)
+  )
   return(out)
 }
 
@@ -436,6 +442,63 @@ posterior_predict = function(object,
 #' gam / bam objects. Code is modified from severa internal functions written
 #' by Gavin Simpson for the gratia R package, which in turn were modified from
 #' original code written by Simon Wood for the mgcv R package
+
+# simulator for tweedie LSS models
+#' @importFrom rlang .data
+#' @importFrom stats rpois rgamma
+#' @importFrom tibble tibble
+#' @noRd
+rtw <- function(mu, p, phi) {
+  if (any(p <= 1 | p >= 2)) {
+    stop("'p' must be in interval (1, 2)")
+  }
+  if (any(phi <= 0)) {
+    stop("scale parameter 'phi' must be positive")
+  }
+  if (any(mu < 0)) {
+    stop("mean 'mu' must be non-negative")
+  }
+  lambda <- mu^(2 - p) / ((2 - p) * phi)
+  shape <- (2 - p) / (p - 1)
+  scale <- phi * (p - 1) * mu^(p - 1)
+  N <- rpois(length(lambda), lambda)
+  gs <- rep(scale, N)
+  tab <- tibble(
+    y = rgamma(gs * 0 + 1, shape = shape, scale = gs),
+    lab = rep(seq_along(N), N)
+  )
+  out <- numeric(length(N))
+  out[which(N != 0)] <- tab %>%
+    dplyr::group_by(.data$lab) %>%
+    dplyr::summarise(summed = sum(.data$y)) %>%
+    dplyr::pull(.data$summed)
+  out
+}
+
+#' converts from theta to power parameter `p` given `a` and `b`
+#' @noRd
+theta_2_power <- function(theta, a, b) {
+  i <- theta > 0
+  exp_theta_pos <- exp(-theta[i])
+  exp_theta_neg <- exp(theta[!i])
+  theta[i] <- (b + a * exp_theta_pos) / (1 + exp_theta_pos)
+  theta[!i] <- (b * exp_theta_neg + a) / (1 + exp_theta_neg)
+  theta
+}
+
+#' extracts the `a` and `b` parameters of the model search over which the power
+#' parameter is searched for
+#' @noRd
+get_tw_ab <- function(family) {
+  if (family[["family"]] != "twlss") {
+    stop("'model' wasn't fitted with 'twlss()' family.", call. = FALSE)
+  }
+  rfun <- family$residuals
+  a <- get(".a", envir = environment(rfun))
+  b <- get(".b", envir = environment(rfun))
+  c(a, b)
+}
+
 #' @importFrom mgcv fix.family.rd
 #' @noRd
 fix_family_rd <- function(family, ...) {
@@ -453,7 +516,7 @@ fix_family_rd <- function(family, ...) {
   }
 
   # handle special cases
-  fn <- fam[['family']]
+  fn <- fam[["family"]]
 
   # handle multivariate normal
   if (identical(fn, "Multivariate normal")) {
@@ -492,6 +555,7 @@ fix_family_rd <- function(family, ...) {
 }
 
 #' @importFrom mgcv fix.family.rd
+#' @importFrom stats family
 #' @noRd
 get_family_rd <- function(object) {
   if (inherits(object, "glm")) {
@@ -503,8 +567,8 @@ get_family_rd <- function(object) {
   fam <- fix_family_rd(fam)
   if (is.null(fam[["rd"]])) {
     stop("Don't yet know how to simulate from family <",
-         fam[["family"]], ">",
-         call. = FALSE
+      fam[["family"]], ">",
+      call. = FALSE
     )
   }
   fam[["rd"]]
@@ -521,8 +585,8 @@ get_family_invlink <- function(object) {
   fam <- fix_family_rd(fam)
   if (is.null(fam[["rd"]])) {
     stop("Don't yet know how to simulate from family <",
-         fam[["family"]], ">",
-         call. = FALSE
+      fam[["family"]], ">",
+      call. = FALSE
     )
   }
   fam[["linkinv"]]

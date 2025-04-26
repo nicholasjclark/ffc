@@ -5,6 +5,11 @@ utils::globalVariables(
   c(
     ".basis",
     ".time",
+    ".draw",
+    ".evaluation",
+    ".pred",
+    ".rep",
+    ".sim",
     ".estimate",
     ".realisation",
     ".model",

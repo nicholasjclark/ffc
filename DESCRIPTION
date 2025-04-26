@@ -23,6 +23,8 @@ Imports:
     dplyr (>= 1.0.0),
     tsibble,
     magrittr,
+    tidyr,
+    tibble,
     purrr,
     insight,
     fabletools,

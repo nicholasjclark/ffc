@@ -15,8 +15,8 @@ validate_pos_integer <- function(x) {
   }
 }
 
-#'@noRd
-validate_proportional = function(x) {
+#' @noRd
+validate_proportional <- function(x) {
   s <- substitute(x)
   x <- base::suppressWarnings(as.numeric(x))
   if (length(x) != 1L || anyNA(x)) {

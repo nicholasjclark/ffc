@@ -7,7 +7,7 @@
 \method{forecast}{ffc_gam}(
   object,
   newdata,
-  type = "link",
+  type = "response",
   n_draws = 10,
   n_sims = 10,
   model = ETS(),
@@ -26,10 +26,10 @@ model. The covariate information in \code{newdata}, along with the temporal info
 indexed by the \code{time} variable in the original call to \code{ffc_gam()}, will be used to
 generate forecasts from the fitted model equations}
 
-\item{type}{When this has the value \code{link} (default) the linear predictor is calculated
+\item{type}{When this has the value \code{link}, the linear predictor is calculated
 on the link scale. If \code{expected} is used, predictions reflect the expectation
 of the response (the mean) but ignore uncertainty in the observation process.
-When \code{response} is used, the predictions take uncertainty in the observation
+When \code{response} is used (the default), the predictions take uncertainty in the observation
 process into account to return predictions on the outcome scale}
 
 \item{n_draws}{A positive \code{integer} specifying the number of basis coefficient

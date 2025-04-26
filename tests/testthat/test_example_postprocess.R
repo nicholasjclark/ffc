@@ -8,11 +8,10 @@ test_that("ffc_gam() is structured correctly", {
 
   expect_true(
     identical(
-      attr(example_mod2$gam_init[[1]], 'knots'),
+      attr(example_mod2$gam_init[[1]], "knots"),
       list(season = c(0.5, 12.5))
     )
   )
-
 })
 
 test_that("mgcv post-processing works correctly", {

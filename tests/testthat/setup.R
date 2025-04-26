@@ -55,20 +55,21 @@ dat <- structure(
 )
 
 example_mod2 <- ffc_gam(
-  y ~ s(season, bs = 'cc', k = 12) +
+  y ~ s(season, bs = "cc", k = 12) +
 
     # Use mean_only = TRUE to ensure that only a constant
     # basis function is used as the by-variable; this enables
     # us to fit a smooth of 'time' that we can then forecast
     # ahead just like any other fts basis :)
     fts(
-      time, mean_only = TRUE,
-      time_k = 20, time_bs = 'bs', time_m = 1
+      time,
+      mean_only = TRUE,
+      time_k = 20, time_bs = "bs", time_m = 1
     ),
 
   # Supply some knots to ensure they are picked up correctly
   knots = list(season = c(0.5, 12.5)),
-  time = 'time',
+  time = "time",
   data = dat,
   family = poisson()
 )
