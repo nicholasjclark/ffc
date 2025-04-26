@@ -48,7 +48,7 @@
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  <span class="va">newdata</span>,</span>
-<span>  type <span class="op">=</span> <span class="st">"link"</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"response"</span>,</span>
 <span>  n_draws <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  n_sims <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu">ETS</span><span class="op">(</span><span class="op">)</span>,</span>
@@ -76,10 +76,10 @@ generate forecasts from the fitted model equations</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>When this has the value <code>link</code> (default) the linear predictor is calculated
+<dd><p>When this has the value <code>link</code>, the linear predictor is calculated
 on the link scale. If <code>expected</code> is used, predictions reflect the expectation
 of the response (the mean) but ignore uncertainty in the observation process.
-When <code>response</code> is used, the predictions take uncertainty in the observation
+When <code>response</code> is used (the default), the predictions take uncertainty in the observation
 process into account to return predictions on the outcome scale</p></dd>
 
 
