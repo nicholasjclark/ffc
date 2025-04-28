@@ -2,8 +2,10 @@
 #'
 #' @param object An object of class `fts_ts` containing time-varying
 #' basis function coefficients extracted from an `ffc_gam` object
-#' @param model A valid model definition from the \pkg{fable} package
-#' (i.e. `ETS()`, `ARIMA()`, `NAIVE()`, etc...)
+#' @param model A `character` string representing a valid univariate model definition
+#' from the \pkg{fable} package. Note that the chosen method must have an associated
+#'`generate()` method in order to simulate forecast realisations. Valid models
+#' currently include: `'ETS'`, `'ARIMA'`, `'AR'`, `'NAIVE'`, and `'NNETAR'`
 #' @param h A positive `integer` specifying the length of the forecast
 #' horizon
 #' @param times A positive `integer` specifying the number of forecast
@@ -20,26 +22,14 @@
 #' @export
 forecast.fts_ts <- function(
     object,
-    model = ETS(),
+    model = 'ARIMA',
     h = 1,
-    times = 10,
+    times = 25,
     ...) {
   insight::check_if_installed("fable")
 
   # Check arguments
   validate_pos_integer(h)
-  mod_name <- deparse(substitute(model))
-  mod_name <- gsub(
-    "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
-    "",
-    mod_name,
-    perl = TRUE
-  )
-  mod_name <- gsub(
-    "[^A-Za-z0-9 ]",
-    "",
-    mod_name
-  )
 
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
@@ -51,7 +41,7 @@ forecast.fts_ts <- function(
     fabletools::model(
       do.call(
         what = `::`,
-        args = list("fable", mod_name)
+        args = list("fable", model)
       )(.estimate)
     ) %>%
     # Simulate future paths for each coefficient time series
@@ -60,7 +50,7 @@ forecast.fts_ts <- function(
       times = times
     ) %>%
     # Tidy the names
-    dplyr::mutate(.model = mod_name)
+    dplyr::mutate(.model = model)
 }
 
 #' Forecasting `ffc_gam` models
@@ -103,11 +93,11 @@ forecast.ffc_gam <- function(
     object,
     newdata,
     type = "response",
-    n_draws = 10,
-    n_sims = 10,
-    model = ETS(),
+    n_draws = 25,
+    n_sims = 50,
+    model = 'ARIMA',
     summary = TRUE,
-    robust = FALSE,
+    robust = TRUE,
     probs = c(0.025, 0.975),
     ...) {
   type <- match.arg(
@@ -128,7 +118,6 @@ forecast.ffc_gam <- function(
   validate_proportional(min(probs))
   validate_proportional(max(probs))
 
-
   # Extract the full linear predictor matrix
   orig_lpmat <- predict(
     object,
@@ -143,7 +132,7 @@ forecast.ffc_gam <- function(
     V = vcov(object)
   )
 
-  if (is.null(object$gam_init)) {
+  if (length(object$gam_init) == 0) {
     # No need to modify lpmatrix if there were no
     # fts() terms in the model
     full_linpreds <- matrix(
@@ -183,27 +172,13 @@ forecast.ffc_gam <- function(
       times = n_draws
     )
 
-    # Validate model choice
-    mod_name <- deparse(substitute(model))
-    mod_name <- gsub(
-      "\\s*(\\([^()]*(?:(?1)[^()]*)*\\))",
-      "",
-      mod_name,
-      perl = TRUE
-    )
-    mod_name <- gsub(
-      "[^A-Za-z0-9 ]",
-      "",
-      mod_name
-    )
-
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
     functional_fc <- forecast(
       object = functional_coefs,
       h = max_horizon,
       times = n_sims,
-      model = mod_name
+      model = model
     )
 
     # Only need to return forecasts for those times that are

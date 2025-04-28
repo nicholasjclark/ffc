@@ -8,11 +8,11 @@
   object,
   newdata,
   type = "response",
-  n_draws = 10,
-  n_sims = 10,
-  model = ETS(),
+  n_draws = 25,
+  n_sims = 50,
+  model = "ARIMA",
   summary = TRUE,
-  robust = FALSE,
+  robust = TRUE,
   probs = c(0.025, 0.975),
   ...
 )
@@ -39,8 +39,10 @@ realisation paths to simulate from the fitted time-varying \code{fts()} splines}
 from each basis coefficient time series model when creating the basis coefficient
 forecast distributions}
 
-\item{model}{A valid model definition from the \pkg{fable} package
-(i.e. \code{ETS()}, \code{ARIMA()}, \code{NAIVE()}, etc...)}
+\item{model}{A \code{character} string representing a valid univariate model definition
+from the \pkg{fable} package. Note that the chosen method must have an associated
+\code{generate()} method in order to simulate forecast realisations. Valid models
+currently include: \code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
 
 \item{summary}{Should summary statistics be returned instead of the raw values?
 Default is \code{TRUE}}

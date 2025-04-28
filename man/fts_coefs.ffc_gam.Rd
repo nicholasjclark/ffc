@@ -7,7 +7,7 @@
 \usage{
 fts_coefs(object, ...)
 
-\method{fts_coefs}{ffc_gam}(object, summary = TRUE, times = 100, ...)
+\method{fts_coefs}{ffc_gam}(object, summary = TRUE, times = 25, ...)
 }
 \arguments{
 \item{object}{\code{list} object of class \code{ffc_gam}. See \code{\link[=ffc_gam]{ffc_gam()}}}

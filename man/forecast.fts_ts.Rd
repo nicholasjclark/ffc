@@ -4,14 +4,16 @@
 \alias{forecast.fts_ts}
 \title{Forecasting functional basis coefficients}
 \usage{
-\method{forecast}{fts_ts}(object, model = ETS(), h = 1, times = 10, ...)
+\method{forecast}{fts_ts}(object, model = "ARIMA", h = 1, times = 25, ...)
 }
 \arguments{
 \item{object}{An object of class \code{fts_ts} containing time-varying
 basis function coefficients extracted from an \code{ffc_gam} object}
 
-\item{model}{A valid model definition from the \pkg{fable} package
-(i.e. \code{ETS()}, \code{ARIMA()}, \code{NAIVE()}, etc...)}
+\item{model}{A \code{character} string representing a valid univariate model definition
+from the \pkg{fable} package. Note that the chosen method must have an associated
+\code{generate()} method in order to simulate forecast realisations. Valid models
+currently include: \code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
 
 \item{h}{A positive \code{integer} specifying the length of the forecast
 horizon}

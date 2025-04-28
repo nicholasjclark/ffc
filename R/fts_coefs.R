@@ -32,7 +32,7 @@ fts_coefs <- function(object, ...) {
 fts_coefs.ffc_gam <- function(
     object,
     summary = TRUE,
-    times = 100,
+    times = 25,
     ...) {
   if (is.null(object$fts_smooths)) {
     message("No functional smooths using fts() were included in this model")

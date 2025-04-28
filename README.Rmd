@@ -78,7 +78,7 @@ mod <- ffc_gam(
     fts(
       age,
       k = 10, bs = "cr", by = sex,
-      time_bs = "cr", time_k = 10
+      time_k = 10
     ),
   time = "year",
   data = qld_mortality,
@@ -183,8 +183,7 @@ Clearly there is a lot of structure and dependence here, suggesting that a dynam
 functional_fc <- forecast(
   object = functional_coefs,
   h = 5,
-  times = 5,
-  model = ETS()
+  times = 5
 )
 functional_fc
 ```

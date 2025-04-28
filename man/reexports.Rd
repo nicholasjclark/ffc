@@ -7,6 +7,16 @@
 \alias{te}
 \alias{gam}
 \alias{bam}
+\alias{nb}
+\alias{negbin}
+\alias{betar}
+\alias{cnorm}
+\alias{ocat}
+\alias{scat}
+\alias{ziP}
+\alias{multinom}
+\alias{tw}
+\alias{twlss}
 \alias{autoplot}
 \alias{forecast}
 \title{Objects exported from other packages}
@@ -20,6 +30,6 @@ below to see their documentation.
 
   \item{ggplot2}{\code{\link[ggplot2]{autoplot}}}
 
-  \item{mgcv}{\code{\link[mgcv]{bam}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{s}}, \code{\link[mgcv]{te}}}
+  \item{mgcv}{\code{\link[mgcv]{bam}}, \code{\link[mgcv:Beta]{betar}}, \code{\link[mgcv]{cnorm}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{multinom}}, \code{\link[mgcv:negbin]{nb}}, \code{\link[mgcv]{negbin}}, \code{\link[mgcv]{ocat}}, \code{\link[mgcv]{s}}, \code{\link[mgcv]{scat}}, \code{\link[mgcv]{te}}, \code{\link[mgcv:Tweedie]{tw}}, \code{\link[mgcv]{twlss}}, \code{\link[mgcv]{ziP}}}
 }}
 
