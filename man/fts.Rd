@@ -12,7 +12,7 @@ fts(
   bs = "cr",
   time_bs = "bs",
   m = NA,
-  time_m = 1,
+  time_m = 2,
   d = NA,
   by = NA,
   xt = NULL,

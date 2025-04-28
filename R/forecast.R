@@ -4,12 +4,15 @@
 #' basis function coefficients extracted from an `ffc_gam` object
 #' @param model A `character` string representing a valid univariate model definition
 #' from the \pkg{fable} package. Note that the chosen method must have an associated
-#'`generate()` method in order to simulate forecast realisations. Valid models
+#' `generate()` method in order to simulate forecast realisations. Valid models
 #' currently include: `'ETS'`, `'ARIMA'`, `'AR'`, `'NAIVE'`, and `'NNETAR'`
 #' @param h A positive `integer` specifying the length of the forecast
 #' horizon
 #' @param times A positive `integer` specifying the number of forecast
 #' realisation paths to simulate from the fitted forecast `model`
+#' @param stationary If `TRUE`, the fitted time series models are
+#' constrained to be stationary. Default is `FALSE`. This option
+#' only works when `model == 'ARIMA'`
 #' @param ... Ignored
 #' @details Basis function coefficient time series will be used as input
 #' to the specified `model` to train a forecasting model that will then be
@@ -22,35 +25,56 @@
 #' @export
 forecast.fts_ts <- function(
     object,
-    model = 'ARIMA',
+    model = "ARIMA",
     h = 1,
     times = 25,
+    stationary = FALSE,
     ...) {
   insight::check_if_installed("fable")
 
   # Check arguments
   validate_pos_integer(h)
+  if (stationary & !identical(model, "ARIMA")) {
+    stop("stationary = TRUE only works with model = 'ARIMA'")
+  }
 
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
 
   # Fit model and forecast
-  object_tsbl %>%
-    # Fit the forecasting model(s) to each basis coefficient
-    # time series
-    fabletools::model(
-      do.call(
-        what = `::`,
-        args = list("fable", model)
-      )(.estimate)
-    ) %>%
-    # Simulate future paths for each coefficient time series
-    fabletools::generate(
-      h = h,
-      times = times
-    ) %>%
-    # Tidy the names
-    dplyr::mutate(.model = model)
+  if (stationary) {
+    out <- object_tsbl %>%
+      # Fit the forecasting model(s) to each basis coefficient
+      # time series
+      fabletools::model(
+        do.call(
+          what = `::`,
+          args = list("fable", model)
+        )(.estimate,
+          order_constraint = (p + q + P + Q <= 6) & (d + D == 0))
+      ) %>%
+      # Simulate future paths for each coefficient time series
+      fabletools::generate(
+        h = h,
+        times = times
+      ) %>%
+      # Tidy the names
+      dplyr::mutate(.model = model)
+  } else {
+    out <- object_tsbl %>%
+      fabletools::model(
+        do.call(
+          what = `::`,
+          args = list("fable", model)
+        )(.estimate)
+      ) %>%
+      fabletools::generate(
+        h = h,
+        times = times
+      ) %>%
+      dplyr::mutate(.model = model)
+  }
+  return(out)
 }
 
 #' Forecasting `ffc_gam` models
@@ -95,10 +119,11 @@ forecast.ffc_gam <- function(
     type = "response",
     n_draws = 25,
     n_sims = 50,
-    model = 'ARIMA',
+    model = "ARIMA",
+    stationary = FALSE,
     summary = TRUE,
     robust = TRUE,
-    probs = c(0.025, 0.975),
+    probs = c(0.025, 0.1, 0.9, 0.975),
     ...) {
   type <- match.arg(
     arg = type,
@@ -110,11 +135,6 @@ forecast.ffc_gam <- function(
   )
   validate_pos_integer(n_draws)
   validate_pos_integer(n_sims)
-  if (length(probs) != 2L) {
-    stop("argument 'probs' must be a vector of length 2",
-      call. = FALSE
-    )
-  }
   validate_proportional(min(probs))
   validate_proportional(max(probs))
 
@@ -178,7 +198,8 @@ forecast.ffc_gam <- function(
       object = functional_coefs,
       h = max_horizon,
       times = n_sims,
-      model = model
+      model = model,
+      stationary = stationary,
     )
 
     # Only need to return forecasts for those times that are
@@ -327,8 +348,7 @@ forecast.ffc_gam <- function(
 
   # Summarise if necessary
   if (summary) {
-    Qupper <- apply(preds, 2, quantile, probs = max(probs), na.rm = TRUE)
-    Qlower <- apply(preds, 2, quantile, probs = min(probs), na.rm = TRUE)
+    Qs <- apply(preds, 2, quantile, probs = probs, na.rm = TRUE)
 
     if (robust) {
       estimates <- apply(preds, 2, median, na.rm = TRUE)
@@ -339,13 +359,12 @@ forecast.ffc_gam <- function(
     }
 
     out <- data.frame(
-      cbind(estimates, errors, Qlower, Qupper)
+      cbind(estimates, errors, t(Qs))
     )
     colnames(out) <- c(
       ".estimate",
       ".error",
-      paste0(".q", 100 * min(probs)),
-      paste0(".q", 100 * max(probs))
+      paste0(".q", 100 * probs)
     )
     class(out) <- c("tbl_df", "tbl", "data.frame")
   } else {

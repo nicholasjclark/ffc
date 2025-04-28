@@ -24,8 +24,10 @@ test_that("MRF basis setup works correctly", {
     ffc_gam(
       crime ~
         fts(district,
-          bs = "mrf", xt = xt,
+          bs = "mrf",
+          xt = xt,
           k = 6,
+          time_bs = 'cr',
           time_k = 10
         ),
       time = "time",

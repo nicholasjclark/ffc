@@ -3,13 +3,13 @@ library(ffc)
 library(ggplot2); theme_set(theme_classic())
 
 # Simulated training and testing data
-set.seed(0)
+set.seed(43210)
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
-  prop_trend = 0.6,
-  prop_train = 0.85,
-  mu = 2,
+  prop_trend = 0.65,
+  prop_train = 0.80,
+  mu = 1.5,
   family = nb()
 )
 mvgam::plot_mvgam_series(
@@ -39,6 +39,8 @@ mod <- ffc_gam(
 )
 summary(mod)
 gratia::draw(mod)
+
+# View draws of the time-varying basis coefficient
 autoplot(
   fts_coefs(
     mod,
@@ -51,7 +53,7 @@ autoplot(
 fc <- forecast(
   mod,
   newdata = simdat$data_test,
-  n_sims = 100
+  stationary = TRUE
 )
 
 # Plot forecasts against truth
@@ -69,6 +71,12 @@ ggplot(
   geom_ribbon(
     aes(ymax = .q97.5,
         ymin = .q2.5),
+    alpha = 0.3,
+    fill = 'darkred'
+  ) +
+  geom_ribbon(
+    aes(ymax = .q90,
+        ymin = .q10),
     alpha = 0.4,
     fill = 'darkred'
   ) +
@@ -77,14 +85,42 @@ ggplot(
     col = 'darkred',
     linewidth = 1
   ) +
-  geom_point(
-    pch = 21,
-    fill = 'black',
-    col = 'white'
+  geom_line()
+
+# How would an automatic ARIMA model with Box-Cox transformation compare?
+library(fable)
+sim_tsibble <- simdat$data_train %>%
+  dplyr::mutate(
+    yearmon = tsibble::make_yearmonth(
+      year = year,
+      month = season
+    )
+  ) %>%
+  tsibble::as_tsibble(
+    index = yearmon
   )
 
+sim_tsibble %>%
+  model(
+    arima = ARIMA(box_cox(y, feasts::guerrero(y)))
+  ) %>%
+  forecast(
+    h = max(simdat$data_test$time) -
+      min(simdat$data_test$time) + 1
+  ) %>%
+  autoplot(sim_tsibble) +
+  geom_line(
+    data = simdat$data_test %>%
+      dplyr::mutate(
+        yearmon = tsibble::make_yearmonth(
+          year = year,
+          month = season
+        )
+      ),
+    aes(y = y)
+  )
 
-# Compare to a model that uses spline extrapolation instead
+# How would a model that uses spline extrapolation compare?
 mod2 <- ffc_gam(
   y ~ s(season, bs = "cc", k = 12) +
     s(time, k = 30),
@@ -95,17 +131,13 @@ mod2 <- ffc_gam(
   data = simdat$data_train,
   family = nb()
 )
-summary(mod2)
-gratia::draw(mod2)
 
-# Compute forecast distribution
 fc2 <- forecast(
   mod2,
   newdata = simdat$data_test,
   n_sims = 100
 )
 
-# Plot forecasts against truth
 plot_dat <- dplyr::bind_rows(
   simdat$data_train,
   (simdat$data_test %>%
@@ -120,6 +152,12 @@ ggplot(
   geom_ribbon(
     aes(ymax = .q97.5,
         ymin = .q2.5),
+    alpha = 0.3,
+    fill = 'darkred'
+  ) +
+  geom_ribbon(
+    aes(ymax = .q90,
+        ymin = .q10),
     alpha = 0.4,
     fill = 'darkred'
   ) +
@@ -128,8 +166,4 @@ ggplot(
     col = 'darkred',
     linewidth = 1
   ) +
-  geom_point(
-    pch = 21,
-    fill = 'black',
-    col = 'white'
-  )
+  geom_line()

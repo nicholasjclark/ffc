@@ -11,9 +11,10 @@
   n_draws = 25,
   n_sims = 50,
   model = "ARIMA",
+  stationary = FALSE,
   summary = TRUE,
   robust = TRUE,
-  probs = c(0.025, 0.975),
+  probs = c(0.025, 0.1, 0.9, 0.975),
   ...
 )
 }
@@ -43,6 +44,10 @@ forecast distributions}
 from the \pkg{fable} package. Note that the chosen method must have an associated
 \code{generate()} method in order to simulate forecast realisations. Valid models
 currently include: \code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
+
+\item{stationary}{If \code{TRUE}, the fitted time series models are
+constrained to be stationary. Default is \code{FALSE}. This option
+only works when \code{model == 'ARIMA'}}
 
 \item{summary}{Should summary statistics be returned instead of the raw values?
 Default is \code{TRUE}}

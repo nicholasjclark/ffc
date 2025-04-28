@@ -4,7 +4,7 @@
 \alias{forecast.fts_ts}
 \title{Forecasting functional basis coefficients}
 \usage{
-\method{forecast}{fts_ts}(object, model = "ARIMA", h = 1, times = 25, ...)
+\method{forecast}{fts_ts}(object, model = "ARIMA", h = 1, times = 25, stationary = FALSE, ...)
 }
 \arguments{
 \item{object}{An object of class \code{fts_ts} containing time-varying
@@ -20,6 +20,10 @@ horizon}
 
 \item{times}{A positive \code{integer} specifying the number of forecast
 realisation paths to simulate from the fitted forecast \code{model}}
+
+\item{stationary}{If \code{TRUE}, the fitted time series models are
+constrained to be stationary. Default is \code{FALSE}. This option
+only works when \code{model == 'ARIMA'}}
 
 \item{...}{Ignored}
 }
