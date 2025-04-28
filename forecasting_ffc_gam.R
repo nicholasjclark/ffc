@@ -3,7 +3,7 @@ library(ffc)
 library(ggplot2); theme_set(theme_classic())
 
 # Simulated training and testing data
-set.seed(43210)
+set.seed(0)
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
@@ -19,12 +19,17 @@ mvgam::plot_mvgam_series(
 
 # Fit a model
 mod <- ffc_gam(
-  y ~ s(season, bs = "cc", k = 12) +
+  y ~
+    # Capture possible time-varying seasonality
+    fts(
+      season,
+      bs = "cc",
+      k = 8
+    ) +
 
     # Use mean_only = TRUE to ensure that only a constant
-    # basis function is used as the by-variable; this enables
-    # us to fit a smooth of 'time' that we can then forecast
-    # ahead just like any other fts basis :)
+    # basis function is used as the by-variable to fit a smooth
+    # of 'time' that we can then forecast ahead
     fts(
       time,
       mean_only = TRUE,
@@ -38,7 +43,6 @@ mod <- ffc_gam(
   family = nb()
 )
 summary(mod)
-gratia::draw(mod)
 
 # View draws of the time-varying basis coefficient
 autoplot(
@@ -49,7 +53,12 @@ autoplot(
   )
 )
 
-# Compute forecast distribution
+# Compute forecast distribution by fitting the basis coefficient
+# time series models in parallel (which is automatically supported
+# within the fable package)
+library(future)
+plan(multisession)
+
 fc <- forecast(
   mod,
   newdata = simdat$data_test,
@@ -102,7 +111,7 @@ sim_tsibble <- simdat$data_train %>%
 
 sim_tsibble %>%
   model(
-    arima = ARIMA(box_cox(y, feasts::guerrero(y)))
+    arima = ARIMA(fabletools::box_cox(y, feasts::guerrero(y)))
   ) %>%
   forecast(
     h = max(simdat$data_test$time) -
@@ -122,8 +131,12 @@ sim_tsibble %>%
 
 # How would a model that uses spline extrapolation compare?
 mod2 <- ffc_gam(
-  y ~ s(season, bs = "cc", k = 12) +
-    s(time, k = 30),
+  y ~ te(
+    season,
+    time,
+    bs = c("cc", "tp"),
+    k = c(4, 10)
+  ),
 
   # Supply some knots to ensure they are picked up correctly
   knots = list(season = c(0.5, 12.5)),

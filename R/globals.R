@@ -14,6 +14,12 @@ utils::globalVariables(
     ".realisation",
     ".model",
     "functional_ts",
-    "ETS"
+    "ETS",
+    "ARIMA",
+    "d",
+    "D",
+    "p",
+    "P",
+    "Q"
   )
 )

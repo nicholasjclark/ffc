@@ -40,9 +40,11 @@ test_that("MRF basis setup works correctly", {
   mod <- ffc_gam(
     crime ~
       fts(district,
-        bs = "mrf", xt = xt,
+        bs = "mrf",
+        xt = xt,
         k = 6,
-        time_k = 3
+        time_k = 3,
+        time_bs = 'cr'
       ),
     time = "time",
     data = fake_dat,
