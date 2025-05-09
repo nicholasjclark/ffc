@@ -28,7 +28,8 @@ Imports:
     purrr,
     insight,
     fabletools,
-    generics
+    generics,
+    distributional
 Suggests: 
     testthat (>= 3.0.0),
     fable (>= 0.2.0),

@@ -3,7 +3,7 @@ library(ffc)
 library(ggplot2); theme_set(theme_classic())
 
 # Simulated training and testing data
-set.seed(0)
+#set.seed(0)
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
@@ -24,7 +24,7 @@ mod <- ffc_gam(
     fts(
       season,
       bs = "cc",
-      k = 8
+      k = 5
     ) +
 
     # Use mean_only = TRUE to ensure that only a constant
@@ -60,41 +60,34 @@ library(future)
 plan(multisession)
 
 fc <- forecast(
-  mod,
+  object = mod,
   newdata = simdat$data_test,
-  stationary = TRUE
+  stationary = TRUE,
+  n_draws = 10,
+  n_sims = 200,
+  # use summary = FALSE to return the full distribution
+  summary = FALSE
 )
 
-# Plot forecasts against truth
-plot_dat <- dplyr::bind_rows(
-  simdat$data_train,
-  (simdat$data_test %>%
-     dplyr::bind_cols(fc))
-)
+# Convert resulting forecasts to a fable for automatic
+# plotting / scoring of forecasts
+newdata <- simdat$data_test %>%
+  dplyr::mutate(
+    yearmon = tsibble::make_yearmonth(
+      year = year,
+      month = season
+    )
+  ) %>%
+  tsibble::as_tsibble(
+    index = yearmon
+  )
+newdata[['value']] <- fc
 
-ggplot(
-  data = plot_dat,
-  aes(x = time,
-      y = y)
-) +
-  geom_ribbon(
-    aes(ymax = .q97.5,
-        ymin = .q2.5),
-    alpha = 0.3,
-    fill = 'darkred'
-  ) +
-  geom_ribbon(
-    aes(ymax = .q90,
-        ymin = .q10),
-    alpha = 0.4,
-    fill = 'darkred'
-  ) +
-  geom_line(
-    aes(y = .estimate),
-    col = 'darkred',
-    linewidth = 1
-  ) +
-  geom_line()
+fc_ffc <- fabletools:::build_fable(
+  newdata,
+  response = 'y',
+  distribution = 'value'
+)
 
 # How would an automatic ARIMA model with Box-Cox transformation compare?
 library(fable)
@@ -109,24 +102,13 @@ sim_tsibble <- simdat$data_train %>%
     index = yearmon
   )
 
-sim_tsibble %>%
+fc_arima <- sim_tsibble %>%
   model(
     arima = ARIMA(fabletools::box_cox(y, feasts::guerrero(y)))
   ) %>%
   forecast(
     h = max(simdat$data_test$time) -
       min(simdat$data_test$time) + 1
-  ) %>%
-  autoplot(sim_tsibble) +
-  geom_line(
-    data = simdat$data_test %>%
-      dplyr::mutate(
-        yearmon = tsibble::make_yearmonth(
-          year = year,
-          month = season
-        )
-      ),
-    aes(y = y)
   )
 
 # How would a model that uses spline extrapolation compare?
@@ -148,35 +130,63 @@ mod2 <- ffc_gam(
 fc2 <- forecast(
   mod2,
   newdata = simdat$data_test,
-  n_sims = 100
+  n_sims = 100,
+  summary = FALSE
+)
+newdata[['value']] <- fc2
+
+fc_gam <- fabletools:::build_fable(
+  newdata,
+  response = 'y',
+  distribution = 'value'
 )
 
-plot_dat <- dplyr::bind_rows(
-  simdat$data_train,
-  (simdat$data_test %>%
-     dplyr::bind_cols(fc2))
-)
-
-ggplot(
-  data = plot_dat,
-  aes(x = time,
-      y = y)
-) +
-  geom_ribbon(
-    aes(ymax = .q97.5,
-        ymin = .q2.5),
-    alpha = 0.3,
-    fill = 'darkred'
-  ) +
-  geom_ribbon(
-    aes(ymax = .q90,
-        ymin = .q10),
-    alpha = 0.4,
-    fill = 'darkred'
-  ) +
+# Plot the resulting forecasts from all three models
+fc_ffc %>%
+  autoplot(sim_tsibble) +
   geom_line(
-    aes(y = .estimate),
-    col = 'darkred',
-    linewidth = 1
+    data = newdata,
+    aes(y = y)
   ) +
-  geom_line()
+  ggtitle('FFC forecast')
+
+fc_arima %>%
+  autoplot(sim_tsibble) +
+  geom_line(
+    data = simdat$data_test %>%
+      dplyr::mutate(
+        yearmon = tsibble::make_yearmonth(
+          year = year,
+          month = season
+        )
+      ),
+    aes(y = y)
+  ) +
+  ggtitle('ARIMA with Box-Cox forecast')
+
+fc_gam %>%
+  autoplot(sim_tsibble) +
+  geom_line(
+    data = newdata,
+    aes(y = y)
+  ) +
+  ggtitle('GAM forecast')
+
+# Score the forecasts from all three models with CRPS (lower is better)
+fc_ffc %>%
+  fabletools::accuracy(
+    newdata,
+    measures = distribution_accuracy_measures
+  )
+
+fc_arima %>%
+  fabletools::accuracy(
+    newdata,
+    measures = distribution_accuracy_measures
+  )
+
+fc_gam %>%
+  fabletools::accuracy(
+    newdata,
+    measures = distribution_accuracy_measures
+  )

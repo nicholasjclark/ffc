@@ -117,8 +117,8 @@ forecast.ffc_gam <- function(
     object,
     newdata,
     type = "response",
-    n_draws = 25,
-    n_sims = 50,
+    n_draws = 10,
+    n_sims = 100,
     model = "ARIMA",
     stationary = FALSE,
     summary = TRUE,
@@ -368,7 +368,9 @@ forecast.ffc_gam <- function(
     )
     class(out) <- c("tbl_df", "tbl", "data.frame")
   } else {
-    out <- preds
+    out <- distributional::dist_sample(
+      lapply(seq_len(NCOL(preds)), function(i) preds[,i])
+    )
   }
 
   return(out)
