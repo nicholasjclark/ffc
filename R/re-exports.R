@@ -51,6 +51,14 @@ mgcv::multinom
 mgcv::tw
 
 #' @export
+#' @importFrom mgcv ldTweedie
+mgcv::ldTweedie
+
+#' @export
+#' @importFrom mgcv rTweedie
+mgcv::rTweedie
+
+#' @export
 #' @importFrom mgcv twlss
 mgcv::twlss
 

@@ -3,14 +3,14 @@ library(ffc)
 library(ggplot2); theme_set(theme_classic())
 
 # Simulated training and testing data
-#set.seed(0)
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
-  prop_trend = 0.65,
-  prop_train = 0.80,
+  drift = TRUE,
+  prop_trend = 0.60,
+  prop_train = 0.85,
   mu = 1.5,
-  family = nb()
+  family = poisson()
 )
 mvgam::plot_mvgam_series(
   data = simdat$data_train,
@@ -20,19 +20,21 @@ mvgam::plot_mvgam_series(
 # Fit a model
 mod <- ffc_gam(
   y ~
-    # Capture possible time-varying seasonality
-    fts(
-      season,
-      bs = "cc",
-      k = 5
-    ) +
-
     # Use mean_only = TRUE to ensure that only a constant
     # basis function is used as the by-variable to fit a smooth
     # of 'time' that we can then forecast ahead
     fts(
       time,
       mean_only = TRUE,
+      time_bs = 'ts',
+      time_k = 30
+    ) +
+    # Capture possible time-varying seasonality
+    fts(
+      season,
+      bs = "cc",
+      k = 8,
+      time_bs = 'ts',
       time_k = 30
     ),
 
@@ -40,17 +42,20 @@ mod <- ffc_gam(
   knots = list(season = c(0.5, 12.5)),
   time = "time",
   data = simdat$data_train,
-  family = nb()
+  family = nb(),
+  engine = 'bam',
+  discrete = TRUE
 )
 summary(mod)
 
 # View draws of the time-varying basis coefficient
+func_coefs <- fts_coefs(
+  mod,
+  summary = FALSE,
+  times = 20
+)
 autoplot(
-  fts_coefs(
-    mod,
-    summary = FALSE,
-    times = 10
-  )
+  func_coefs
 )
 
 # Compute forecast distribution by fitting the basis coefficient
@@ -62,9 +67,10 @@ plan(multisession)
 fc <- forecast(
   object = mod,
   newdata = simdat$data_test,
-  stationary = TRUE,
-  n_draws = 10,
-  n_sims = 200,
+  model = 'ARIMA',
+  stationary = FALSE,
+  n_draws = 20,
+  n_sims = 100,
   # use summary = FALSE to return the full distribution
   summary = FALSE
 )
