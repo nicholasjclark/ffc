@@ -40,7 +40,13 @@ fts_coefs.ffc_gam <- function(
   } else {
     # Time variable
     time_var <- object$time_var
-    unique_times <- sort(unique(object$model[, time_var]))
+
+    # Get all unique times within training window, assuming
+    # equal time steps
+    unique_times <- seq(
+      min(object$model[, time_var]),
+      max(object$model[, time_var])
+    )
 
     # Smooth names
     sm_names <- unlist(

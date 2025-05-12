@@ -143,25 +143,25 @@ dyn_to_spline <- function(
     clean_sm_names(names(coef(gam_init)))
   )
 
-  # Need to ensure a constant basis is included to capture
-  # any mean-shifts in the functions over time
-  if (!any(apply(X, 2, sd) == 0)) {
-    orig_names <- colnames(X)
-    X <- cbind(
-      X,
-      matrix(1, nrow = NROW(X), ncol = 1)
-    )
-    colnames(X) <- c(
-      orig_names,
-      paste0(
-        label,
-        term_id,
-        "_mean"
-      )
-    )
-  }
-
   if (mean_only) {
+    # Ensure a constant basis is included to capture
+    # any mean-shifts in the functions over time
+    if (!any(apply(X, 2, sd) == 0)) {
+      orig_names <- colnames(X)
+      X <- cbind(
+        X,
+        matrix(1, nrow = NROW(X), ncol = 1)
+      )
+      colnames(X) <- c(
+        orig_names,
+        paste0(
+          label,
+          term_id,
+          "_mean"
+        )
+      )
+    }
+
     X <- X[, grepl(paste0(
       label,
       term_id,

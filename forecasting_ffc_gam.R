@@ -1,14 +1,15 @@
 # Forecasting from a ffc_gam object
 library(ffc)
+library(fable)
 library(ggplot2); theme_set(theme_classic())
 
 # Simulated training and testing data
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
-  trend_model = mvgam::GP(),
+  trend_model = mvgam::RW(),
   drift = TRUE,
   prop_trend = 0.60,
-  prop_train = 0.85,
+  prop_train = 0.9,
   mu = 1.5,
   family = poisson()
 )
@@ -26,25 +27,26 @@ mod <- ffc_gam(
     fts(
       time,
       mean_only = TRUE,
-      time_bs = 'ts',
+      time_bs = 'cs',
       time_k = 30
     ) +
-    # Capture possible time-varying seasonality
+
+    # Capture possible time-varying seasonality;
+    # use time_m = 1 to make it less likely to find nonstationary
+    # models for the seasonal basis coefficients
     fts(
       season,
       bs = "cc",
-      k = 8,
-      time_bs = 'ts',
-      time_k = 30
+      k = 7,
+      time_bs = 'cs',
+      time_k = 8
     ),
 
-  # Supply some knots to ensure they are picked up correctly
   knots = list(season = c(0.5, 12.5)),
   time = "time",
   data = simdat$data_train,
   family = nb(),
-  engine = 'bam',
-  discrete = TRUE
+  engine = 'bam'
 )
 summary(mod)
 
@@ -52,8 +54,9 @@ summary(mod)
 func_coefs <- fts_coefs(
   mod,
   summary = FALSE,
-  times = 20
+  times = 10
 )
+
 autoplot(
   func_coefs
 )
@@ -69,8 +72,10 @@ fc <- forecast(
   newdata = simdat$data_test,
   model = 'ARIMA',
   stationary = FALSE,
-  n_draws = 20,
-  n_sims = 100,
+
+  # ~5,000 total draws; need large numbers to estimate tail probabilities
+  n_draws = 15,
+  n_sims = 330,
   # use summary = FALSE to return the full distribution
   summary = FALSE
 )
@@ -96,7 +101,6 @@ fc_ffc <- fabletools:::build_fable(
 )
 
 # How would an automatic ARIMA model with Box-Cox transformation compare?
-library(fable)
 sim_tsibble <- simdat$data_train %>%
   dplyr::mutate(
     yearmon = tsibble::make_yearmonth(

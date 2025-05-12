@@ -94,7 +94,7 @@ ffc_gam <- function(
     formula = interpreted$formula,
     family = family,
     data = interpreted$data,
-    na.action = "na.fail",
+    na.action = "na.omit",
     ...
   )
   out <- do.call(engine, fit_args)
@@ -121,6 +121,47 @@ update_mod_data <- function(
     gam_object,
     fts_smooths,
     data) {
+  # Response variable(s) for omitting NAs in data
+  # Check that response terms are in the data; account for possible
+  # 'cbind' in there if this is a binomial model
+  resp_terms <- as.character(terms(formula(gam_object$formula))[[2]])
+  if (length(resp_terms) == 1) {
+    out_name <- as.character(terms(formula(gam_object$formula))[[2]])
+    if (!as.character(terms(formula(gam_object$formula))[[2]]) %in% names(data)) {
+      stop(
+        paste0('variable ', terms(formula(gam_object$formula))[[2]], ' not found in data'),
+        call. = FALSE
+      )
+    }
+  } else {
+    if (any(grepl('cbind', resp_terms))) {
+      resp_terms <- resp_terms[-grepl('cbind', resp_terms)]
+      out_name <- resp_terms[1]
+      for (i in 1:length(resp_terms)) {
+        if (!resp_terms[i] %in% names(data)) {
+          stop(
+            paste0('variable ', resp_terms[i], ' not found in data'),
+            call. = FALSE
+          )
+        }
+      }
+    } else {
+      stop(
+        'Not sure how to deal with this response variable specification',
+        call. = FALSE
+      )
+    }
+  }
+
+  # Indices of missing responses in data
+  resp_finites <- vector(mode = 'list')
+  for(i in seq_along(resp_terms)){
+    resp_finites[[i]] <- which(is.finite(data[[resp_terms[i]]]))
+  }
+  resp_finites <- unique(
+    unlist(resp_finites, use.names = FALSE)
+  )
+
   # All terms included in fts smooths
   all_terms <- unique(
     unlist(purrr::map(fts_smooths, "term"))
@@ -134,7 +175,10 @@ update_mod_data <- function(
   )
 
   # Any offset terms
-  termlabs <- attr(terms.formula(gam_object$formula, keep.order = TRUE), "term.labels")
+  termlabs <- attr(
+    terms.formula(gam_object$formula, keep.order = TRUE),
+    "term.labels"
+  )
 
   # Check for offsets as well
   off_names <- grep(
@@ -157,7 +201,7 @@ update_mod_data <- function(
     for (i in 1:length(vars_to_add)) {
       gam_object$model <- cbind(
         gam_object$model,
-        data[[vars_to_add[i]]]
+        data[[vars_to_add[i]]][resp_finites]
       )
     }
     colnames(gam_object$model) <- c(orig_names, vars_to_add)
