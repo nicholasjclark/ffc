@@ -67,6 +67,7 @@ fts_coefs.ffc_gam <- function(
     )
 
     # Loop across fts smooths and calculate time-varying coefficients
+    validate_pos_integer(times)
     fts_preds <- do.call(
       rbind,
       lapply(fts_idx, function(sm) {
@@ -113,7 +114,6 @@ fts_coefs.ffc_gam <- function(
             time_var
           )
         } else {
-          validate_pos_integer(times)
           dat <- do.call(
             rbind,
             lapply(1:times, function(x) {
@@ -131,6 +131,11 @@ fts_coefs.ffc_gam <- function(
                 ".realisation",
                 time_var
               )
+              if(!is.null(attr(object$model, 'index'))){
+                repdat[[attr(object$model, 'index')]] <-
+                  object$model[[attr(object$model, 'index')]]
+              }
+
               repdat
             })
           )
@@ -141,6 +146,9 @@ fts_coefs.ffc_gam <- function(
     )
     class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
     attr(fts_preds, "time_var") <- time_var
+    attr(fts_preds, "index") <- attr(object$model, 'index')
+    attr(fts_preds, "index2") <- attr(object$model, 'index2')
+    attr(fts_preds, "interval") <- attr(object$model, "interval")
     attr(fts_preds, "summarized") <- isTRUE(summary)
     return(fts_preds)
   }

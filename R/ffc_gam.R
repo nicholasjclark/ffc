@@ -196,6 +196,14 @@ update_mod_data <- function(
     c("NA", colnames(gam_object$model))
   )
 
+  # Check if this is a tsibble; if so, add the index var
+  if(inherits(data, 'tbl_ts')){
+    vars_to_add <- c(
+      vars_to_add,
+      tsibble::index_var(data)
+    )
+  }
+
   if (length(vars_to_add)) {
     orig_names <- colnames(gam_object$model)
     for (i in 1:length(vars_to_add)) {
@@ -205,6 +213,12 @@ update_mod_data <- function(
       )
     }
     colnames(gam_object$model) <- c(orig_names, vars_to_add)
+
+    if(inherits(data, 'tbl_ts')){
+      attr(gam_object$model, 'index') <- attr(data, 'index')
+      attr(gam_object$model, 'index2') <- attr(data, 'index2')
+      attr(gam_object$model, 'interval') <- attr(data, 'interval')
+    }
   }
   return(gam_object)
 }

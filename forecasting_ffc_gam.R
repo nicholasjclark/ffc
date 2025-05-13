@@ -2,23 +2,80 @@
 library(ffc)
 library(fable)
 library(ggplot2); theme_set(theme_classic())
+library(future)
+plan(multisession, workers = 4)
 
-# Simulated training and testing data
+# Define transformations that avoid distributional
+# assumptions so that ffc is not unfairly advantaged
+# over ARIMA / Box-Cox
+count = function(x) {
+  xhat <- x * runif(1, 1, 20)
+  floor(xhat + abs(min(xhat)))
+}
+
+proportional = function(x) {
+  plogis(x)
+}
+
+posreal = function(x) {
+  xhat <- x * runif(1, 1, 200)
+  xhat + abs(min(xhat)) + runif(1, 0.01, 5)
+}
+
+binary = function(x) {
+  rbinom(
+    n = length(x),
+    size = 1,
+    prob = plogis(x)
+  )
+}
+
+# Simulation setup
+# transform <- posreal; gam_fam <- tw()
+ transform <- count; gam_fam <- nb()
+# transform <- proportional; gam_fam <- betar()
+# transform <- binary; gam_fam <- binomial()
+
+# Simulated training and testing data; use Student-T
+# for more realism
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
-  trend_model = mvgam::RW(),
+  trend_model = mvgam::GP(),
   drift = TRUE,
-  prop_trend = 0.60,
+  prop_trend = 0.7,
   prop_train = 0.9,
-  mu = 1.5,
-  family = poisson()
-)
-mvgam::plot_mvgam_series(
-  data = simdat$data_train,
-  newdata = simdat$data_test
+  mu = -1,
+  family = mvgam::student()
 )
 
-# Fit a model
+# Convert to non-Gaussian
+dat_tsibble <- rbind(
+  simdat$data_train,
+  simdat$data_test
+) %>%
+  dplyr::mutate(
+    yearmon = tsibble::make_yearmonth(
+      year = year,
+      month = season
+    )
+  ) %>%
+  tsibble::as_tsibble(
+    index = yearmon
+  ) %>%
+  dplyr::mutate(y = do.call(
+    transform,
+    list(y)
+  )
+  )
+
+# Create tsibbles of training and testing data
+train_tsibble <- dat_tsibble %>%
+  dplyr::filter(time <= 85)
+
+test_tsibble <- dat_tsibble %>%
+  dplyr::filter(time > 85)
+
+# Fit a ffc model
 mod <- ffc_gam(
   y ~
     # Use mean_only = TRUE to ensure that only a constant
@@ -27,71 +84,44 @@ mod <- ffc_gam(
     fts(
       time,
       mean_only = TRUE,
-      time_bs = 'cs',
-      time_k = 30
+      time_bs = 'bs',
+      time_m = 1,
+      time_k = 40
     ) +
-
-    # Capture possible time-varying seasonality;
-    # use time_m = 1 to make it less likely to find nonstationary
-    # models for the seasonal basis coefficients
     fts(
       season,
-      bs = "cc",
-      k = 7,
-      time_bs = 'cs',
-      time_k = 8
+      bs = 'cc',
+      k = 6,
+      time_bs = 'tp',
+      time_k = 10
     ),
-
   knots = list(season = c(0.5, 12.5)),
   time = "time",
-  data = simdat$data_train,
-  family = nb(),
-  engine = 'bam'
+  data = train_tsibble,
+  family = gam_fam,
+  select = TRUE
 )
 summary(mod)
 
-# View draws of the time-varying basis coefficient
-func_coefs <- fts_coefs(
-  mod,
-  summary = FALSE,
-  times = 10
-)
-
-autoplot(
-  func_coefs
-)
+# View the time-varying basis coefficients
+gratia::draw(mod)
 
 # Compute forecast distribution by fitting the basis coefficient
 # time series models in parallel (which is automatically supported
 # within the fable package)
-library(future)
-plan(multisession)
-
 fc <- forecast(
   object = mod,
-  newdata = simdat$data_test,
+  newdata = test_tsibble,
   model = 'ARIMA',
+  n_quantiles = 4,
   stationary = FALSE,
-
-  # ~5,000 total draws; need large numbers to estimate tail probabilities
-  n_draws = 15,
-  n_sims = 330,
   # use summary = FALSE to return the full distribution
   summary = FALSE
 )
 
 # Convert resulting forecasts to a fable for automatic
 # plotting / scoring of forecasts
-newdata <- simdat$data_test %>%
-  dplyr::mutate(
-    yearmon = tsibble::make_yearmonth(
-      year = year,
-      month = season
-    )
-  ) %>%
-  tsibble::as_tsibble(
-    index = yearmon
-  )
+newdata <- test_tsibble
 newdata[['value']] <- fc
 
 fc_ffc <- fabletools:::build_fable(
@@ -100,103 +130,65 @@ fc_ffc <- fabletools:::build_fable(
   distribution = 'value'
 )
 
-# How would an automatic ARIMA model with Box-Cox transformation compare?
-sim_tsibble <- simdat$data_train %>%
-  dplyr::mutate(
-    yearmon = tsibble::make_yearmonth(
-      year = year,
-      month = season
-    )
-  ) %>%
-  tsibble::as_tsibble(
-    index = yearmon
-  )
-
-fc_arima <- sim_tsibble %>%
+# Benchmarks
+fc_arima <- train_tsibble %>%
   model(
     arima = ARIMA(fabletools::box_cox(y, feasts::guerrero(y)))
   ) %>%
   forecast(
-    h = max(simdat$data_test$time) -
-      min(simdat$data_test$time) + 1
+    h = max(test_tsibble$time) -
+      min(test_tsibble$time) + 1
   )
 
-# How would a model that uses spline extrapolation compare?
-mod2 <- ffc_gam(
-  y ~ te(
-    season,
-    time,
-    bs = c("cc", "tp"),
-    k = c(4, 10)
-  ),
+fc_ets <- train_tsibble %>%
+  model(
+    ets = ETS(fabletools::box_cox(y, feasts::guerrero(y)))
+  ) %>%
+  forecast(
+    h = max(test_tsibble$time) -
+      min(test_tsibble$time) + 1
+  )
 
-  # Supply some knots to ensure they are picked up correctly
-  knots = list(season = c(0.5, 12.5)),
-  time = "time",
-  data = simdat$data_train,
-  family = nb()
-)
-
-fc2 <- forecast(
-  mod2,
-  newdata = simdat$data_test,
-  n_sims = 100,
-  summary = FALSE
-)
-newdata[['value']] <- fc2
-
-fc_gam <- fabletools:::build_fable(
-  newdata,
-  response = 'y',
-  distribution = 'value'
-)
-
-# Plot the resulting forecasts from all three models
+# Plot the resulting forecasts
 fc_ffc %>%
-  autoplot(sim_tsibble) +
+  autoplot(train_tsibble) +
   geom_line(
-    data = newdata,
+    data = test_tsibble,
     aes(y = y)
   ) +
   ggtitle('FFC forecast')
 
 fc_arima %>%
-  autoplot(sim_tsibble) +
+  autoplot(train_tsibble) +
   geom_line(
-    data = simdat$data_test %>%
-      dplyr::mutate(
-        yearmon = tsibble::make_yearmonth(
-          year = year,
-          month = season
-        )
-      ),
+    data = test_tsibble,
     aes(y = y)
   ) +
   ggtitle('ARIMA with Box-Cox forecast')
 
-fc_gam %>%
-  autoplot(sim_tsibble) +
+fc_ets %>%
+  autoplot(train_tsibble) +
   geom_line(
-    data = newdata,
+    data = test_tsibble,
     aes(y = y)
   ) +
-  ggtitle('GAM forecast')
+  ggtitle('ETS with Box-Cox forecast')
 
-# Score the forecasts from all three models with CRPS (lower is better)
+# Score the forecasts with CRPS (lower is better)
 fc_ffc %>%
   fabletools::accuracy(
-    newdata,
+    test_tsibble,
     measures = distribution_accuracy_measures
   )
 
 fc_arima %>%
   fabletools::accuracy(
-    newdata,
+    test_tsibble,
     measures = distribution_accuracy_measures
   )
 
-fc_gam %>%
+fc_ets %>%
   fabletools::accuracy(
-    newdata,
+    test_tsibble,
     measures = distribution_accuracy_measures
   )

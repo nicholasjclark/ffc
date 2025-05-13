@@ -11,6 +11,7 @@ interpret_ffc <- function(
     knots = NULL) {
   # Tibbles often get rearranged by mgcv in very strange ways; grouping?
   # best to convert to plain-Jane data.frames first
+  orig_data <- data
   if (inherits(data, "tbl_df")) {
     data <- as.data.frame(data)
   }
@@ -85,6 +86,7 @@ interpret_ffc <- function(
     list(
       formula = updated_formula,
       data = data,
+      orig_data = orig_data,
       fts_smooths = fts_smooths,
       gam_init = gam_init
     )

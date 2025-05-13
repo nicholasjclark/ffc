@@ -8,8 +8,7 @@
   object,
   newdata,
   type = "response",
-  n_draws = 10,
-  n_sims = 100,
+  n_quantiles = 5,
   model = "ARIMA",
   stationary = FALSE,
   summary = TRUE,
@@ -33,10 +32,9 @@ of the response (the mean) but ignore uncertainty in the observation process.
 When \code{response} is used (the default), the predictions take uncertainty in the observation
 process into account to return predictions on the outcome scale}
 
-\item{n_draws}{A positive \code{integer} specifying the number of basis coefficient
-realisation paths to simulate from the fitted time-varying \code{fts()} splines}
-
-\item{n_sims}{A positive \code{integer} specifying the number of simulation paths to compute
+\item{n_quantiles}{Positive \code{integer} specifying the number of empirical
+quantiles of each basis coefficient time series to compute and forecast
+ahead
 from each basis coefficient time series model when creating the basis coefficient
 forecast distributions}
 

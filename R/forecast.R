@@ -40,6 +40,9 @@ forecast.fts_ts <- function(
 
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
+  attr(object_tsbl, 'interval') <- attr(object, 'interval')
+  attr(object_tsbl, 'index') <- attr(object, 'index')
+  attr(object_tsbl, 'index2') <- attr(object, 'index2')
 
   # Fit model and forecast
   if (stationary) {
@@ -92,9 +95,9 @@ forecast.fts_ts <- function(
 #' of the response (the mean) but ignore uncertainty in the observation process.
 #' When `response` is used (the default), the predictions take uncertainty in the observation
 #' process into account to return predictions on the outcome scale
-#' @param n_draws A positive `integer` specifying the number of basis coefficient
-#' realisation paths to simulate from the fitted time-varying `fts()` splines
-#' @param n_sims A positive `integer` specifying the number of simulation paths to compute
+#' @param n_quantiles Positive `integer` specifying the number of empirical
+#' quantiles of each basis coefficient time series to compute and forecast
+#' ahead
 #' from each basis coefficient time series model when creating the basis coefficient
 #' forecast distributions
 #' @param summary Should summary statistics be returned instead of the raw values?
@@ -117,8 +120,7 @@ forecast.ffc_gam <- function(
     object,
     newdata,
     type = "response",
-    n_draws = 10,
-    n_sims = 100,
+    n_quantiles = 5,
     model = "ARIMA",
     stationary = FALSE,
     summary = TRUE,
@@ -133,8 +135,7 @@ forecast.ffc_gam <- function(
       "response"
     )
   )
-  validate_pos_integer(n_draws)
-  validate_pos_integer(n_sims)
+  validate_pos_integer(n_quantiles)
   validate_proportional(min(probs))
   validate_proportional(max(probs))
 
@@ -147,7 +148,7 @@ forecast.ffc_gam <- function(
 
   # Take full draws of beta coefficients
   orig_betas <- mgcv::rmvn(
-    n = n_draws * n_sims,
+    n = 1000 * n_quantiles,
     mu = coef(object),
     V = vcov(object)
   )
@@ -186,21 +187,70 @@ forecast.ffc_gam <- function(
     max_horizon <- max(fc_horizons)
 
     # Extract functional basis coefficient time series
-    functional_coefs <- fts_coefs(
+    intermed_coefs <- fts_coefs(
       object,
       summary = FALSE,
-      times = n_draws
+      times = 1000
     )
+
+    # Calculate quantiles
+    functional_coefs <- intermed_coefs %>%
+      dplyr::group_by(.basis, .time) %>%
+      dplyr::summarise(
+        tibble::as_tibble_row(
+          quantile(
+            .estimate,
+            probs = seq(0.01, 0.99, length.out = n_quantiles)
+          )
+        )
+      ) %>%
+      dplyr::ungroup() %>%
+      tidyr::pivot_longer(
+        cols = contains('%'),
+        names_to = 'quantile',
+        values_to = '.estimate') %>%
+      dplyr::mutate(.realisation = as.numeric(gsub('%', '', quantile))) %>%
+      tsibble::as_tsibble(
+        key = c(.basis, .realisation),
+        index = .time
+      )
+    if(!is.null(attr(intermed_coefs, 'index'))){
+      functional_coefs <- functional_coefs %>%
+        dplyr::left_join(
+          intermed_coefs %>%
+            dplyr::select(.time, !!attr(intermed_coefs, 'index')) %>%
+            dplyr::distinct(),
+          by = dplyr::join_by(.time)
+        )
+    }
+    class(functional_coefs) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
+    attr(functional_coefs, 'time_var') <- attr(intermed_coefs, 'time_var')
+    attr(functional_coefs, 'index') <- attr(intermed_coefs, 'index')
+    attr(functional_coefs, 'index2') <- attr(intermed_coefs, 'index2')
+    attr(functional_coefs, 'interval') <- attr(intermed_coefs, 'interval')
+    attr(functional_coefs, 'summarized') <- attr(intermed_coefs, 'summarized')
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
     functional_fc <- forecast(
       object = functional_coefs,
       h = max_horizon,
-      times = n_sims,
+      # 1000 realisation paths per quantile
+      times = 1000,
       model = model,
       stationary = stationary,
     )
+
+    if(!is.null(attr(intermed_coefs, 'index'))){
+      functional_fc <- functional_fc %>%
+        dplyr::left_join(
+          interpreted$orig_data %>%
+            dplyr::select(!!time_var, !!attr(intermed_coefs, 'index')) %>%
+            dplyr::distinct(),
+          by = dplyr::join_by(!!attr(intermed_coefs, 'index'))
+        ) %>%
+        dplyr::rename(.time = !!time_var)
+    }
 
     # Only need to return forecasts for those times that are
     # in newdata
@@ -208,6 +258,39 @@ forecast.ffc_gam <- function(
       dplyr::filter(
         .time %in% unique(interpreted$data[[time_var]])
       )
+
+    norm_quantiles = function(x) {
+      xhat <- vector(length = length(x))
+      for(i in seq_along(x)){
+        if(x[i] < 50){
+          xhat[i] <- (50 - x[i]) / 50
+        } else {
+          xhat[i] <- (x[i] - 50) / 50
+        }
+      }
+      1 - xhat
+    }
+
+    # Sample draws based on quantile weights
+    inds_keep <- functional_fc %>%
+      tibble::as_tibble() %>%
+      dplyr::select(.basis, .realisation, .rep) %>%
+      dplyr::mutate(.weight = norm_quantiles(.realisation)) %>%
+      dplyr::group_by(.basis) %>%
+      dplyr::sample_n(
+        size = 1000 * n_quantiles,
+        replace = TRUE,
+        weight = .weight
+      )
+
+    functional_fc <- inds_keep %>%
+      dplyr::left_join(functional_fc,
+                       by = dplyr::join_by(.basis, .realisation, .rep),
+                       relationship = 'many-to-many') %>%
+      dplyr::ungroup() %>%
+      dplyr::group_by(.basis, .time) %>%
+      dplyr::mutate(.realisation = 1,
+                    .rep = 1:(1000 * n_quantiles))
 
     # Which coefficients in lpmatrix are associated with fts objects?
     smooth_names <- unlist(
@@ -291,9 +374,9 @@ forecast.ffc_gam <- function(
       )
 
     # Should now have n_draws * n_sims draws for each row of newdata
-    if (!NROW(orig_lpmat) * n_draws * n_sims == NROW(fts_fc)) {
-      stop("Wrong dimensions in forecast coefs; need to check on this")
-    }
+    # if (!NROW(orig_lpmat) * n_draws * n_sims == NROW(fts_fc)) {
+    #   stop("Wrong dimensions in forecast coefs; need to check on this")
+    # }
 
     # Should also have same ncols as number of fts basis functions
     if (
@@ -410,7 +493,11 @@ posterior_predict <- function(object,
   if (is.null(scale)) {
     scale_p <- summary(object)[["dispersion"]]
   }
-  scale_p <- rep(scale_p, length(linpreds))
+
+  if (!grepl('tweedie', mod$family[['family']],
+            ignore.case = TRUE)) {
+    scale_p <- rep(scale_p, length(linpreds))
+  }
 
   # weights
   weights <- rep(1, length(linpreds))
