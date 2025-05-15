@@ -93,25 +93,34 @@ ggplot(
 
 Fit a model to estimate how the log(mortality) curve changed over time
 using `deaths` as the outcome and using a time-varying function of `age`
-as the primary predictor. Using `fts()`, we model the age-death function
-with a set of `k = 10` thin plate basis functions whose coefficients are
-allowed to vary over time, where `time = 'year'`. In this model we also
-allow the time-varying effects to vary among sexes, while ensuring they
-can be efficiently learned by linking their smoothing parameters. We use
-the `bam()` engine (as opposed to `gam()`) for parameter estimation,
-given the large size of the dataset. In future, other engines such as
-`brm()` and `mvgam()`, will be made available for full luxury Bayesian
-inference.
+as the primary predictor. Using `fts()`, we model the age-death
+functions hierarchically using thin plate basis functions whose
+coefficients are allowed to vary over time, where `time = 'year'`. The
+hierarchical formulation allows a shared time-varying level to be
+modelled, along with deviations around that time-varying level for each
+sex. We use the `bam()` engine (as opposed to `gam()`) for parameter
+estimation, given the large size of the dataset. In future, other
+engines such as `brm()` and `mvgam()`, will be made available for full
+luxury Bayesian inference.
 
 ``` r
 mod <- ffc_gam(
   deaths ~
     offset(log(population)) +
     sex +
+    # Use mean_only = TRUE to model a time-varying level
+    fts(
+      year,
+      mean_only = TRUE,
+      bs = 'tp',
+      time_k = 35
+    ) +
+    # Model the male/female deviations around the shared mean
     fts(
       age,
-      k = 10, bs = "cr", by = sex,
-      time_k = 10
+      by = sex,
+      bs = 'tp',
+      time_k = 15
     ),
   time = "year",
   data = qld_mortality,
@@ -131,60 +140,60 @@ summary(mod)
 #> Link function: log 
 #> 
 #> Formula:
-#> deaths ~ sex + offset(log(population)) + s(year, by = fts_bs_s_age_bysexfemale_1, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_2, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_3, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_4, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_5, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_6, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_7, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_8, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_9, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_1, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_2, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_3, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_4, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_5, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_6, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_7, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_8, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_9, 
-#>     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_age1_mean, 
-#>     bs = "bs", k = 10, m = 1, id = 1)
+#> deaths ~ sex + offset(log(population)) + s(year, by = fts_year1_mean, 
+#>     bs = "tp", k = 35, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_1, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_2, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_3, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_4, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_5, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_6, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_7, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_8, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_9, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_1, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_2, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_3, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_4, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_5, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_6, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_7, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_8, 
+#>     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_9, 
+#>     bs = "tp", k = 15, m = 2, id = 2)
 #> 
 #> Parametric coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.664337   0.004209 -1345.9   <2e-16 ***
-#> sexmale      0.577793   0.005181   111.5   <2e-16 ***
+#> (Intercept) -5.650741   0.004071 -1387.9   <2e-16 ***
+#> sexmale      0.576371   0.005016   114.9   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
-#>                                       edf Ref.df   Chi.sq p-value    
-#> s(year):fts_bs_s_age_bysexfemale_1  9.992     10  21226.4  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_2  9.997     10  18352.8  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_3  9.997     10  20256.8  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_4  9.999     10   8508.9  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_5  9.999     10    108.3  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_6  9.999     10  29219.5  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_7 10.000     10 163689.5  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_8 10.000     10 378156.2  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_9  9.999     10 318979.6  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_1    9.995     10  34586.7  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_2    9.999     10  23790.6  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_3    9.999     10  26767.2  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_4    9.999     10  11541.2  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_5    9.999     10   1061.2  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_6   10.000     10  58331.7  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_7   10.000     10 231936.3  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_8   10.000     10 394150.6  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_9    9.996     10 125186.4  <2e-16 ***
-#> s(year):fts_age1_mean               9.000      9   9489.3  <2e-16 ***
+#>                                       edf Ref.df Chi.sq p-value    
+#> s(year):fts_year1_mean             31.761 33.633  10202  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_1  7.048  8.198  16336  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_2  5.291  6.233  10286  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_3  6.749  7.794   9625  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_4  5.349  6.314   8522  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_5  6.476  7.476   8479  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_6  5.205  6.146   8713  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_7  6.379  7.370   7815  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_8  5.108  5.942  11491  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_9  5.549  6.283   6097  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_1    7.425  8.630  19621  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_2    5.780  6.825  11220  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_3    7.129  8.282  12804  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_4    5.755  6.825  11978  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_5    6.755  7.867  14718  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_6    5.407  6.416  12071  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_7    6.474  7.528  11899  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_8    5.218  6.068  13555  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_9    5.373  6.074   6747  <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> R-sq.(adj) =  0.986   Deviance explained = 97.7%
-#> fREML =  21658  Scale est. = 1         n = 8282
+#> R-sq.(adj) =  0.986   Deviance explained = 97.6%
+#> fREML =  21791  Scale est. = 1         n = 8282
 ```
 
 View predicted functional curves using a fixed offset (where
@@ -288,18 +297,18 @@ functional_coefs <- fts_coefs(
 )
 functional_coefs
 #> # A tibble: 7,790 × 5
-#>    .basis                     .time .estimate .realisation  year
-#>    <chr>                      <int>     <dbl>        <int> <int>
-#>  1 fts_bs_s_age_bysexfemale_1  1980     -3.78            1  1980
-#>  2 fts_bs_s_age_bysexfemale_1  1981     -3.79            1  1981
-#>  3 fts_bs_s_age_bysexfemale_1  1982     -3.80            1  1982
-#>  4 fts_bs_s_age_bysexfemale_1  1983     -3.82            1  1983
-#>  5 fts_bs_s_age_bysexfemale_1  1984     -3.83            1  1984
-#>  6 fts_bs_s_age_bysexfemale_1  1985     -3.83            1  1985
-#>  7 fts_bs_s_age_bysexfemale_1  1986     -3.81            1  1986
-#>  8 fts_bs_s_age_bysexfemale_1  1987     -3.80            1  1987
-#>  9 fts_bs_s_age_bysexfemale_1  1988     -3.78            1  1988
-#> 10 fts_bs_s_age_bysexfemale_1  1989     -3.76            1  1989
+#>    .basis         .time .estimate .realisation  year
+#>    <chr>          <int>     <dbl>        <int> <int>
+#>  1 fts_year1_mean  1980     0.386            1  1980
+#>  2 fts_year1_mean  1981     0.379            1  1981
+#>  3 fts_year1_mean  1982     0.419            1  1982
+#>  4 fts_year1_mean  1983     0.325            1  1983
+#>  5 fts_year1_mean  1984     0.318            1  1984
+#>  6 fts_year1_mean  1985     0.331            1  1985
+#>  7 fts_year1_mean  1986     0.280            1  1986
+#>  8 fts_year1_mean  1987     0.257            1  1987
+#>  9 fts_year1_mean  1988     0.247            1  1988
+#> 10 fts_year1_mean  1989     0.264            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -333,20 +342,183 @@ functional_fc <- forecast(
 functional_fc
 #> # A tsibble: 4,750 x 6 [1Y]
 #> # Key:       .basis, .realisation, .model, .rep [950]
-#>    .basis        .realisation .model .time .rep    .sim
-#>    <chr>                <int> <chr>  <dbl> <chr>  <dbl>
-#>  1 fts_age1_mean            1 ARIMA   2021 1     -0.384
-#>  2 fts_age1_mean            1 ARIMA   2022 1     -0.393
-#>  3 fts_age1_mean            1 ARIMA   2023 1     -0.403
-#>  4 fts_age1_mean            1 ARIMA   2024 1     -0.415
-#>  5 fts_age1_mean            1 ARIMA   2025 1     -0.434
-#>  6 fts_age1_mean            1 ARIMA   2021 2     -0.387
-#>  7 fts_age1_mean            1 ARIMA   2022 2     -0.405
-#>  8 fts_age1_mean            1 ARIMA   2023 2     -0.428
-#>  9 fts_age1_mean            1 ARIMA   2024 2     -0.448
-#> 10 fts_age1_mean            1 ARIMA   2025 2     -0.467
+#>    .basis                     .realisation .model .time .rep   .sim
+#>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.85
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.85
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.86
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.87
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.89
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.85
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.84
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.82
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.78
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.72
 #> # ℹ 4,740 more rows
 ```
+
+Another example showing univariate time series modelling and forecasting
+
+``` r
+library(fable)
+library(tsibble)
+library(dplyr)
+```
+
+Our aim here is to forecast the number of domestic holiday travellers to
+Melbourne, Australia. The data can be found in the `tsibble::tourism`
+data set. For now we need to explicitly add the `quarter` and `time`
+variables to the data, but in future this will be done automatically for
+seamless integration with the `tsibbleverse`
+
+``` r
+tourism_melb <- tourism %>%
+  filter(Region == "Melbourne",
+         Purpose == "Holiday") %>%
+  mutate(quarter = lubridate::quarter(Quarter),
+         time = dplyr::row_number())
+tourism_melb
+#> # A tsibble: 80 x 7 [1Q]
+#> # Key:       Region, State, Purpose [1]
+#>    Quarter Region    State    Purpose Trips quarter  time
+#>      <qtr> <chr>     <chr>    <chr>   <dbl>   <int> <int>
+#>  1 1998 Q1 Melbourne Victoria Holiday  428.       1     1
+#>  2 1998 Q2 Melbourne Victoria Holiday  424.       2     2
+#>  3 1998 Q3 Melbourne Victoria Holiday  450.       3     3
+#>  4 1998 Q4 Melbourne Victoria Holiday  451.       4     4
+#>  5 1999 Q1 Melbourne Victoria Holiday  412.       1     5
+#>  6 1999 Q2 Melbourne Victoria Holiday  355.       2     6
+#>  7 1999 Q3 Melbourne Victoria Holiday  362.       3     7
+#>  8 1999 Q4 Melbourne Victoria Holiday  342.       4     8
+#>  9 2000 Q1 Melbourne Victoria Holiday  434.       1     9
+#> 10 2000 Q2 Melbourne Victoria Holiday  403.       2    10
+#> # ℹ 70 more rows
+```
+
+Split into training and testing folds. We wil aim to forecast the last 5
+quarters of the data
+
+``` r
+train <- tourism_melb %>%
+  dplyr::slice_head(n = 75)
+
+test <- tourism_melb %>%
+  dplyr::slice_tail(n = 5)
+```
+
+Now fit an `ffc` model. We use time-varying level and time-varying
+seasonality components, together with a Tweedie observation model
+(because our outcome, `Trips`, consists of non-negative real values).
+This model is simpler so we use the `'gam'` engine for fitting:
+
+``` r
+mod <- ffc_gam(
+  Trips ~
+    # Use mean_only = TRUE to model a time-varying mean
+    fts(
+      time,
+      mean_only = TRUE,
+      time_k = 50
+    ) +
+    # Time-varying seasonality
+    fts(
+      quarter,
+      bs = 'tp',
+      k = 4,
+      time_k = 15
+    ),
+  time = "time",
+  data = train,
+  family = tw(),
+  engine = 'gam'
+)
+```
+
+Draw the time-varying basis coefficients, this time using `gratia`
+
+``` r
+gratia::draw(mod)
+```
+
+<img src="man/figures/README-unnamed-chunk-16-1.png" width="100%" />
+
+Compute forecast distribution by fitting the basis coefficient time
+series models in parallel (which is automatically supported within the
+`fable` package). Here we fit independent exponential smoothing models
+to each coefficient time series
+
+``` r
+fc <- forecast(
+  object = mod,
+  newdata = test,
+  model = 'ETS',
+  summary = FALSE
+)
+```
+
+Convert resulting forecasts to a `fable` object for automatic plotting
+and/or scoring of forecasts
+
+``` r
+test[['value']] <- fc
+
+fc_ffc <- fabletools:::build_fable(
+  test,
+  response = 'Trips',
+  distribution = 'value'
+)
+```
+
+Plot the forecast distribution along with the observed data
+
+``` r
+fc_ffc %>%
+  autoplot(train) +
+  geom_line(
+    data = test,
+    aes(y = Trips)
+  ) +
+  ggtitle('FFC forecast')
+```
+
+<img src="man/figures/README-unnamed-chunk-19-1.png" width="100%" />
+
+Compare to forecasts from automatic ARIMA and ETS models, which are
+simpler to code and of course a bit faster
+
+``` r
+train %>%
+  model(
+    arima = ARIMA(Trips)) %>%
+  forecast(
+    h = 5
+  ) %>%
+  autoplot(train) +
+  geom_line(
+    data = test,
+    aes(y = Trips)
+  ) +
+  ggtitle('ARIMA forecast')
+```
+
+<img src="man/figures/README-unnamed-chunk-20-1.png" width="100%" />
+
+``` r
+train %>%
+  model(
+    ets = ETS(Trips)) %>%
+  forecast(
+    h = 5
+  ) %>%
+  autoplot(train) +
+  geom_line(
+    data = test,
+    aes(y = Trips)
+  ) +
+  ggtitle('ETS forecast')
+```
+
+<img src="man/figures/README-unnamed-chunk-21-1.png" width="100%" />
 
 ## Getting help
 

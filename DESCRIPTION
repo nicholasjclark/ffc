@@ -29,7 +29,8 @@ Imports:
     insight,
     fabletools,
     generics,
-    distributional
+    distributional,
+    vctrs
 Suggests: 
     testthat (>= 3.0.0),
     fable (>= 0.2.0),

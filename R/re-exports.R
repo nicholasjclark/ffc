@@ -70,6 +70,10 @@ ggplot2::autoplot
 #' @export
 generics::forecast
 
+#' @importFrom generics generate
+#' @export
+generics::generate
+
 #' Pipe operator
 #'
 #' See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.

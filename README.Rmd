@@ -69,16 +69,25 @@ ggplot(
   scale_y_log10()
 ```
 
-Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death function with a set of `k = 10` thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. In this model we also allow the time-varying effects to vary among sexes, while ensuring they can be efficiently learned by linking their smoothing parameters. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
+Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
 ```{r}
 mod <- ffc_gam(
   deaths ~
     offset(log(population)) +
     sex +
+    # Use mean_only = TRUE to model a time-varying level
+    fts(
+      year,
+      mean_only = TRUE,
+      bs = 'tp',
+      time_k = 35
+    ) +
+    # Model the male/female deviations around the shared mean
     fts(
       age,
-      k = 10, bs = "cr", by = sex,
-      time_k = 10
+      by = sex,
+      bs = 'tp',
+      time_k = 15
     ),
   time = "year",
   data = qld_mortality,
@@ -179,13 +188,131 @@ autoplot(functional_coefs)
 ```
 
 Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
-```{r}
+```{r, warning=FALSE}
 functional_fc <- forecast(
   object = functional_coefs,
   h = 5,
   times = 5
 )
 functional_fc
+```
+
+Another example showing univariate time series modelling and forecasting
+```{r, message=FALSE, warning=FALSE}
+library(fable)
+library(tsibble)
+library(dplyr)
+```
+
+Our aim here is to forecast the number of domestic holiday travellers to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
+```{r}
+tourism_melb <- tourism %>%
+  filter(Region == "Melbourne",
+         Purpose == "Holiday") %>%
+  mutate(quarter = lubridate::quarter(Quarter),
+         time = dplyr::row_number())
+tourism_melb
+```
+
+Split into training and testing folds. We wil aim to forecast the last 5 quarters of the data
+```{r}
+train <- tourism_melb %>%
+  dplyr::slice_head(n = 75)
+
+test <- tourism_melb %>%
+  dplyr::slice_tail(n = 5)
+```
+
+Now fit an `ffc` model. We use time-varying level and time-varying seasonality components, together with a Tweedie observation model (because our outcome, `Trips`, consists of non-negative real values). This model is simpler so we use the `'gam'` engine for fitting:
+```{r}
+mod <- ffc_gam(
+  Trips ~
+    # Use mean_only = TRUE to model a time-varying mean
+    fts(
+      time,
+      mean_only = TRUE,
+      time_k = 50
+    ) +
+    # Time-varying seasonality
+    fts(
+      quarter,
+      bs = 'tp',
+      k = 4,
+      time_k = 15
+    ),
+  time = "time",
+  data = train,
+  family = tw(),
+  engine = 'gam'
+)
+```
+
+Draw the time-varying basis coefficients, this time using `gratia`
+```{r}
+gratia::draw(mod)
+```
+
+Compute forecast distribution by fitting the basis coefficient time series models in parallel (which is automatically supported within the `fable` package). Here we fit independent exponential smoothing models to each coefficient time series
+```{r}
+fc <- forecast(
+  object = mod,
+  newdata = test,
+  model = 'ETS',
+  summary = FALSE
+)
+```
+
+Convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
+```{r, warning=FALSE}
+test[['value']] <- fc
+
+fc_ffc <- fabletools:::build_fable(
+  test,
+  response = 'Trips',
+  distribution = 'value'
+)
+```
+
+Plot the forecast distribution along with the observed data
+```{r}
+fc_ffc %>%
+  autoplot(train) +
+  geom_line(
+    data = test,
+    aes(y = Trips)
+  ) +
+  ggtitle('FFC forecast')
+```
+
+Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster
+```{r}
+train %>%
+  model(
+    arima = ARIMA(Trips)) %>%
+  forecast(
+    h = 5
+  ) %>%
+  autoplot(train) +
+  geom_line(
+    data = test,
+    aes(y = Trips)
+  ) +
+  ggtitle('ARIMA forecast')
+```
+
+```{r}
+train %>%
+  model(
+    ets = ETS(Trips)) %>%
+  forecast(
+    h = 5
+  ) %>%
+  autoplot(train) +
+  geom_line(
+    data = test,
+    aes(y = Trips)
+  ) +
+  ggtitle('ETS forecast')
 ```
 
 ## Getting help

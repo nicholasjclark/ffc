@@ -32,7 +32,7 @@ binary = function(x) {
 
 # Simulation setup
 # transform <- posreal; gam_fam <- tw()
- transform <- count; gam_fam <- nb()
+transform <- count; gam_fam <- nb()
 # transform <- proportional; gam_fam <- betar()
 # transform <- binary; gam_fam <- binomial()
 
@@ -40,12 +40,16 @@ binary = function(x) {
 # for more realism
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
-  trend_model = mvgam::GP(),
+  trend_model = mvgam::RW(),
   drift = TRUE,
-  prop_trend = 0.7,
+  prop_trend = 0.6,
   prop_train = 0.9,
   mu = -1,
   family = mvgam::student()
+)
+mvgam::plot_mvgam_series(
+  data = simdat$data_train,
+  newdata = simdat$data_test
 )
 
 # Convert to non-Gaussian
@@ -84,16 +88,14 @@ mod <- ffc_gam(
     fts(
       time,
       mean_only = TRUE,
-      time_bs = 'bs',
-      time_m = 1,
-      time_k = 40
+      time_bs = 'tp',
+      time_k = 50
     ) +
     fts(
       season,
       bs = 'cc',
       k = 6,
-      time_bs = 'tp',
-      time_k = 10
+      time_bs = 'tp'
     ),
   knots = list(season = c(0.5, 12.5)),
   time = "time",
@@ -112,8 +114,8 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = test_tsibble,
-  model = 'ARIMA',
-  n_quantiles = 4,
+  model = 'ETS',
+  quantile_fc = FALSE,
   stationary = FALSE,
   # use summary = FALSE to return the full distribution
   summary = FALSE

@@ -40,43 +40,145 @@ forecast.fts_ts <- function(
 
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
-  attr(object_tsbl, 'interval') <- attr(object, 'interval')
-  attr(object_tsbl, 'index') <- attr(object, 'index')
-  attr(object_tsbl, 'index2') <- attr(object, 'index2')
 
-  # Fit model and forecast
-  if (stationary) {
-    out <- object_tsbl %>%
-      # Fit the forecasting model(s) to each basis coefficient
-      # time series
-      fabletools::model(
-        do.call(
-          what = `::`,
-          args = list("fable", model)
-        )(.estimate,
-          order_constraint = (p + q + P + Q <= 6) & (d + D == 0))
-      ) %>%
-      # Simulate future paths for each coefficient time series
-      fabletools::generate(
-        h = h,
-        times = times
-      ) %>%
-      # Tidy the names
-      dplyr::mutate(.model = model)
+  # If .sd is included, use the variance inflation method
+  # to update forecast uncertainties
+  if(exists('.sd', object_tsbl)){
+
+    # Calculate SDs
+    object_sds <- object_tsbl %>%
+      as.data.frame() %>%
+      dplyr::group_by(.basis, .realisation) %>%
+      dplyr::summarise(.sd = mean(.sd))
+
+    if(stationary){
+      out <- object_tsbl %>%
+        # Fit the forecasting model(s) to each basis coefficient
+        # time series
+        fabletools::model(
+          do.call(
+            what = `::`,
+            args = list("fable", model)
+          )(.estimate,
+            order_constraint = (p + q + P + Q <= 6) & (d + D == 0))
+        ) %>%
+        # Simulate future paths for each coefficient time series
+        forecast(
+          h = h
+        ) %>%
+        # Tidy the names
+        dplyr::mutate(.model = model) %>%
+
+        # Add the SDs to the tibble and use them to modify
+        # the forecast uncertainty
+        dplyr::left_join(object_sds,
+                         by = dplyr::join_by(.basis, .realisation)) %>%
+        dplyr::mutate(.estimate = vctrs::new_vctr(
+          purrr::map2(
+            .estimate,
+            .sd,
+            \(x, y) generate(
+              distributional::dist_normal(
+                mean = mean(x),
+                sd = sqrt(distributional::parameters(x)$sigma ^ 2 + y ^ 2)),
+              times = times
+            )),
+          class = 'distribution'
+        )) %>%
+        tidyr::unnest(
+          cols = .estimate
+        ) %>%
+        tidyr::unnest(
+          cols = .estimate
+        ) %>%
+        dplyr::rename('.sim' = '.estimate') %>%
+        dplyr::group_by(.basis, .realisation) %>%
+        dplyr::mutate(.rep = rep(1:times, h)) %>%
+        dplyr::ungroup()
+
+    } else {
+      out <- object_tsbl %>%
+        # Fit the forecasting model(s) to each basis coefficient
+        # time series
+        fabletools::model(
+          do.call(
+            what = `::`,
+            args = list("fable", model)
+          )(.estimate)
+        ) %>%
+        # Simulate future paths for each coefficient time series
+        forecast(
+          h = h
+        ) %>%
+        # Tidy the names
+        dplyr::mutate(.model = model) %>%
+
+        # Add the SDs to the tibble and use them to modify
+        # the forecast uncertainty
+        dplyr::left_join(object_sds,
+                         by = dplyr::join_by(.basis, .realisation)) %>%
+        dplyr::mutate(.estimate = vctrs::new_vctr(
+          purrr::map2(
+            .estimate,
+            .sd,
+            \(x, y) generate(
+              distributional::dist_normal(
+                mean = mean(x),
+                sd = sqrt(distributional::parameters(x)$sigma ^ 2 + y ^ 2)),
+              times = times
+            )),
+          class = 'distribution'
+        )) %>%
+        tidyr::unnest(
+          cols = .estimate
+        ) %>%
+        tidyr::unnest(
+          cols = .estimate
+        ) %>%
+        dplyr::rename('.sim' = '.estimate') %>%
+        dplyr::group_by(.basis, .realisation) %>%
+        dplyr::mutate(.rep = rep(1:times, h)) %>%
+        dplyr::ungroup()
+    }
+
   } else {
-    out <- object_tsbl %>%
-      fabletools::model(
-        do.call(
-          what = `::`,
-          args = list("fable", model)
-        )(.estimate)
-      ) %>%
-      fabletools::generate(
-        h = h,
-        times = times
-      ) %>%
-      dplyr::mutate(.model = model)
+    # Else do not modify forecast variances
+    if (stationary) {
+      out <- object_tsbl %>%
+        # Fit the forecasting model(s) to each basis coefficient
+        # time series
+        fabletools::model(
+          do.call(
+            what = `::`,
+            args = list("fable", model)
+          )(.estimate,
+            order_constraint = (p + q + P + Q <= 6) & (d + D == 0))
+        ) %>%
+        # Simulate future paths for each coefficient time series
+        fabletools::generate(
+          h = h,
+          times = times
+        ) %>%
+        # Tidy the names
+        dplyr::mutate(.model = model)
+    } else {
+      out <- object_tsbl %>%
+        fabletools::model(
+          do.call(
+            what = `::`,
+            args = list("fable", model)
+          )(.estimate)
+        ) %>%
+        fabletools::generate(
+          h = h,
+          times = times
+        ) %>%
+        dplyr::mutate(.model = model)
+    }
   }
+
+
+
   return(out)
 }
 
@@ -95,11 +197,12 @@ forecast.fts_ts <- function(
 #' of the response (the mean) but ignore uncertainty in the observation process.
 #' When `response` is used (the default), the predictions take uncertainty in the observation
 #' process into account to return predictions on the outcome scale
-#' @param n_quantiles Positive `integer` specifying the number of empirical
-#' quantiles of each basis coefficient time series to compute and forecast
-#' ahead
-#' from each basis coefficient time series model when creating the basis coefficient
-#' forecast distributions
+#' @param quantile_fc Logical. If `TRUE`, quantile forecasts are computed. If
+#' `FALSE`, forecasts are computed using a meta-analysis approach that adjusts
+#' the forecast variance based on the empirical variance of the basis function
+#' coefficient time series. Using `TRUE` will be faster but using `FALSE` may give
+#' better forecast uncertainties when the variance of the basis fucntion coefficient
+#' time series is not stable over time. Defaults to `FALSE`
 #' @param summary Should summary statistics be returned instead of the raw values?
 #' Default is `TRUE`
 #' @param robust If `FALSE` (the default) the mean is used as the measure of
@@ -120,7 +223,7 @@ forecast.ffc_gam <- function(
     object,
     newdata,
     type = "response",
-    n_quantiles = 5,
+    quantile_fc = FALSE,
     model = "ARIMA",
     stationary = FALSE,
     summary = TRUE,
@@ -135,7 +238,7 @@ forecast.ffc_gam <- function(
       "response"
     )
   )
-  validate_pos_integer(n_quantiles)
+
   validate_proportional(min(probs))
   validate_proportional(max(probs))
 
@@ -148,7 +251,7 @@ forecast.ffc_gam <- function(
 
   # Take full draws of beta coefficients
   orig_betas <- mgcv::rmvn(
-    n = 1000 * n_quantiles,
+    n = 1000,
     mu = coef(object),
     V = vcov(object)
   )
@@ -193,27 +296,46 @@ forecast.ffc_gam <- function(
       times = 1000
     )
 
-    # Calculate quantiles
-    functional_coefs <- intermed_coefs %>%
-      dplyr::group_by(.basis, .time) %>%
-      dplyr::summarise(
-        tibble::as_tibble_row(
-          quantile(
-            .estimate,
-            probs = seq(0.01, 0.99, length.out = n_quantiles)
+    # Calculate man + SD or quantiles
+    if(quantile_fc){
+      functional_coefs <- intermed_coefs %>%
+        dplyr::group_by(.basis, .time) %>%
+        dplyr::summarise(
+          tibble::as_tibble_row(
+            quantile(
+              .estimate,
+              probs = seq(0.025, 0.975, length.out = 5),
+              type = 8
+            )
           )
+        ) %>%
+        dplyr::ungroup() %>%
+        tidyr::pivot_longer(
+          cols = tidyr::contains('%'),
+          names_to = 'quantile',
+          values_to = '.estimate') %>%
+        dplyr::mutate(.realisation = as.numeric(gsub('%', '', quantile))) %>%
+        tsibble::as_tsibble(
+          key = c(.basis, .realisation),
+          index = .time
         )
-      ) %>%
-      dplyr::ungroup() %>%
-      tidyr::pivot_longer(
-        cols = contains('%'),
-        names_to = 'quantile',
-        values_to = '.estimate') %>%
-      dplyr::mutate(.realisation = as.numeric(gsub('%', '', quantile))) %>%
-      tsibble::as_tsibble(
-        key = c(.basis, .realisation),
-        index = .time
-      )
+    } else {
+      functional_coefs <- intermed_coefs %>%
+        dplyr::group_by(.basis, .time) %>%
+        dplyr::summarise(
+          .mean = mean(.estimate),
+          .sd = sd(.estimate)
+        ) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(.realisation = 1,
+                      .estimate = .mean) %>%
+        tsibble::as_tsibble(
+          key = c(.basis, .realisation),
+          index = .time
+        )
+    }
+
+
     if(!is.null(attr(intermed_coefs, 'index'))){
       functional_coefs <- functional_coefs %>%
         dplyr::left_join(
@@ -232,13 +354,14 @@ forecast.ffc_gam <- function(
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
-    functional_fc <- forecast(
+    functional_fc <- suppressWarnings(
+      forecast(
       object = functional_coefs,
       h = max_horizon,
-      # 1000 realisation paths per quantile
       times = 1000,
       model = model,
       stationary = stationary,
+    )
     )
 
     if(!is.null(attr(intermed_coefs, 'index'))){
@@ -259,38 +382,28 @@ forecast.ffc_gam <- function(
         .time %in% unique(interpreted$data[[time_var]])
       )
 
-    norm_quantiles = function(x) {
-      xhat <- vector(length = length(x))
-      for(i in seq_along(x)){
-        if(x[i] < 50){
-          xhat[i] <- (50 - x[i]) / 50
-        } else {
-          xhat[i] <- (x[i] - 50) / 50
-        }
-      }
-      1 - xhat
+    if(quantile_fc) {
+      # Sample draws based on quantile weights
+      inds_keep <- functional_fc %>%
+        tibble::as_tibble() %>%
+        dplyr::select(.basis, .realisation, .rep) %>%
+        dplyr::mutate(.weight = norm_quantiles(.realisation)) %>%
+        dplyr::group_by(.basis) %>%
+        dplyr::sample_n(
+          size = 1000,
+          replace = TRUE,
+          weight = .weight
+        )
+
+      functional_fc <- inds_keep %>%
+        dplyr::left_join(functional_fc,
+                         by = dplyr::join_by(.basis, .realisation, .rep),
+                         relationship = 'many-to-many') %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(.basis, .time) %>%
+        dplyr::mutate(.realisation = 1,
+                      .rep = 1:1000)
     }
-
-    # Sample draws based on quantile weights
-    inds_keep <- functional_fc %>%
-      tibble::as_tibble() %>%
-      dplyr::select(.basis, .realisation, .rep) %>%
-      dplyr::mutate(.weight = norm_quantiles(.realisation)) %>%
-      dplyr::group_by(.basis) %>%
-      dplyr::sample_n(
-        size = 1000 * n_quantiles,
-        replace = TRUE,
-        weight = .weight
-      )
-
-    functional_fc <- inds_keep %>%
-      dplyr::left_join(functional_fc,
-                       by = dplyr::join_by(.basis, .realisation, .rep),
-                       relationship = 'many-to-many') %>%
-      dplyr::ungroup() %>%
-      dplyr::group_by(.basis, .time) %>%
-      dplyr::mutate(.realisation = 1,
-                    .rep = 1:(1000 * n_quantiles))
 
     # Which coefficients in lpmatrix are associated with fts objects?
     smooth_names <- unlist(
@@ -457,6 +570,20 @@ forecast.ffc_gam <- function(
   }
 
   return(out)
+}
+
+#' Normalise quantiles into sampling weights
+#' @noRd
+norm_quantiles = function(x) {
+  xhat <- vector(length = length(x))
+  for(i in seq_along(x)){
+    if(x[i] < 50){
+      xhat[i] <- (50 - x[i]) / 50
+    } else {
+      xhat[i] <- (x[i] - 50) / 50
+    }
+  }
+  1.1 - xhat
 }
 
 #' Posterior expectations

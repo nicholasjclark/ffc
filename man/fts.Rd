@@ -10,7 +10,7 @@ fts(
   k = NA,
   time_k = 10,
   bs = "cr",
-  time_bs = "bs",
+  time_bs = "tp",
   m = NA,
   time_m = 2,
   d = NA,

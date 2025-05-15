@@ -3,23 +3,7 @@ library("testthat")
 library("ffc")
 data("growth_data")
 
-# Fit some models that can be used for testing several downstream functions
-example_mod <- ffc_gam(
-  formula = height_cm ~
-    s(id, bs = "re") +
-    fts(
-      age_yr,
-      bs = "tp", k = 4,
-      time_bs = "cr", time_k = 6
-    ),
-  data = growth_data,
-  time = "age_yr",
-  family = mgcv::Tweedie(p = 1.5),
-  engine = "bam",
-  discrete = TRUE
-)
-
-# Another example, this time for a time series that only aims to forecast
+# Fit an example for a time series that only aims to forecast
 # the temporal trend smooth
 dat <- structure(
   list(
@@ -54,7 +38,7 @@ dat <- structure(
   class = "data.frame"
 )
 
-example_mod2 <- ffc_gam(
+example_mod <- ffc_gam(
   y ~ s(season, bs = "cc", k = 12) +
 
     # Use mean_only = TRUE to ensure that only a constant

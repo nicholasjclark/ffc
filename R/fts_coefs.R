@@ -190,5 +190,18 @@ fts_ts_2_tsbl <- function(x) {
       index = .time
     )
   }
+
+  if(!is.null(attr(x, 'interval'))) {
+    attr(out, 'interval') <- attr(x, 'interval')
+  }
+
+  if(!is.null(attr(x, 'index'))) {
+    attr(out, 'index') <- attr(x, 'index')
+  }
+
+  if(!is.null(attr(x, 'index2'))) {
+    attr(out, 'index2') <- attr(x, 'index2')
+  }
+
   return(out)
 }

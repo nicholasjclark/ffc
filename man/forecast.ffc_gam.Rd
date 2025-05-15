@@ -8,7 +8,7 @@
   object,
   newdata,
   type = "response",
-  n_quantiles = 5,
+  quantile_fc = FALSE,
   model = "ARIMA",
   stationary = FALSE,
   summary = TRUE,
@@ -32,11 +32,12 @@ of the response (the mean) but ignore uncertainty in the observation process.
 When \code{response} is used (the default), the predictions take uncertainty in the observation
 process into account to return predictions on the outcome scale}
 
-\item{n_quantiles}{Positive \code{integer} specifying the number of empirical
-quantiles of each basis coefficient time series to compute and forecast
-ahead
-from each basis coefficient time series model when creating the basis coefficient
-forecast distributions}
+\item{quantile_fc}{Logical. If \code{TRUE}, quantile forecasts are computed. If
+\code{FALSE}, forecasts are computed using a meta-analysis approach that adjusts
+the forecast variance based on the empirical variance of the basis function
+coefficient time series. Using \code{TRUE} will be faster but using \code{FALSE} may give
+better forecast uncertainties when the variance of the basis fucntion coefficient
+time series is not stable over time. Defaults to \code{FALSE}}
 
 \item{model}{A \code{character} string representing a valid univariate model definition
 from the \pkg{fable} package. Note that the chosen method must have an associated
