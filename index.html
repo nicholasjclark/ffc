@@ -120,16 +120,25 @@
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>y <span class="op">=</span> <span class="st">"Observed log(Mortality)"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_log10</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-3-1.png" width="100%"></p>
-<p>Fit a model to estimate how the log(mortality) curve changed over time using <code>deaths</code> as the outcome and using a time-varying function of <code>age</code> as the primary predictor. Using <code><a href="reference/fts.html">fts()</a></code>, we model the age-death function with a set of <code>k = 10</code> thin plate basis functions whose coefficients are allowed to vary over time, where <code>time = 'year'</code>. In this model we also allow the time-varying effects to vary among sexes, while ensuring they can be efficiently learned by linking their smoothing parameters. We use the <code><a href="https://rdrr.io/pkg/mgcv/man/bam.html" class="external-link">bam()</a></code> engine (as opposed to <code><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam()</a></code>) for parameter estimation, given the large size of the dataset. In future, other engines such as <code>brm()</code> and <code>mvgam()</code>, will be made available for full luxury Bayesian inference.</p>
+<p>Fit a model to estimate how the log(mortality) curve changed over time using <code>deaths</code> as the outcome and using a time-varying function of <code>age</code> as the primary predictor. Using <code><a href="reference/fts.html">fts()</a></code>, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where <code>time = 'year'</code>. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the <code><a href="https://rdrr.io/pkg/mgcv/man/bam.html" class="external-link">bam()</a></code> engine (as opposed to <code><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam()</a></code>) for parameter estimation, given the large size of the dataset. In future, other engines such as <code>brm()</code> and <code>mvgam()</code>, will be made available for full luxury Bayesian inference.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ffc_gam.html">ffc_gam</a></span><span class="op">(</span></span>
 <span>  <span class="va">deaths</span> <span class="op">~</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">population</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="va">sex</span> <span class="op">+</span></span>
+<span>    <span class="co"># Use mean_only = TRUE to model a time-varying level</span></span>
+<span>    <span class="fu"><a href="reference/fts.html">fts</a></span><span class="op">(</span></span>
+<span>      <span class="va">year</span>,</span>
+<span>      mean_only <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>      bs <span class="op">=</span> <span class="st">'tp'</span>,</span>
+<span>      time_k <span class="op">=</span> <span class="fl">35</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="co"># Model the male/female deviations around the shared mean</span></span>
 <span>    <span class="fu"><a href="reference/fts.html">fts</a></span><span class="op">(</span></span>
 <span>      <span class="va">age</span>,</span>
-<span>      k <span class="op">=</span> <span class="fl">10</span>, bs <span class="op">=</span> <span class="st">"cr"</span>, by <span class="op">=</span> <span class="va">sex</span>,</span>
-<span>      time_k <span class="op">=</span> <span class="fl">10</span></span>
+<span>      by <span class="op">=</span> <span class="va">sex</span>,</span>
+<span>      bs <span class="op">=</span> <span class="st">'tp'</span>,</span>
+<span>      time_k <span class="op">=</span> <span class="fl">15</span></span>
 <span>    <span class="op">)</span>,</span>
 <span>  time <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">qld_mortality</span>,</span>
@@ -144,60 +153,60 @@
 <span><span class="co">#&gt; Link function: log </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Formula:</span></span>
-<span><span class="co">#&gt; deaths ~ sex + offset(log(population)) + s(year, by = fts_bs_s_age_bysexfemale_1, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_2, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_3, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_4, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_5, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_6, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_7, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_8, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_9, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_1, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_2, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_3, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_4, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_5, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_6, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_7, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_8, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexmale_9, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1) + s(year, by = fts_age1_mean, </span></span>
-<span><span class="co">#&gt;     bs = "bs", k = 10, m = 1, id = 1)</span></span>
+<span><span class="co">#&gt; deaths ~ sex + offset(log(population)) + s(year, by = fts_year1_mean, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 35, m = 2, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_1, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_2, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_3, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_4, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_5, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_6, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_7, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_8, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_9, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_1, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_2, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_3, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_4, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_5, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_6, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_7, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_8, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_age_bysexmale_9, </span></span>
+<span><span class="co">#&gt;     bs = "tp", k = 15, m = 2, id = 2)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric coefficients:</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span><span class="co">#&gt; (Intercept) -5.664337   0.004209 -1345.9   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; sexmale      0.577793   0.005181   111.5   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept) -5.650741   0.004071 -1387.9   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; sexmale      0.576371   0.005016   114.9   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Approximate significance of smooth terms:</span></span>
-<span><span class="co">#&gt;                                       edf Ref.df   Chi.sq p-value    </span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1  9.992     10  21226.4  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2  9.997     10  18352.8  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3  9.997     10  20256.8  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4  9.999     10   8508.9  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5  9.999     10    108.3  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6  9.999     10  29219.5  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7 10.000     10 163689.5  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8 10.000     10 378156.2  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9  9.999     10 318979.6  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1    9.995     10  34586.7  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2    9.999     10  23790.6  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3    9.999     10  26767.2  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4    9.999     10  11541.2  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5    9.999     10   1061.2  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6   10.000     10  58331.7  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   10.000     10 231936.3  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8   10.000     10 394150.6  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9    9.996     10 125186.4  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_age1_mean               9.000      9   9489.3  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt;                                       edf Ref.df Chi.sq p-value    </span></span>
+<span><span class="co">#&gt; s(year):fts_year1_mean             31.761 33.633  10202  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1  7.048  8.198  16336  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2  5.291  6.233  10286  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3  6.749  7.794   9625  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4  5.349  6.314   8522  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5  6.476  7.476   8479  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6  5.205  6.146   8713  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7  6.379  7.370   7815  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8  5.108  5.942  11491  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9  5.549  6.283   6097  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1    7.425  8.630  19621  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2    5.780  6.825  11220  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3    7.129  8.282  12804  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4    5.755  6.825  11978  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5    6.755  7.867  14718  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6    5.407  6.416  12071  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7    6.474  7.528  11899  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8    5.218  6.068  13555  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9    5.373  6.074   6747  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; R-sq.(adj) =  0.986   Deviance explained = 97.7%</span></span>
-<span><span class="co">#&gt; fREML =  21658  Scale est. = 1         n = 8282</span></span></code></pre></div>
+<span><span class="co">#&gt; R-sq.(adj) =  0.986   Deviance explained = 97.6%</span></span>
+<span><span class="co">#&gt; fREML =  21791  Scale est. = 1         n = 8282</span></span></code></pre></div>
 <p>View predicted functional curves using a fixed offset (where <code>population = 1</code>), which allows us to calculate a standardized rate of mortality</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdat</span> <span class="op">&lt;-</span> <span class="va">qld_mortality</span></span>
@@ -275,18 +284,18 @@
 <span><span class="op">)</span></span>
 <span><span class="va">functional_coefs</span></span>
 <span><span class="co">#&gt; # A tibble: 7,790 × 5</span></span>
-<span><span class="co">#&gt;    .basis                     .time .estimate .realisation  year</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;                      &lt;int&gt;     &lt;dbl&gt;        &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1  1980     -3.78            1  1980</span></span>
-<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1  1981     -3.79            1  1981</span></span>
-<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1  1982     -3.80            1  1982</span></span>
-<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1  1983     -3.82            1  1983</span></span>
-<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1  1984     -3.83            1  1984</span></span>
-<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1  1985     -3.83            1  1985</span></span>
-<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1  1986     -3.81            1  1986</span></span>
-<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1  1987     -3.80            1  1987</span></span>
-<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1  1988     -3.78            1  1988</span></span>
-<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1  1989     -3.76            1  1989</span></span>
+<span><span class="co">#&gt;    .basis         .time .estimate .realisation  year</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;          &lt;int&gt;     &lt;dbl&gt;        &lt;int&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1 fts_year1_mean  1980     0.386            1  1980</span></span>
+<span><span class="co">#&gt;  2 fts_year1_mean  1981     0.379            1  1981</span></span>
+<span><span class="co">#&gt;  3 fts_year1_mean  1982     0.419            1  1982</span></span>
+<span><span class="co">#&gt;  4 fts_year1_mean  1983     0.325            1  1983</span></span>
+<span><span class="co">#&gt;  5 fts_year1_mean  1984     0.318            1  1984</span></span>
+<span><span class="co">#&gt;  6 fts_year1_mean  1985     0.331            1  1985</span></span>
+<span><span class="co">#&gt;  7 fts_year1_mean  1986     0.280            1  1986</span></span>
+<span><span class="co">#&gt;  8 fts_year1_mean  1987     0.257            1  1987</span></span>
+<span><span class="co">#&gt;  9 fts_year1_mean  1988     0.247            1  1988</span></span>
+<span><span class="co">#&gt; 10 fts_year1_mean  1989     0.264            1  1989</span></span>
 <span><span class="co">#&gt; # ℹ 7,780 more rows</span></span></code></pre></div>
 <p>The basis function coefficient time series can be plotted using <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -305,19 +314,136 @@
 <span><span class="va">functional_fc</span></span>
 <span><span class="co">#&gt; # A tsibble: 4,750 x 6 [1Y]</span></span>
 <span><span class="co">#&gt; # Key:       .basis, .realisation, .model, .rep [950]</span></span>
-<span><span class="co">#&gt;    .basis        .realisation .model .time .rep    .sim</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;                &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_age1_mean            1 ARIMA   2021 1     -0.384</span></span>
-<span><span class="co">#&gt;  2 fts_age1_mean            1 ARIMA   2022 1     -0.393</span></span>
-<span><span class="co">#&gt;  3 fts_age1_mean            1 ARIMA   2023 1     -0.403</span></span>
-<span><span class="co">#&gt;  4 fts_age1_mean            1 ARIMA   2024 1     -0.415</span></span>
-<span><span class="co">#&gt;  5 fts_age1_mean            1 ARIMA   2025 1     -0.434</span></span>
-<span><span class="co">#&gt;  6 fts_age1_mean            1 ARIMA   2021 2     -0.387</span></span>
-<span><span class="co">#&gt;  7 fts_age1_mean            1 ARIMA   2022 2     -0.405</span></span>
-<span><span class="co">#&gt;  8 fts_age1_mean            1 ARIMA   2023 2     -0.428</span></span>
-<span><span class="co">#&gt;  9 fts_age1_mean            1 ARIMA   2024 2     -0.448</span></span>
-<span><span class="co">#&gt; 10 fts_age1_mean            1 ARIMA   2025 2     -0.467</span></span>
+<span><span class="co">#&gt;    .basis                     .realisation .model .time .rep   .sim</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;                             &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt; &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.85</span></span>
+<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.85</span></span>
+<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.86</span></span>
+<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.87</span></span>
+<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.89</span></span>
+<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.85</span></span>
+<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.84</span></span>
+<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.82</span></span>
+<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.78</span></span>
+<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.72</span></span>
 <span><span class="co">#&gt; # ℹ 4,740 more rows</span></span></code></pre></div>
+<p>Another example showing univariate time series modelling and forecasting</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://fable.tidyverts.org" class="external-link">fable</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tsibble.tidyverts.org" class="external-link">tsibble</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
+<p>Our aim here is to forecast the number of domestic holiday travellers to Melbourne, Australia. The data can be found in the <code><a href="https://tsibble.tidyverts.org/reference/tourism.html" class="external-link">tsibble::tourism</a></code> data set. For now we need to explicitly add the <code>quarter</code> and <code>time</code> variables to the data, but in future this will be done automatically for seamless integration with the <code>tsibbleverse</code></p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tourism_melb</span> <span class="op">&lt;-</span> <span class="va">tourism</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">Region</span> <span class="op">==</span> <span class="st">"Melbourne"</span>,</span>
+<span>         <span class="va">Purpose</span> <span class="op">==</span> <span class="st">"Holiday"</span><span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>quarter <span class="op">=</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/quarter.html" class="external-link">quarter</a></span><span class="op">(</span><span class="va">Quarter</span><span class="op">)</span>,</span>
+<span>         time <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">row_number</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tourism_melb</span></span>
+<span><span class="co">#&gt; # A tsibble: 80 x 7 [1Q]</span></span>
+<span><span class="co">#&gt; # Key:       Region, State, Purpose [1]</span></span>
+<span><span class="co">#&gt;    Quarter Region    State    Purpose Trips quarter  time</span></span>
+<span><span class="co">#&gt;      &lt;qtr&gt; &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;   &lt;dbl&gt;   &lt;int&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1 1998 Q1 Melbourne Victoria Holiday  428.       1     1</span></span>
+<span><span class="co">#&gt;  2 1998 Q2 Melbourne Victoria Holiday  424.       2     2</span></span>
+<span><span class="co">#&gt;  3 1998 Q3 Melbourne Victoria Holiday  450.       3     3</span></span>
+<span><span class="co">#&gt;  4 1998 Q4 Melbourne Victoria Holiday  451.       4     4</span></span>
+<span><span class="co">#&gt;  5 1999 Q1 Melbourne Victoria Holiday  412.       1     5</span></span>
+<span><span class="co">#&gt;  6 1999 Q2 Melbourne Victoria Holiday  355.       2     6</span></span>
+<span><span class="co">#&gt;  7 1999 Q3 Melbourne Victoria Holiday  362.       3     7</span></span>
+<span><span class="co">#&gt;  8 1999 Q4 Melbourne Victoria Holiday  342.       4     8</span></span>
+<span><span class="co">#&gt;  9 2000 Q1 Melbourne Victoria Holiday  434.       1     9</span></span>
+<span><span class="co">#&gt; 10 2000 Q2 Melbourne Victoria Holiday  403.       2    10</span></span>
+<span><span class="co">#&gt; # ℹ 70 more rows</span></span></code></pre></div>
+<p>Split into training and testing folds. We wil aim to forecast the last 5 quarters of the data</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">train</span> <span class="op">&lt;-</span> <span class="va">tourism_melb</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_head</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">75</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">test</span> <span class="op">&lt;-</span> <span class="va">tourism_melb</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_tail</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<p>Now fit an <code>ffc</code> model. We use time-varying level and time-varying seasonality components, together with a Tweedie observation model (because our outcome, <code>Trips</code>, consists of non-negative real values). This model is simpler so we use the <code>'gam'</code> engine for fitting:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ffc_gam.html">ffc_gam</a></span><span class="op">(</span></span>
+<span>  <span class="va">Trips</span> <span class="op">~</span></span>
+<span>    <span class="co"># Use mean_only = TRUE to model a time-varying mean</span></span>
+<span>    <span class="fu"><a href="reference/fts.html">fts</a></span><span class="op">(</span></span>
+<span>      <span class="va">time</span>,</span>
+<span>      mean_only <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>      time_k <span class="op">=</span> <span class="fl">50</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="co"># Time-varying seasonality</span></span>
+<span>    <span class="fu"><a href="reference/fts.html">fts</a></span><span class="op">(</span></span>
+<span>      <span class="va">quarter</span>,</span>
+<span>      bs <span class="op">=</span> <span class="st">'tp'</span>,</span>
+<span>      k <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>      time_k <span class="op">=</span> <span class="fl">15</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>  time <span class="op">=</span> <span class="st">"time"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">train</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/Tweedie.html" class="external-link">tw</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  engine <span class="op">=</span> <span class="st">'gam'</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Draw the time-varying basis coefficients, this time using <code>gratia</code></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">gratia</span><span class="fu">::</span><span class="fu">draw</span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-16-1.png" width="100%"></p>
+<p>Compute forecast distribution by fitting the basis coefficient time series models in parallel (which is automatically supported within the <code>fable</code> package). Here we fit independent exponential smoothing models to each coefficient time series</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">mod</span>,</span>
+<span>  newdata <span class="op">=</span> <span class="va">test</span>,</span>
+<span>  model <span class="op">=</span> <span class="st">'ETS'</span>,</span>
+<span>  summary <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Convert resulting forecasts to a <code>fable</code> object for automatic plotting and/or scoring of forecasts</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">test</span><span class="op">[[</span><span class="st">'value'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">fc</span></span>
+<span></span>
+<span><span class="va">fc_ffc</span> <span class="op">&lt;-</span> <span class="fu">fabletools</span><span class="fu">:::</span><span class="fu">build_fable</span><span class="op">(</span></span>
+<span>  <span class="va">test</span>,</span>
+<span>  response <span class="op">=</span> <span class="st">'Trips'</span>,</span>
+<span>  distribution <span class="op">=</span> <span class="st">'value'</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Plot the forecast distribution along with the observed data</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fc_ffc</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">train</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">test</span>,</span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">Trips</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">'FFC forecast'</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-19-1.png" width="100%"></p>
+<p>Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">train</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://fabletools.tidyverts.org/reference/model.html" class="external-link">model</a></span><span class="op">(</span></span>
+<span>    arima <span class="op">=</span> <span class="fu"><a href="https://fable.tidyverts.org/reference/ARIMA.html" class="external-link">ARIMA</a></span><span class="op">(</span><span class="va">Trips</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
+<span>    h <span class="op">=</span> <span class="fl">5</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">train</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">test</span>,</span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">Trips</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">'ARIMA forecast'</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-20-1.png" width="100%"></p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">train</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://fabletools.tidyverts.org/reference/model.html" class="external-link">model</a></span><span class="op">(</span></span>
+<span>    ets <span class="op">=</span> <span class="fu"><a href="https://fable.tidyverts.org/reference/ETS.html" class="external-link">ETS</a></span><span class="op">(</span><span class="va">Trips</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
+<span>    h <span class="op">=</span> <span class="fl">5</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">train</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">test</span>,</span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">Trips</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">'ETS forecast'</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-21-1.png" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="getting-help">Getting help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
