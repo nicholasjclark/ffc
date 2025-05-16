@@ -43,15 +43,14 @@ forecast.fts_ts <- function(
 
   # If .sd is included, use the variance inflation method
   # to update forecast uncertainties
-  if(exists('.sd', object_tsbl)){
-
+  if (exists(".sd", object_tsbl)) {
     # Calculate SDs
     object_sds <- object_tsbl %>%
       as.data.frame() %>%
       dplyr::group_by(.basis, .realisation) %>%
       dplyr::summarise(.sd = mean(.sd))
 
-    if(stationary){
+    if (stationary) {
       out <- object_tsbl %>%
         # Fit the forecasting model(s) to each basis coefficient
         # time series
@@ -68,11 +67,11 @@ forecast.fts_ts <- function(
         ) %>%
         # Tidy the names
         dplyr::mutate(.model = model) %>%
-
         # Add the SDs to the tibble and use them to modify
         # the forecast uncertainty
         dplyr::left_join(object_sds,
-                         by = dplyr::join_by(.basis, .realisation)) %>%
+          by = dplyr::join_by(.basis, .realisation)
+        ) %>%
         dplyr::mutate(.estimate = vctrs::new_vctr(
           purrr::map2(
             .estimate,
@@ -80,10 +79,12 @@ forecast.fts_ts <- function(
             \(x, y) generate(
               distributional::dist_normal(
                 mean = mean(x),
-                sd = sqrt(distributional::parameters(x)$sigma ^ 2 + y ^ 2)),
+                sd = sqrt(distributional::parameters(x)$sigma^2 + y^2)
+              ),
               times = times
-            )),
-          class = 'distribution'
+            )
+          ),
+          class = "distribution"
         )) %>%
         tidyr::unnest(
           cols = .estimate
@@ -91,11 +92,10 @@ forecast.fts_ts <- function(
         tidyr::unnest(
           cols = .estimate
         ) %>%
-        dplyr::rename('.sim' = '.estimate') %>%
+        dplyr::rename(".sim" = ".estimate") %>%
         dplyr::group_by(.basis, .realisation) %>%
         dplyr::mutate(.rep = rep(1:times, h)) %>%
         dplyr::ungroup()
-
     } else {
       out <- object_tsbl %>%
         # Fit the forecasting model(s) to each basis coefficient
@@ -112,11 +112,11 @@ forecast.fts_ts <- function(
         ) %>%
         # Tidy the names
         dplyr::mutate(.model = model) %>%
-
         # Add the SDs to the tibble and use them to modify
         # the forecast uncertainty
         dplyr::left_join(object_sds,
-                         by = dplyr::join_by(.basis, .realisation)) %>%
+          by = dplyr::join_by(.basis, .realisation)
+        ) %>%
         dplyr::mutate(.estimate = vctrs::new_vctr(
           purrr::map2(
             .estimate,
@@ -124,10 +124,12 @@ forecast.fts_ts <- function(
             \(x, y) generate(
               distributional::dist_normal(
                 mean = mean(x),
-                sd = sqrt(distributional::parameters(x)$sigma ^ 2 + y ^ 2)),
+                sd = sqrt(distributional::parameters(x)$sigma^2 + y^2)
+              ),
               times = times
-            )),
-          class = 'distribution'
+            )
+          ),
+          class = "distribution"
         )) %>%
         tidyr::unnest(
           cols = .estimate
@@ -135,12 +137,11 @@ forecast.fts_ts <- function(
         tidyr::unnest(
           cols = .estimate
         ) %>%
-        dplyr::rename('.sim' = '.estimate') %>%
+        dplyr::rename(".sim" = ".estimate") %>%
         dplyr::group_by(.basis, .realisation) %>%
         dplyr::mutate(.rep = rep(1:times, h)) %>%
         dplyr::ungroup()
     }
-
   } else {
     # Else do not modify forecast variances
     if (stationary) {
@@ -297,7 +298,7 @@ forecast.ffc_gam <- function(
     )
 
     # Calculate man + SD or quantiles
-    if(quantile_fc){
+    if (quantile_fc) {
       functional_coefs <- intermed_coefs %>%
         dplyr::group_by(.basis, .time) %>%
         dplyr::summarise(
@@ -311,10 +312,11 @@ forecast.ffc_gam <- function(
         ) %>%
         dplyr::ungroup() %>%
         tidyr::pivot_longer(
-          cols = tidyr::contains('%'),
-          names_to = 'quantile',
-          values_to = '.estimate') %>%
-        dplyr::mutate(.realisation = as.numeric(gsub('%', '', quantile))) %>%
+          cols = tidyr::contains("%"),
+          names_to = "quantile",
+          values_to = ".estimate"
+        ) %>%
+        dplyr::mutate(.realisation = as.numeric(gsub("%", "", quantile))) %>%
         tsibble::as_tsibble(
           key = c(.basis, .realisation),
           index = .time
@@ -327,8 +329,10 @@ forecast.ffc_gam <- function(
           .sd = sd(.estimate)
         ) %>%
         dplyr::ungroup() %>%
-        dplyr::mutate(.realisation = 1,
-                      .estimate = .mean) %>%
+        dplyr::mutate(
+          .realisation = 1,
+          .estimate = .mean
+        ) %>%
         tsibble::as_tsibble(
           key = c(.basis, .realisation),
           index = .time
@@ -336,41 +340,41 @@ forecast.ffc_gam <- function(
     }
 
 
-    if(!is.null(attr(intermed_coefs, 'index'))){
+    if (!is.null(attr(intermed_coefs, "index"))) {
       functional_coefs <- functional_coefs %>%
         dplyr::left_join(
           intermed_coefs %>%
-            dplyr::select(.time, !!attr(intermed_coefs, 'index')) %>%
+            dplyr::select(.time, !!attr(intermed_coefs, "index")) %>%
             dplyr::distinct(),
           by = dplyr::join_by(.time)
         )
     }
     class(functional_coefs) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
-    attr(functional_coefs, 'time_var') <- attr(intermed_coefs, 'time_var')
-    attr(functional_coefs, 'index') <- attr(intermed_coefs, 'index')
-    attr(functional_coefs, 'index2') <- attr(intermed_coefs, 'index2')
-    attr(functional_coefs, 'interval') <- attr(intermed_coefs, 'interval')
-    attr(functional_coefs, 'summarized') <- attr(intermed_coefs, 'summarized')
+    attr(functional_coefs, "time_var") <- attr(intermed_coefs, "time_var")
+    attr(functional_coefs, "index") <- attr(intermed_coefs, "index")
+    attr(functional_coefs, "index2") <- attr(intermed_coefs, "index2")
+    attr(functional_coefs, "interval") <- attr(intermed_coefs, "interval")
+    attr(functional_coefs, "summarized") <- attr(intermed_coefs, "summarized")
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
     functional_fc <- suppressWarnings(
       forecast(
-      object = functional_coefs,
-      h = max_horizon,
-      times = 1000,
-      model = model,
-      stationary = stationary,
-    )
+        object = functional_coefs,
+        h = max_horizon,
+        times = 1000,
+        model = model,
+        stationary = stationary,
+      )
     )
 
-    if(!is.null(attr(intermed_coefs, 'index'))){
+    if (!is.null(attr(intermed_coefs, "index"))) {
       functional_fc <- functional_fc %>%
         dplyr::left_join(
           interpreted$orig_data %>%
-            dplyr::select(!!time_var, !!attr(intermed_coefs, 'index')) %>%
+            dplyr::select(!!time_var, !!attr(intermed_coefs, "index")) %>%
             dplyr::distinct(),
-          by = dplyr::join_by(!!attr(intermed_coefs, 'index'))
+          by = dplyr::join_by(!!attr(intermed_coefs, "index"))
         ) %>%
         dplyr::rename(.time = !!time_var)
     }
@@ -382,7 +386,7 @@ forecast.ffc_gam <- function(
         .time %in% unique(interpreted$data[[time_var]])
       )
 
-    if(quantile_fc) {
+    if (quantile_fc) {
       # Sample draws based on quantile weights
       inds_keep <- functional_fc %>%
         tibble::as_tibble() %>%
@@ -397,12 +401,15 @@ forecast.ffc_gam <- function(
 
       functional_fc <- inds_keep %>%
         dplyr::left_join(functional_fc,
-                         by = dplyr::join_by(.basis, .realisation, .rep),
-                         relationship = 'many-to-many') %>%
+          by = dplyr::join_by(.basis, .realisation, .rep),
+          relationship = "many-to-many"
+        ) %>%
         dplyr::ungroup() %>%
         dplyr::group_by(.basis, .time) %>%
-        dplyr::mutate(.realisation = 1,
-                      .rep = 1:1000)
+        dplyr::mutate(
+          .realisation = 1,
+          .rep = 1:1000
+        )
     }
 
     # Which coefficients in lpmatrix are associated with fts objects?
@@ -565,7 +572,7 @@ forecast.ffc_gam <- function(
     class(out) <- c("tbl_df", "tbl", "data.frame")
   } else {
     out <- distributional::dist_sample(
-      lapply(seq_len(NCOL(preds)), function(i) preds[,i])
+      lapply(seq_len(NCOL(preds)), function(i) preds[, i])
     )
   }
 
@@ -574,10 +581,10 @@ forecast.ffc_gam <- function(
 
 #' Normalise quantiles into sampling weights
 #' @noRd
-norm_quantiles = function(x) {
+norm_quantiles <- function(x) {
   xhat <- vector(length = length(x))
-  for(i in seq_along(x)){
-    if(x[i] < 50){
+  for (i in seq_along(x)) {
+    if (x[i] < 50) {
       xhat[i] <- (50 - x[i]) / 50
     } else {
       xhat[i] <- (x[i] - 50) / 50
@@ -621,8 +628,9 @@ posterior_predict <- function(object,
     scale_p <- summary(object)[["dispersion"]]
   }
 
-  if (!grepl('tweedie', mod$family[['family']],
-            ignore.case = TRUE)) {
+  if (!grepl("tweedie", object$family[["family"]],
+    ignore.case = TRUE
+  )) {
     scale_p <- rep(scale_p, length(linpreds))
   }
 

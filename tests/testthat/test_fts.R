@@ -7,7 +7,7 @@ test_that("fts() working correctly", {
   expect_true(inherits(fts_obj, "list"))
   expect_true(fts_obj$term == "growth")
   expect_true(fts_obj$by == "NA")
-  expect_true(fts_obj$time_bs == "bs")
+  expect_true(fts_obj$time_bs == "tp")
   expect_true(fts_obj$time_k == 10)
 
   smooth_obj <- eval(parse(text = fts_obj$call))

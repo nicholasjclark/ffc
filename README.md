@@ -112,14 +112,14 @@ mod <- ffc_gam(
     fts(
       year,
       mean_only = TRUE,
-      bs = 'tp',
+      bs = "tp",
       time_k = 35
     ) +
     # Model the male/female deviations around the shared mean
     fts(
       age,
       by = sex,
-      bs = 'tp',
+      bs = "tp",
       time_k = 15
     ),
   time = "year",
@@ -299,16 +299,16 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
 #>    <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.386            1  1980
-#>  2 fts_year1_mean  1981     0.379            1  1981
-#>  3 fts_year1_mean  1982     0.419            1  1982
-#>  4 fts_year1_mean  1983     0.325            1  1983
-#>  5 fts_year1_mean  1984     0.318            1  1984
-#>  6 fts_year1_mean  1985     0.331            1  1985
-#>  7 fts_year1_mean  1986     0.280            1  1986
+#>  1 fts_year1_mean  1980     0.366            1  1980
+#>  2 fts_year1_mean  1981     0.378            1  1981
+#>  3 fts_year1_mean  1982     0.407            1  1982
+#>  4 fts_year1_mean  1983     0.324            1  1983
+#>  5 fts_year1_mean  1984     0.323            1  1984
+#>  6 fts_year1_mean  1985     0.326            1  1985
+#>  7 fts_year1_mean  1986     0.279            1  1986
 #>  8 fts_year1_mean  1987     0.257            1  1987
-#>  9 fts_year1_mean  1988     0.247            1  1988
-#> 10 fts_year1_mean  1989     0.264            1  1989
+#>  9 fts_year1_mean  1988     0.246            1  1988
+#> 10 fts_year1_mean  1989     0.259            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -344,16 +344,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.85
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.87
 #>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.85
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.86
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.87
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.89
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.85
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.84
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.82
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.78
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.72
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.84
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.82
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.79
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.87
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.85
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.85
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.85
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.85
 #> # ℹ 4,740 more rows
 ```
 
@@ -373,10 +373,14 @@ seamless integration with the `tsibbleverse`
 
 ``` r
 tourism_melb <- tourism %>%
-  filter(Region == "Melbourne",
-         Purpose == "Holiday") %>%
-  mutate(quarter = lubridate::quarter(Quarter),
-         time = dplyr::row_number())
+  filter(
+    Region == "Melbourne",
+    Purpose == "Holiday"
+  ) %>%
+  mutate(
+    quarter = lubridate::quarter(Quarter),
+    time = dplyr::row_number()
+  )
 tourism_melb
 #> # A tsibble: 80 x 7 [1Q]
 #> # Key:       Region, State, Purpose [1]
@@ -406,7 +410,7 @@ test <- tourism_melb %>%
   dplyr::slice_tail(n = 5)
 ```
 
-Now fit an `ffc` model. We use time-varying level and time-varying
+Now fit an `ffc_gam`. We use time-varying level and time-varying
 seasonality components, together with a Tweedie observation model
 (because our outcome, `Trips`, consists of non-negative real values).
 This model is simpler so we use the `'gam'` engine for fitting:
@@ -423,14 +427,14 @@ mod <- ffc_gam(
     # Time-varying seasonality
     fts(
       quarter,
-      bs = 'tp',
+      bs = "tp",
       k = 4,
       time_k = 15
     ),
   time = "time",
   data = train,
   family = tw(),
-  engine = 'gam'
+  engine = "gam"
 )
 ```
 
@@ -451,7 +455,7 @@ to each coefficient time series
 fc <- forecast(
   object = mod,
   newdata = test,
-  model = 'ETS',
+  model = "ETS",
   summary = FALSE
 )
 ```
@@ -460,12 +464,12 @@ Convert resulting forecasts to a `fable` object for automatic plotting
 and/or scoring of forecasts
 
 ``` r
-test[['value']] <- fc
+test[["value"]] <- fc
 
 fc_ffc <- fabletools:::build_fable(
   test,
-  response = 'Trips',
-  distribution = 'value'
+  response = "Trips",
+  distribution = "value"
 )
 ```
 
@@ -478,7 +482,7 @@ fc_ffc %>%
     data = test,
     aes(y = Trips)
   ) +
-  ggtitle('FFC forecast')
+  ggtitle("FFC forecast")
 ```
 
 <img src="man/figures/README-unnamed-chunk-19-1.png" width="100%" />
@@ -489,7 +493,8 @@ simpler to code and of course a bit faster
 ``` r
 train %>%
   model(
-    arima = ARIMA(Trips)) %>%
+    arima = ARIMA(Trips)
+  ) %>%
   forecast(
     h = 5
   ) %>%
@@ -498,7 +503,7 @@ train %>%
     data = test,
     aes(y = Trips)
   ) +
-  ggtitle('ARIMA forecast')
+  ggtitle("ARIMA forecast")
 ```
 
 <img src="man/figures/README-unnamed-chunk-20-1.png" width="100%" />
@@ -506,7 +511,8 @@ train %>%
 ``` r
 train %>%
   model(
-    ets = ETS(Trips)) %>%
+    ets = ETS(Trips)
+  ) %>%
   forecast(
     h = 5
   ) %>%
@@ -515,7 +521,7 @@ train %>%
     data = test,
     aes(y = Trips)
   ) +
-  ggtitle('ETS forecast')
+  ggtitle("ETS forecast")
 ```
 
 <img src="man/figures/README-unnamed-chunk-21-1.png" width="100%" />

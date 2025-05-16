@@ -27,7 +27,7 @@ test_that("MRF basis setup works correctly", {
           bs = "mrf",
           xt = xt,
           k = 6,
-          time_bs = 'cr',
+          time_bs = "cr",
           time_k = 10
         ),
       time = "time",
@@ -44,7 +44,7 @@ test_that("MRF basis setup works correctly", {
         xt = xt,
         k = 6,
         time_k = 3,
-        time_bs = 'cr'
+        time_bs = "cr"
       ),
     time = "time",
     data = fake_dat,

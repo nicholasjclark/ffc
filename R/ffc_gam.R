@@ -129,33 +129,33 @@ update_mod_data <- function(
     out_name <- as.character(terms(formula(gam_object$formula))[[2]])
     if (!as.character(terms(formula(gam_object$formula))[[2]]) %in% names(data)) {
       stop(
-        paste0('variable ', terms(formula(gam_object$formula))[[2]], ' not found in data'),
+        paste0("variable ", terms(formula(gam_object$formula))[[2]], " not found in data"),
         call. = FALSE
       )
     }
   } else {
-    if (any(grepl('cbind', resp_terms))) {
-      resp_terms <- resp_terms[-grepl('cbind', resp_terms)]
+    if (any(grepl("cbind", resp_terms))) {
+      resp_terms <- resp_terms[-grepl("cbind", resp_terms)]
       out_name <- resp_terms[1]
       for (i in 1:length(resp_terms)) {
         if (!resp_terms[i] %in% names(data)) {
           stop(
-            paste0('variable ', resp_terms[i], ' not found in data'),
+            paste0("variable ", resp_terms[i], " not found in data"),
             call. = FALSE
           )
         }
       }
     } else {
       stop(
-        'Not sure how to deal with this response variable specification',
+        "Not sure how to deal with this response variable specification",
         call. = FALSE
       )
     }
   }
 
   # Indices of missing responses in data
-  resp_finites <- vector(mode = 'list')
-  for(i in seq_along(resp_terms)){
+  resp_finites <- vector(mode = "list")
+  for (i in seq_along(resp_terms)) {
     resp_finites[[i]] <- which(is.finite(data[[resp_terms[i]]]))
   }
   resp_finites <- unique(
@@ -197,7 +197,7 @@ update_mod_data <- function(
   )
 
   # Check if this is a tsibble; if so, add the index var
-  if(inherits(data, 'tbl_ts')){
+  if (inherits(data, "tbl_ts")) {
     vars_to_add <- c(
       vars_to_add,
       tsibble::index_var(data)
@@ -214,10 +214,10 @@ update_mod_data <- function(
     }
     colnames(gam_object$model) <- c(orig_names, vars_to_add)
 
-    if(inherits(data, 'tbl_ts')){
-      attr(gam_object$model, 'index') <- attr(data, 'index')
-      attr(gam_object$model, 'index2') <- attr(data, 'index2')
-      attr(gam_object$model, 'interval') <- attr(data, 'interval')
+    if (inherits(data, "tbl_ts")) {
+      attr(gam_object$model, "index") <- attr(data, "index")
+      attr(gam_object$model, "index2") <- attr(data, "index2")
+      attr(gam_object$model, "interval") <- attr(data, "interval")
     }
   }
   return(gam_object)

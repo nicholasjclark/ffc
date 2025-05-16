@@ -131,9 +131,9 @@ fts_coefs.ffc_gam <- function(
                 ".realisation",
                 time_var
               )
-              if(!is.null(attr(object$model, 'index'))){
-                repdat[[attr(object$model, 'index')]] <-
-                  object$model[[attr(object$model, 'index')]]
+              if (!is.null(attr(object$model, "index"))) {
+                repdat[[attr(object$model, "index")]] <-
+                  object$model[[attr(object$model, "index")]]
               }
 
               repdat
@@ -146,8 +146,8 @@ fts_coefs.ffc_gam <- function(
     )
     class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
     attr(fts_preds, "time_var") <- time_var
-    attr(fts_preds, "index") <- attr(object$model, 'index')
-    attr(fts_preds, "index2") <- attr(object$model, 'index2')
+    attr(fts_preds, "index") <- attr(object$model, "index")
+    attr(fts_preds, "index2") <- attr(object$model, "index2")
     attr(fts_preds, "interval") <- attr(object$model, "interval")
     attr(fts_preds, "summarized") <- isTRUE(summary)
     return(fts_preds)
@@ -191,16 +191,16 @@ fts_ts_2_tsbl <- function(x) {
     )
   }
 
-  if(!is.null(attr(x, 'interval'))) {
-    attr(out, 'interval') <- attr(x, 'interval')
+  if (!is.null(attr(x, "interval"))) {
+    attr(out, "interval") <- attr(x, "interval")
   }
 
-  if(!is.null(attr(x, 'index'))) {
-    attr(out, 'index') <- attr(x, 'index')
+  if (!is.null(attr(x, "index"))) {
+    attr(out, "index") <- attr(x, "index")
   }
 
-  if(!is.null(attr(x, 'index2'))) {
-    attr(out, 'index2') <- attr(x, 'index2')
+  if (!is.null(attr(x, "index2"))) {
+    attr(out, "index2") <- attr(x, "index2")
   }
 
   return(out)

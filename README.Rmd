@@ -79,14 +79,14 @@ mod <- ffc_gam(
     fts(
       year,
       mean_only = TRUE,
-      bs = 'tp',
+      bs = "tp",
       time_k = 35
     ) +
     # Model the male/female deviations around the shared mean
     fts(
       age,
       by = sex,
-      bs = 'tp',
+      bs = "tp",
       time_k = 15
     ),
   time = "year",
@@ -207,10 +207,14 @@ library(dplyr)
 Our aim here is to forecast the number of domestic holiday travellers to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
 ```{r}
 tourism_melb <- tourism %>%
-  filter(Region == "Melbourne",
-         Purpose == "Holiday") %>%
-  mutate(quarter = lubridate::quarter(Quarter),
-         time = dplyr::row_number())
+  filter(
+    Region == "Melbourne",
+    Purpose == "Holiday"
+  ) %>%
+  mutate(
+    quarter = lubridate::quarter(Quarter),
+    time = dplyr::row_number()
+  )
 tourism_melb
 ```
 
@@ -223,7 +227,7 @@ test <- tourism_melb %>%
   dplyr::slice_tail(n = 5)
 ```
 
-Now fit an `ffc` model. We use time-varying level and time-varying seasonality components, together with a Tweedie observation model (because our outcome, `Trips`, consists of non-negative real values). This model is simpler so we use the `'gam'` engine for fitting:
+Now fit an `ffc_gam`. We use time-varying level and time-varying seasonality components, together with a Tweedie observation model (because our outcome, `Trips`, consists of non-negative real values). This model is simpler so we use the `'gam'` engine for fitting:
 ```{r}
 mod <- ffc_gam(
   Trips ~
@@ -236,14 +240,14 @@ mod <- ffc_gam(
     # Time-varying seasonality
     fts(
       quarter,
-      bs = 'tp',
+      bs = "tp",
       k = 4,
       time_k = 15
     ),
   time = "time",
   data = train,
   family = tw(),
-  engine = 'gam'
+  engine = "gam"
 )
 ```
 
@@ -257,19 +261,19 @@ Compute forecast distribution by fitting the basis coefficient time series model
 fc <- forecast(
   object = mod,
   newdata = test,
-  model = 'ETS',
+  model = "ETS",
   summary = FALSE
 )
 ```
 
 Convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
 ```{r, warning=FALSE}
-test[['value']] <- fc
+test[["value"]] <- fc
 
 fc_ffc <- fabletools:::build_fable(
   test,
-  response = 'Trips',
-  distribution = 'value'
+  response = "Trips",
+  distribution = "value"
 )
 ```
 
@@ -281,14 +285,15 @@ fc_ffc %>%
     data = test,
     aes(y = Trips)
   ) +
-  ggtitle('FFC forecast')
+  ggtitle("FFC forecast")
 ```
 
 Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster
 ```{r}
 train %>%
   model(
-    arima = ARIMA(Trips)) %>%
+    arima = ARIMA(Trips)
+  ) %>%
   forecast(
     h = 5
   ) %>%
@@ -297,13 +302,14 @@ train %>%
     data = test,
     aes(y = Trips)
   ) +
-  ggtitle('ARIMA forecast')
+  ggtitle("ARIMA forecast")
 ```
 
 ```{r}
 train %>%
   model(
-    ets = ETS(Trips)) %>%
+    ets = ETS(Trips)
+  ) %>%
   forecast(
     h = 5
   ) %>%
@@ -312,7 +318,7 @@ train %>%
     data = test,
     aes(y = Trips)
   ) +
-  ggtitle('ETS forecast')
+  ggtitle("ETS forecast")
 ```
 
 ## Getting help
