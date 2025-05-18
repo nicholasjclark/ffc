@@ -89,13 +89,15 @@ mod <- ffc_gam(
       time,
       mean_only = TRUE,
       time_bs = 'tp',
+      time_m = 1,
       time_k = 50
     ) +
     fts(
       season,
       bs = 'cc',
       k = 6,
-      time_bs = 'tp'
+      time_bs = 'tp',
+      time_m = 1
     ),
   knots = list(season = c(0.5, 12.5)),
   time = "time",
@@ -114,8 +116,7 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = test_tsibble,
-  model = 'ETS',
-  quantile_fc = FALSE,
+  model = 'ARIMA',
   stationary = FALSE,
   # use summary = FALSE to return the full distribution
   summary = FALSE

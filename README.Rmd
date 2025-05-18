@@ -80,14 +80,16 @@ mod <- ffc_gam(
       year,
       mean_only = TRUE,
       bs = "tp",
-      time_k = 35
+      time_k = 35,
+      time_m = 1
     ) +
     # Model the male/female deviations around the shared mean
     fts(
       age,
       by = sex,
       bs = "tp",
-      time_k = 15
+      time_k = 15,
+      time_m = 1
     ),
   time = "year",
   data = qld_mortality,
@@ -235,14 +237,16 @@ mod <- ffc_gam(
     fts(
       time,
       mean_only = TRUE,
-      time_k = 50
+      time_k = 50,
+      time_m = 1
     ) +
     # Time-varying seasonality
     fts(
       quarter,
       bs = "tp",
       k = 4,
-      time_k = 15
+      time_k = 15,
+      time_m = 1
     ),
   time = "time",
   data = train,
