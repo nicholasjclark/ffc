@@ -206,12 +206,12 @@ library(tsibble)
 library(dplyr)
 ```
 
-Our aim here is to forecast the number of domestic holiday travellers to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
+Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
 ```{r}
 tourism_melb <- tourism %>%
   filter(
     Region == "Melbourne",
-    Purpose == "Holiday"
+    Purpose == "Visiting"
   ) %>%
   mutate(
     quarter = lubridate::quarter(Quarter),
@@ -243,7 +243,6 @@ mod <- ffc_gam(
     # Time-varying seasonality
     fts(
       quarter,
-      bs = "tp",
       k = 4,
       time_k = 15,
       time_m = 1
