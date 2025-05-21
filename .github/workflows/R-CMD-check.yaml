@@ -17,16 +17,16 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ${{ matrix.config.os }} RStan - ${{ matrix.config.os }} (${{ matrix.config.r }})
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,  r: 'release'}
+          - {os: macos-latest,   r: 'release', rstan: 'CRAN'}
+          - {os: windows-latest, r: 'release', rstan: 'CRAN'}
+          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release', rstan: 'CRAN'}
+          - {os: ubuntu-latest,  r: 'release', rstan: 'CRAN'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
