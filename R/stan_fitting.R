@@ -16,7 +16,7 @@
 #'
 #' @return a stanfit object
 #'
-fit_ardf = function(model,
+fit_ardf = function(data,
                     chains = 4,
                     iter = 1000,
                     warmup = floor(iter / 2),
