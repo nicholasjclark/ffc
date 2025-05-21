@@ -48,4 +48,5 @@ LinkingTo:
     RcppParallel (>= 5.0.1),
     rstan (>= 2.32.0),
     StanHeaders (>= 2.21.0)
+SystemRequirements: GNU make
 LazyData: true
