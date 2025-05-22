@@ -31,8 +31,8 @@ binary = function(x) {
 }
 
 # Simulation setup
-# transform <- posreal; gam_fam <- tw()
-transform <- count; gam_fam <- nb()
+ transform <- posreal; gam_fam <- tw()
+# transform <- count; gam_fam <- nb()
 # transform <- proportional; gam_fam <- betar()
 # transform <- binary; gam_fam <- binomial()
 
@@ -42,7 +42,7 @@ simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::RW(),
   drift = TRUE,
-  prop_trend = 0.6,
+  prop_trend = 0.7,
   prop_train = 0.9,
   mu = -1,
   family = mvgam::student()
@@ -116,8 +116,9 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = test_tsibble,
-  model = 'ARIMA',
-  stationary = FALSE,
+  model = 'ARDF',
+  K = 2,
+  p = 5,
   # use summary = FALSE to return the full distribution
   summary = FALSE
 )

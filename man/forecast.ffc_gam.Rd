@@ -40,9 +40,11 @@ better forecast uncertainties when the variance of the basis fucntion coefficien
 time series is not stable over time. Defaults to \code{FALSE}}
 
 \item{model}{A \code{character} string representing a valid univariate model definition
-from the \pkg{fable} package. Note that the chosen method must have an associated
+from the \pkg{fable} package or one of the built-in Bayesian dynamic
+factor models. Note that if a \pkg{fable} model is used,
+the chosen method must have an associated
 \code{generate()} method in order to simulate forecast realisations. Valid models
-currently include: \code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
+currently include: \code{'ARDF'},\code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
 
 \item{stationary}{If \code{TRUE}, the fitted time series models are
 constrained to be stationary. Default is \code{FALSE}. This option
@@ -59,7 +61,7 @@ Only used if \code{summary} is \code{TRUE}}
 \item{probs}{The percentiles to be computed by the \code{quantile()} function.
 Only used if \code{summary} is \code{TRUE}}
 
-\item{...}{ignored}
+\item{...}{Other arguments to pass to the Stan dynamic factor models}
 }
 \value{
 Predicted values on the appropriate scale.

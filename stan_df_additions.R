@@ -97,30 +97,16 @@ model_data <- list(
 )
 
 
+test <- ffc:::fit_ardf(data = model_data)
 
-library(rstan)
-options(mc.cores = parallel::detectCores())
-rstan_options(auto_write = TRUE)
-stan_mod <- rstan::stan_model('inst/stan/ar_df.stan')
-
-fit1 <- rstan::sampling(
-  stan_mod,
-  data = model_data,
-  chains = 4,
-  cores = 4,
-  refresh = 100,
-  iter = 800,
-  warmup = 400
-)
-
-out <- summary(
-  fit1,
+out <- rstan::summary(
+  test,
   pars = c('alpha', 'sigma_obs', 'ar', 'nu', 'Lambda')
 )
 out$summary
 
 # Extract predictions for each series
-preds <- as.matrix(fit1, pars = 'ypred')
+preds <- as.matrix(test, pars = 'ypred')
 ends <- seq(
   0,
   NCOL(preds),

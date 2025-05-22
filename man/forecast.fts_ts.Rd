@@ -11,9 +11,11 @@
 basis function coefficients extracted from an \code{ffc_gam} object}
 
 \item{model}{A \code{character} string representing a valid univariate model definition
-from the \pkg{fable} package. Note that the chosen method must have an associated
+from the \pkg{fable} package or one of the built-in Bayesian dynamic
+factor models. Note that if a \pkg{fable} model is used,
+the chosen method must have an associated
 \code{generate()} method in order to simulate forecast realisations. Valid models
-currently include: \code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
+currently include: \code{'ARDF'},\code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
 
 \item{h}{A positive \code{integer} specifying the length of the forecast
 horizon}
@@ -25,7 +27,8 @@ realisation paths to simulate from the fitted forecast \code{model}}
 constrained to be stationary. Default is \code{FALSE}. This option
 only works when \code{model == 'ARIMA'}}
 
-\item{...}{Ignored}
+\item{...}{Other arguments to pass to the Stan dynamic factor models
+(i.e. the AR order \code{p = ...} or the number of factors \code{K = ...})}
 }
 \value{
 A \code{tsibble} object containing the forecast prediction (\code{.sim}) for each

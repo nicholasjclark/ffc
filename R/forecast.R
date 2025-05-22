@@ -3,9 +3,11 @@
 #' @param object An object of class `fts_ts` containing time-varying
 #' basis function coefficients extracted from an `ffc_gam` object
 #' @param model A `character` string representing a valid univariate model definition
-#' from the \pkg{fable} package. Note that the chosen method must have an associated
+#' from the \pkg{fable} package or one of the built-in Bayesian dynamic
+#' factor models. Note that if a \pkg{fable} model is used,
+#' the chosen method must have an associated
 #' `generate()` method in order to simulate forecast realisations. Valid models
-#' currently include: `'ETS'`, `'ARIMA'`, `'AR'`, `'NAIVE'`, and `'NNETAR'`
+#' currently include: `'ARDF'`,`'ETS'`, `'ARIMA'`, `'AR'`, `'NAIVE'`, and `'NNETAR'`
 #' @param h A positive `integer` specifying the length of the forecast
 #' horizon
 #' @param times A positive `integer` specifying the number of forecast
@@ -13,7 +15,8 @@
 #' @param stationary If `TRUE`, the fitted time series models are
 #' constrained to be stationary. Default is `FALSE`. This option
 #' only works when `model == 'ARIMA'`
-#' @param ... Ignored
+#' @param ... Other arguments to pass to the Stan dynamic factor models
+#' (i.e. the AR order `p = ...` or the number of factors `K = ...`)
 #' @details Basis function coefficient time series will be used as input
 #' to the specified `model` to train a forecasting model that will then be
 #' extrapolated `h` timesteps into the future. A total of `times` forecast realisations
@@ -40,6 +43,34 @@ forecast.fts_ts <- function(
 
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
+
+  if (model == 'ARDF'){
+    dots <- list(...)
+    if('K' %in% names(dots)){
+      K <- dots$K
+    } else {
+      K <- 2
+    }
+    if('p' %in% names(dots)){
+      p <- dots$p
+    } else {
+      p <- 5
+    }
+
+    return(
+      train_ardf(
+        .data = object_tsbl,
+        specials = list(K = K,
+                        p = p),
+        h = h,
+        chains = 4,
+        cores = 4,
+        iter = 500,
+        adapt_delta = 0.7,
+        max_treedepth = 9
+      )
+    )
+  }
 
   # If .sd is included, use the variance inflation method
   # to update forecast uncertainties
@@ -178,8 +209,6 @@ forecast.fts_ts <- function(
     }
   }
 
-
-
   return(out)
 }
 
@@ -212,7 +241,7 @@ forecast.fts_ts <- function(
 #' Only used if `summary` is `TRUE`
 #' @param probs The percentiles to be computed by the `quantile()` function.
 #' Only used if `summary` is `TRUE`
-#' @param ... ignored
+#' @param ... Other arguments to pass to the Stan dynamic factor models
 #' @details Computes forecast distributions from fitted `ffc_gam` objects
 #' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
 #' @return Predicted values on the appropriate scale.
@@ -240,8 +269,9 @@ forecast.ffc_gam <- function(
     )
   )
 
-  validate_proportional(min(probs))
-  validate_proportional(max(probs))
+  # validate_proportional(min(probs))
+  # validate_proportional(max(probs))
+  if(model == 'ARDF') quantile_fc <- FALSE
 
   # Extract the full linear predictor matrix
   orig_lpmat <- predict(
@@ -297,7 +327,7 @@ forecast.ffc_gam <- function(
       times = 1000
     )
 
-    # Calculate man + SD or quantiles
+    # Calculate mean + SD or quantiles
     if (quantile_fc) {
       functional_coefs <- intermed_coefs %>%
         dplyr::group_by(.basis, .time) %>%
@@ -339,7 +369,6 @@ forecast.ffc_gam <- function(
         )
     }
 
-
     if (!is.null(attr(intermed_coefs, "index"))) {
       functional_coefs <- functional_coefs %>%
         dplyr::left_join(
@@ -365,6 +394,7 @@ forecast.ffc_gam <- function(
         times = 1000,
         model = model,
         stationary = stationary,
+        ...
       )
     )
 
