@@ -94,9 +94,11 @@ time series is not stable over time. Defaults to <code>FALSE</code></p></dd>
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>A <code>character</code> string representing a valid univariate model definition
-from the <span class="pkg">fable</span> package. Note that the chosen method must have an associated
+from the <span class="pkg">fable</span> package or one of the built-in Bayesian dynamic
+factor models. Note that if a <span class="pkg">fable</span> model is used,
+the chosen method must have an associated
 <code><a href="https://generics.r-lib.org/reference/generate.html" class="external-link">generate()</a></code> method in order to simulate forecast realisations. Valid models
-currently include: <code>'ETS'</code>, <code>'ARIMA'</code>, <code>'AR'</code>, <code>'NAIVE'</code>, and <code>'NNETAR'</code></p></dd>
+currently include: <code>'ARDF'</code>,<code>'ETS'</code>, <code>'ARIMA'</code>, <code>'AR'</code>, <code>'NAIVE'</code>, and <code>'NNETAR'</code></p></dd>
 
 
 <dt id="arg-stationary">stationary<a class="anchor" aria-label="anchor" href="#arg-stationary"></a></dt>
@@ -123,7 +125,7 @@ Only used if <code>summary</code> is <code>TRUE</code></p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>ignored</p></dd>
+<dd><p>Other arguments to pass to the Stan dynamic factor models</p></dd>
 
 </dl></div>
     <div id="value">
