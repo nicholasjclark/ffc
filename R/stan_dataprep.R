@@ -7,7 +7,7 @@ prep_tbl_ts_stan = function(.data,
                             family,
                             model){
 
-  model <- match.arg(model, choices = c('ardf', 'gpdf'))
+  model <- match.arg(model, choices = c('ardf', 'gpdf', 'rwdf'))
 
   # Expand the data to include NAs for the out of sample period
   .fulldata <- expand_tbl_ts(.data, h) %>%
@@ -32,8 +32,9 @@ prep_tbl_ts_stan = function(.data,
 
   sample_sd <- .fulldata %>%
     dplyr::group_by(.series) %>%
-    dplyr::summarise(.meansd = mean(.sd, na.rm = TRUE)) %>%
-    dplyr::pull(.meansd)
+    dplyr::arrange(.time) %>%
+    dplyr::summarise(.finalsd = max(.sd, na.rm = TRUE)) %>%
+    dplyr::pull(.finalsd)
 
   prior_alpha <- c(mean(.fulldata$.y,
                         na.rm = TRUE),

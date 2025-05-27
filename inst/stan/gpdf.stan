@@ -1,4 +1,4 @@
-// Stan model code for autoregressive dynamic factor forecasting models
+// Stan model code for GP dynamic factor forecasting models
 functions {
   vector rep_each(vector x, int K) {
     int N = rows(x);
@@ -12,6 +12,27 @@ functions {
     }
     return y;
   }
+  /* Spectral density GP eigenvalues*/
+  /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
+  real lambda_gp(real L, int m) {
+    real lam;
+    lam = ((m * pi()) / (2 * L)) ^ 2;
+    return lam;
+  }
+  /* Spectral density GP eigenfunctions*/
+  /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
+  vector phi_SE(real L, int m, vector x) {
+    vector[rows(x)] fi;
+    fi = 1 / sqrt(L) * sin(m * pi() / (2 * L) * (x + L));
+    return fi;
+  }
+  /* Spectral density squared exponential Gaussian Process*/
+  /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
+  real spd_SE(real alpha, real rho, real w) {
+    real S;
+    S = (alpha ^ 2) * sqrt(2 * pi()) * rho * exp(-0.5 * (rho ^ 2) * (w ^ 2));
+    return S;
+  }
 }
 data {
   int<lower=0> n; // number of timepoints per series
@@ -24,11 +45,27 @@ data {
   array[n_nonmissing] int<lower=0> obs_ind; // indices of nonmissing observations
   int<lower=1> family; // 1 = normal, 2 = student-t
   vector[2] prior_alpha; // prior intercept control parameters
-  vector[3] prior_ar; // prior ar coefficient control parameters
-  int<lower=1> P; // AR order
   vector[1] beta; // beta coefficient (1) to use in id_glm functions
 }
 transformed data {
+  // gp phi
+  vector<lower=1>[n] times;
+  vector[n] times_cent;
+  real mean_times;
+  real<lower=0> boundary;
+  int<lower=1> num_gp_basis;
+  num_gp_basis = min(25, n);
+  matrix[n, num_gp_basis] gp_phi;
+  for (t in 1 : n) {
+    times[t] = t;
+  }
+  mean_times = mean(times);
+  times_cent = times - mean_times;
+  boundary = (5.0 / 4) * (max(times_cent) - min(times_cent));
+  for (m in 1 : num_gp_basis) {
+    gp_phi[ : , m] = phi_SE(boundary, m, times_cent);
+  }
+
   # Sampling SDs for vectorized likelihood calculations
   vector[n_nonmissing] flat_sigma_obs = rep_each(sample_sd, n)[obs_ind];
 
@@ -38,11 +75,11 @@ transformed data {
   }
 }
 parameters {
-  // dynamic factor AR terms
-  array[P, K] real<lower=-1, upper=1> ar;
+  // gp length scale parameters
+  vector<lower=0>[K] rho_gp;
 
-  // dynamic factor process errors
-  matrix[n, K] LV_z;
+  // gp coefficient weights
+  matrix[num_gp_basis, K] b_gp;
 
   // factor loading lower triangle
   vector[M] L;
@@ -59,6 +96,11 @@ transformed parameters {
   matrix[n, n_series] trend;
   matrix[n_series, K] Lambda = rep_matrix(0, n_series, K);
 
+  // gp spectral densities
+  matrix[n, K] LV;
+  matrix[num_gp_basis, K] diag_SPD;
+  matrix[num_gp_basis, K] SPD_beta;
+
   // factor loadings, with constraints
   {
     int index;
@@ -72,15 +114,14 @@ transformed parameters {
   }
 
   // derived latent factors
-  matrix[n, K] LV  = rep_matrix(0, n, K);
-  LV[1, 1 : K] = LV_z[1, 1 : K];
-  for (j in 1 : K) {
-    for (p in 1 : P) {
-      for (t in (P + 1) : n){
-        LV[t, j] += ar[p, j] * LV[t - p, j] + LV_z[t, j];
-      }
+  for (m in 1 : num_gp_basis) {
+    for (j in 1 : K) {
+      diag_SPD[m, j] = sqrt(spd_SE(1.0, rho_gp[j],
+                            sqrt(lambda_gp(boundary, m))));
     }
   }
+  SPD_beta = diag_SPD .* b_gp;
+  LV = gp_phi * SPD_beta;
 
   // derived series-level trends
   for (i in 1 : n) {
@@ -96,19 +137,12 @@ model {
   // prior for observation df parameter
   nu ~ gamma(2, 0.1);
 
-  // priors for AR parameters
-  for (j in 1 : K) {
-    for (p in 1 : P) {
-      if (prior_ar[3] == 1) target += std_normal_lpdf(ar[p, j]);
-      else if (prior_ar[3] == 2) target += normal_lpdf(ar[p, j] | prior_ar[1], prior_ar[2]);
-    }
-  }
+  // priors for gp parameters
+  to_vector(b_gp) ~ std_normal();
+  rho_gp ~ inv_gamma(1.499007, 5.670433);
 
   // priors for factor loading coefficients
   L ~ double_exponential(0, 0.5);
-
-  // factor process errors
-  to_vector(LV_z) ~ std_normal();
 
   {
     // likelihood functions

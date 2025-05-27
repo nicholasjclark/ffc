@@ -7,7 +7,8 @@
 #' factor models. Note that if a \pkg{fable} model is used,
 #' the chosen method must have an associated
 #' `generate()` method in order to simulate forecast realisations. Valid models
-#' currently include: `'ARDF'`,`'ETS'`, `'ARIMA'`, `'AR'`, `'NAIVE'`, and `'NNETAR'`
+#' currently include: `'ARDF'`, `'GPDF'`,
+#' `'ETS'`, `'ARIMA'`, `'AR'`, `'NAIVE'`, and `'NNETAR'`
 #' @param h A positive `integer` specifying the length of the forecast
 #' horizon
 #' @param times A positive `integer` specifying the number of forecast
@@ -62,6 +63,28 @@ forecast.fts_ts <- function(
         .data = object_tsbl,
         specials = list(K = K,
                         p = p),
+        h = h,
+        chains = 4,
+        cores = 4,
+        iter = 500,
+        adapt_delta = 0.7,
+        max_treedepth = 9
+      )
+    )
+  }
+
+  if (model == 'GPDF'){
+    dots <- list(...)
+    if('K' %in% names(dots)){
+      K <- dots$K
+    } else {
+      K <- 2
+    }
+
+    return(
+      train_gpdf(
+        .data = object_tsbl,
+        specials = list(K = K),
         h = h,
         chains = 4,
         cores = 4,

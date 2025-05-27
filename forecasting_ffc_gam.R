@@ -2,8 +2,6 @@
 library(ffc)
 library(fable)
 library(ggplot2); theme_set(theme_classic())
-library(future)
-plan(multisession, workers = 4)
 
 # Define transformations that avoid distributional
 # assumptions so that ffc is not unfairly advantaged
@@ -40,10 +38,10 @@ binary = function(x) {
 # for more realism
 simdat <- mvgam::sim_mvgam(
   n_series = 1,
-  trend_model = mvgam::RW(),
+  trend_model = mvgam::GP(),
   drift = TRUE,
   prop_trend = 0.7,
-  prop_train = 0.9,
+  prop_train = 0.7,
   mu = -1,
   family = mvgam::student()
 )
@@ -74,10 +72,10 @@ dat_tsibble <- rbind(
 
 # Create tsibbles of training and testing data
 train_tsibble <- dat_tsibble %>%
-  dplyr::filter(time <= 85)
+  dplyr::filter(time <= 75)
 
 test_tsibble <- dat_tsibble %>%
-  dplyr::filter(time > 85)
+  dplyr::filter(time > 75)
 
 # Fit a ffc model
 mod <- ffc_gam(
@@ -89,15 +87,14 @@ mod <- ffc_gam(
       time,
       mean_only = TRUE,
       time_bs = 'tp',
-      time_m = 1,
-      time_k = 50
+      time_k = 60
     ) +
     fts(
       season,
       bs = 'cc',
-      k = 6,
-      time_bs = 'tp',
-      time_m = 1
+      k = 8,
+      time_m = 1,
+      time_bs = 'tp'
     ),
   knots = list(season = c(0.5, 12.5)),
   time = "time",
@@ -111,14 +108,14 @@ summary(mod)
 gratia::draw(mod)
 
 # Compute forecast distribution by fitting the basis coefficient
-# time series models in parallel (which is automatically supported
-# within the fable package)
-fc <- forecast(
+# time series models
+
+# First try GP factors
+fcgp <- forecast(
   object = mod,
   newdata = test_tsibble,
-  model = 'ARDF',
-  K = 2,
-  p = 5,
+  model = 'GPDF',
+  K = 3, # number of factors
   # use summary = FALSE to return the full distribution
   summary = FALSE
 )
@@ -126,9 +123,25 @@ fc <- forecast(
 # Convert resulting forecasts to a fable for automatic
 # plotting / scoring of forecasts
 newdata <- test_tsibble
-newdata[['value']] <- fc
+newdata[['value']] <- fcgp
 
-fc_ffc <- fabletools:::build_fable(
+fc_ffcgp <- fabletools:::build_fable(
+  newdata,
+  response = 'y',
+  distribution = 'value'
+)
+
+# Now try with AR factors
+fcar <- forecast(
+  object = mod,
+  newdata = test_tsibble,
+  model = 'ARDF',
+  K = 3, # number of factors
+  P = 1, # AR order
+  summary = FALSE
+)
+newdata[['value']] <- fcar
+fc_ffcar <- fabletools:::build_fable(
   newdata,
   response = 'y',
   distribution = 'value'
@@ -154,13 +167,21 @@ fc_ets <- train_tsibble %>%
   )
 
 # Plot the resulting forecasts
-fc_ffc %>%
+fc_ffcgp %>%
   autoplot(train_tsibble) +
   geom_line(
     data = test_tsibble,
     aes(y = y)
   ) +
-  ggtitle('FFC forecast')
+  ggtitle('FFC GP forecast')
+
+fc_ffcar %>%
+  autoplot(train_tsibble) +
+  geom_line(
+    data = test_tsibble,
+    aes(y = y)
+  ) +
+  ggtitle('FFC AR forecast')
 
 fc_arima %>%
   autoplot(train_tsibble) +
@@ -179,7 +200,13 @@ fc_ets %>%
   ggtitle('ETS with Box-Cox forecast')
 
 # Score the forecasts with CRPS (lower is better)
-fc_ffc %>%
+fc_ffcgp %>%
+  fabletools::accuracy(
+    test_tsibble,
+    measures = distribution_accuracy_measures
+  )
+
+fc_ffcar %>%
   fabletools::accuracy(
     test_tsibble,
     measures = distribution_accuracy_measures

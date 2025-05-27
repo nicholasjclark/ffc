@@ -2,12 +2,12 @@
 
 #include <Rcpp.h>
 using namespace Rcpp ;
-#include "stanExports_ardf.h"
+#include "stanExports_gpdf.h"
 
-RCPP_MODULE(stan_fit4ardf_mod) {
+RCPP_MODULE(stan_fit4gpdf_mod) {
 
 
-    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("rstantools_model_ardf")
+    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("rstantools_model_gpdf")
 
     .constructor<SEXP,SEXP,SEXP>()
 

@@ -1,10 +1,12 @@
 Package: ffc
 Title: Functional ForeCasting
 Version: 0.0.0.9000
-Date: 2025-04-16
+Date: 2025-05-27
 Authors@R: 
-    person("Nicholas J", "Clark", , "nicholas.j.clark1214@gmail.com", 
-            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7131-3301"))
+    c(person("Nicholas J", "Clark", , "nicholas.j.clark1214@gmail.com", 
+            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7131-3301")),
+      person("KANK", "Karunarathna", role = c("ctb"),
+            comment = c(ORCID = "0000-0002-8995-5502")))
 Description: Perform functional regression using Generalized Additive Models (GAMs) that enable functional responses to be modelled and predicted with a broad range of predictor effects. The package also handles functional predictors with time-varying coefficients that can be forecasted ahead using a variety of efficient forecasting algorithms, providing unmatched flexibility to model and predict how functional responses change over time. 
 License: MIT + file LICENSE
 Config/testthat/edition: 3
@@ -49,4 +51,5 @@ LinkingTo:
     rstan (>= 2.32.0),
     StanHeaders (>= 2.21.0)
 SystemRequirements: GNU make
+NeedsCompilation: yes
 LazyData: true
