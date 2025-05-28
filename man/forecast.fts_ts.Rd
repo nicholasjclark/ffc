@@ -29,7 +29,7 @@ constrained to be stationary. Default is \code{FALSE}. This option
 only works when \code{model == 'ARIMA'}}
 
 \item{...}{Other arguments to pass to the Stan dynamic factor models
-(i.e. the AR order \code{p = ...} or the number of factors \code{K = ...})}
+(i.e. the (V)AR order \code{lag = ...} or the number of factors \code{K = ...})}
 }
 \value{
 A \code{tsibble} object containing the forecast prediction (\code{.sim}) for each

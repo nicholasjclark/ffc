@@ -120,7 +120,7 @@ fcgp <- forecast(
   summary = FALSE
 )
 
- # Convert resulting forecasts to a fable for automatic
+# Convert resulting forecasts to a fable for automatic
 # plotting / scoring of forecasts
 newdata <- test_tsibble
 newdata[['value']] <- fcgp
@@ -131,8 +131,24 @@ fc_ffcgp <- fabletools:::build_fable(
   distribution = 'value'
 )
 
-# Now try with VAR(2) factors
+# Now try with AR(4) factors
 fcar <- forecast(
+  object = mod,
+  newdata = test_tsibble,
+  model = 'ARDF',
+  K = 3,
+  lag = 4, # AR order
+  summary = FALSE
+)
+newdata[['value']] <- fcar
+fc_ffcar <- fabletools:::build_fable(
+  newdata,
+  response = 'y',
+  distribution = 'value'
+)
+
+# Now try with VAR(2) factors
+fcvar <- forecast(
   object = mod,
   newdata = test_tsibble,
   model = 'VARDF',
@@ -140,8 +156,8 @@ fcar <- forecast(
   lag = 2, # AR order
   summary = FALSE
 )
-newdata[['value']] <- fcar
-fc_ffcar <- fabletools:::build_fable(
+newdata[['value']] <- fcvar
+fc_ffcvar <- fabletools:::build_fable(
   newdata,
   response = 'y',
   distribution = 'value'
@@ -183,6 +199,14 @@ fc_ffcar %>%
   ) +
   ggtitle('FFC AR forecast')
 
+fc_ffcvar %>%
+  autoplot(train_tsibble) +
+  geom_line(
+    data = test_tsibble,
+    aes(y = y)
+  ) +
+  ggtitle('FFC VAR forecast')
+
 fc_arima %>%
   autoplot(train_tsibble) +
   geom_line(
@@ -207,6 +231,12 @@ fc_ffcgp %>%
   )
 
 fc_ffcar %>%
+  fabletools::accuracy(
+    test_tsibble,
+    measures = distribution_accuracy_measures
+  )
+
+fc_ffcvar %>%
   fabletools::accuracy(
     test_tsibble,
     measures = distribution_accuracy_measures
