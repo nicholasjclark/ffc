@@ -120,7 +120,7 @@ fcgp <- forecast(
   summary = FALSE
 )
 
-# Convert resulting forecasts to a fable for automatic
+ # Convert resulting forecasts to a fable for automatic
 # plotting / scoring of forecasts
 newdata <- test_tsibble
 newdata[['value']] <- fcgp
@@ -131,13 +131,13 @@ fc_ffcgp <- fabletools:::build_fable(
   distribution = 'value'
 )
 
-# Now try with AR factors
+# Now try with VAR(2) factors
 fcar <- forecast(
   object = mod,
   newdata = test_tsibble,
-  model = 'ARDF',
+  model = 'VARDF',
   K = 3, # number of factors
-  P = 1, # AR order
+  lag = 2, # AR order
   summary = FALSE
 )
 newdata[['value']] <- fcar

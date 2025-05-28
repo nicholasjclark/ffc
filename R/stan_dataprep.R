@@ -7,7 +7,7 @@ prep_tbl_ts_stan = function(.data,
                             family,
                             model){
 
-  model <- match.arg(model, choices = c('ardf', 'gpdf', 'rwdf'))
+  model <- match.arg(model, choices = c('ardf', 'gpdf', 'vardf'))
 
   # Expand the data to include NAs for the out of sample period
   .fulldata <- expand_tbl_ts(.data, h) %>%
@@ -88,15 +88,24 @@ prep_tbl_ts_stan = function(.data,
     beta = array(1)
   )
 
-  if(model == 'ardf'){
+  if (model %in% c('ardf', 'vardf')){
     if(p > max(.fulldata$.time) - 1){
       stop('Cannot estimate a model where p > maximum lag available in the data',
            call. = FALSE)
     }
-    c(model_data) <- nlist(
-      prior_ar = c(1, 1, 1),
-      P = p
-    )
+
+    if (model == 'ardf'){
+      c(model_data) <- nlist(
+        prior_ar = c(1, 1, 1),
+        P = p
+      )
+    }
+
+    if (model == 'vardf'){
+      c(model_data) <- nlist(
+        P = p
+      )
+    }
   }
 
   return(model_data)

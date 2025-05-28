@@ -17,7 +17,7 @@
 #' constrained to be stationary. Default is `FALSE`. This option
 #' only works when `model == 'ARIMA'`
 #' @param ... Other arguments to pass to the Stan dynamic factor models
-#' (i.e. the AR order `p = ...` or the number of factors `K = ...`)
+#' (i.e. the (V)AR order `lag = ...` or the number of factors `K = ...`)
 #' @details Basis function coefficient time series will be used as input
 #' to the specified `model` to train a forecasting model that will then be
 #' extrapolated `h` timesteps into the future. A total of `times` forecast realisations
@@ -45,32 +45,50 @@ forecast.fts_ts <- function(
   # Convert time-varying coefficients to tsibble
   object_tsbl <- fts_ts_2_tsbl(object)
 
-  if (model == 'ARDF'){
+  if (model %in% c('ARDF', 'VARDF')){
     dots <- list(...)
     if('K' %in% names(dots)){
       K <- dots$K
     } else {
       K <- 2
     }
-    if('p' %in% names(dots)){
-      p <- dots$p
+    if('lag' %in% names(dots)){
+      p <- dots$lag
     } else {
       p <- 5
     }
 
-    return(
-      train_ardf(
-        .data = object_tsbl,
-        specials = list(K = K,
-                        p = p),
-        h = h,
-        chains = 4,
-        cores = 4,
-        iter = 500,
-        adapt_delta = 0.7,
-        max_treedepth = 9
+    if (model == 'ARDF'){
+      return(
+        train_ardf(
+          .data = object_tsbl,
+          specials = list(K = K,
+                          p = p),
+          h = h,
+          chains = 4,
+          cores = 4,
+          iter = 500,
+          adapt_delta = 0.7,
+          max_treedepth = 9
+        )
       )
-    )
+    }
+
+    if (model == 'VARDF'){
+      return(
+        train_vardf(
+          .data = object_tsbl,
+          specials = list(K = K,
+                          p = p),
+          h = h,
+          chains = 4,
+          cores = 4,
+          iter = 500,
+          adapt_delta = 0.7,
+          max_treedepth = 9
+        )
+      )
+    }
   }
 
   if (model == 'GPDF'){
