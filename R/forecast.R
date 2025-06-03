@@ -312,7 +312,7 @@ forecast.ffc_gam <- function(
 
   # validate_proportional(min(probs))
   # validate_proportional(max(probs))
-  if(model == 'ARDF') quantile_fc <- FALSE
+  if(model %in% c('ARDF', 'GPDF', 'VARDF')) quantile_fc <- FALSE
 
   # Extract the full linear predictor matrix
   orig_lpmat <- predict(
@@ -395,11 +395,13 @@ forecast.ffc_gam <- function(
     } else {
       functional_coefs <- intermed_coefs %>%
         dplyr::group_by(.basis, .time) %>%
-        dplyr::summarise(
+        dplyr::mutate(
           .mean = mean(.estimate),
           .sd = sd(.estimate)
         ) %>%
+        dplyr::select(.basis, .time, !!time_var, .mean, .sd) %>%
         dplyr::ungroup() %>%
+        dplyr::distinct() %>%
         dplyr::mutate(
           .realisation = 1,
           .estimate = .mean
@@ -446,8 +448,16 @@ forecast.ffc_gam <- function(
             dplyr::select(!!time_var, !!attr(intermed_coefs, "index")) %>%
             dplyr::distinct(),
           by = dplyr::join_by(!!attr(intermed_coefs, "index"))
-        ) %>%
-        dplyr::rename(.time = !!time_var)
+        )
+
+    } else if(time_var %in% colnames(functional_fc)){
+      functional_fc <- functional_fc %>%
+        tsibble::as_tibble() %>%
+        dplyr::select(-.time) %>%
+        dplyr::bind_cols(functional_fc %>%
+                           tsibble::as_tibble() %>%
+                           dplyr::select(!!time_var) %>%
+                           dplyr::rename(.time = !!time_var))
     }
 
     # Only need to return forecasts for those times that are

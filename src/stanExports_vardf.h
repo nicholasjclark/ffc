@@ -124,7 +124,7 @@ static constexpr std::array<const char*, 267> locations_array__ =
   " (in 'string', line 225, column 4 to column 54)",
   " (in 'string', line 224, column 25 to line 226, column 3)",
   " (in 'string', line 224, column 2 to line 226, column 3)",
-  " (in 'string', line 228, column 2 to column 33)",
+  " (in 'string', line 228, column 2 to column 27)",
   " (in 'string', line 232, column 13 to column 25)",
   " (in 'string', line 232, column 6 to column 42)",
   " (in 'string', line 233, column 6 to column 67)",
@@ -1386,8 +1386,7 @@ public:
                              stan::model::index_uni(t)), L_Sigma));
         }
         current_statement__ = 96;
-        lp_accum__.add(stan::math::double_exponential_lpdf<propto__>(L, 0,
-                         0.5));
+        lp_accum__.add(stan::math::student_t_lpdf<propto__>(L, 3, 0, 1.5));
         {
           current_statement__ = 102;
           if (stan::math::logical_eq(family, 1)) {

@@ -45,7 +45,12 @@ make_future_data <- function(.data, h = NULL){
   }
   if(is.null(h)) n <- n*2
 
-  tsibble::new_data(.data, round(n))
+  out <- tsibble::new_data(.data, round(n))
+  if (tsibble::index_var(.data) == '.time') {
+    out <- out %>%
+      dplyr::mutate(!!attr(.data, 'time_var') := .time)
+  }
+  return(out)
 }
 
 #' Checking functions written by Michell O'hara Wild and the fable team

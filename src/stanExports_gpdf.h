@@ -77,7 +77,7 @@ static constexpr std::array<const char*, 146> locations_array__ =
   " (in 'string', line 126, column 2 to column 21)",
   " (in 'string', line 128, column 2 to column 33)",
   " (in 'string', line 129, column 2 to column 41)",
-  " (in 'string', line 131, column 2 to column 33)",
+  " (in 'string', line 131, column 2 to column 27)",
   " (in 'string', line 135, column 13 to column 25)",
   " (in 'string', line 135, column 6 to column 42)",
   " (in 'string', line 136, column 6 to column 67)",
@@ -814,8 +814,7 @@ public:
         lp_accum__.add(stan::math::inv_gamma_lpdf<propto__>(rho_gp, 1.499007,
                          5.670433));
         current_statement__ = 49;
-        lp_accum__.add(stan::math::double_exponential_lpdf<propto__>(L, 0,
-                         0.5));
+        lp_accum__.add(stan::math::student_t_lpdf<propto__>(L, 3, 0, 1.5));
         {
           current_statement__ = 55;
           if (stan::math::logical_eq(family, 1)) {

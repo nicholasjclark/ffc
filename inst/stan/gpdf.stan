@@ -142,7 +142,7 @@ model {
   rho_gp ~ inv_gamma(1.499007, 5.670433);
 
   // priors for factor loading coefficients
-  L ~ double_exponential(0, 0.5);
+  L ~ student_t(3, 0, 1.5);
 
   {
     // likelihood functions

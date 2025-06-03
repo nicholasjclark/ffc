@@ -253,3 +253,67 @@ fc_ets %>%
     test_tsibble,
     measures = distribution_accuracy_measures
   )
+
+
+# A spatiotemporal species distribution example
+# Download the pcod data from the sdmTMB package
+unique(pcod$year)
+data_train <- pcod %>%
+  dplyr::filter(year < 2015)
+data_test <- pcod %>%
+  dplyr::filter(year >= 2015)
+
+mod <- ffc_gam(
+  present ~
+    s(depth_scaled, k = 3) +
+    fts(lon, lat, mean_only = TRUE,
+        time_k = 7) +
+    fts(lon, lat, k = 5,
+        bs = 'cr',
+        time_k = 7),
+  data = data_train,
+  time = 'year',
+  family = binomial(),
+  engine = 'gam',
+  method = 'REML',
+  select = TRUE
+)
+summary(mod)
+gratia::draw(mod)
+
+# Fit auto ARIMA models to each basis coef time series and forecast
+fc <- forecast(
+  object = mod,
+  newdata = data_test,
+  model = 'ARIMA',
+  type = 'expected',
+  summary = TRUE
+)
+
+ggplot(data_train,
+       aes(x = lat,
+           y = lon,
+           colour = as.factor(present))) +
+  geom_point() +
+  facet_wrap(~year) +
+  scale_colour_viridis_d() +
+  theme_bw()
+
+ggplot(data_test,
+       aes(x = lat,
+           y = lon,
+           colour = as.factor(present))) +
+  facet_wrap(~year) +
+  geom_point() +
+  scale_colour_viridis_d() +
+  theme_bw()
+
+ggplot(fc %>%
+         dplyr::bind_cols(data_test),
+       aes(x = lat,
+           y = lon,
+           colour = .estimate)) +
+  facet_wrap(~year) +
+  geom_point() +
+  scale_colour_viridis_c() +
+  theme_bw()

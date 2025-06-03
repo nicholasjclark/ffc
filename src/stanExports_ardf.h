@@ -82,7 +82,7 @@ static constexpr std::array<const char*, 118> locations_array__ =
   " (in 'string', line 90, column 4 to line 93, column 5)",
   " (in 'string', line 89, column 19 to line 94, column 3)",
   " (in 'string', line 89, column 2 to line 94, column 3)",
-  " (in 'string', line 96, column 2 to column 33)",
+  " (in 'string', line 96, column 2 to column 27)",
   " (in 'string', line 98, column 2 to column 33)",
   " (in 'string', line 102, column 13 to column 25)",
   " (in 'string', line 102, column 6 to column 42)",
@@ -660,8 +660,7 @@ public:
           }
         }
         current_statement__ = 54;
-        lp_accum__.add(stan::math::double_exponential_lpdf<propto__>(L, 0,
-                         0.5));
+        lp_accum__.add(stan::math::student_t_lpdf<propto__>(L, 3, 0, 1.5));
         current_statement__ = 55;
         lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
                          stan::math::to_vector(LV_z)));

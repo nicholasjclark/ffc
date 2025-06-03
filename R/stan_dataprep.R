@@ -38,7 +38,7 @@ prep_tbl_ts_stan = function(.data,
 
   prior_alpha <- c(mean(.fulldata$.y,
                         na.rm = TRUE),
-                   mean(.fulldata$.sd,
+                   sd(.fulldata$.y,
                         na.rm = TRUE))
 
   # Need a matrix of values for the series, excluding forecast values
@@ -155,6 +155,7 @@ extract_stan_fc = function(stanfit,
     dplyr::as_tibble()
 
   # Extend any other time variables ...
+  index <- tsibble::index_var(.data)
   out <- suppressMessages(
     make_future_data(.data, h = h) %>%
       dplyr::as_tibble() %>%
@@ -167,9 +168,9 @@ extract_stan_fc = function(stanfit,
       dplyr::right_join(series_fcs,
                         relationship = 'many-to-many',
                         by = dplyr::join_by(.time)) %>%
-      dplyr::select(-.time) %>%
       tsibble::as_tsibble(
-        key = c(.basis, .realisation, .model, .rep)
+        key = c(.basis, .realisation, .model, .rep),
+        index = index
       )
   )
 

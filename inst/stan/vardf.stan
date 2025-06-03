@@ -256,7 +256,7 @@ model {
   }
 
   // priors for factor loading coefficients
-  L ~ double_exponential(0, 0.5);
+  L ~ student_t(3, 0, 1.5);
 
   {
     // likelihood functions
