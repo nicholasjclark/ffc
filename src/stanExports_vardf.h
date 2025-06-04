@@ -127,7 +127,7 @@ static constexpr std::array<const char*, 268> locations_array__ =
   " (in 'string', line 217, column 4 to column 54)",
   " (in 'string', line 216, column 25 to line 218, column 3)",
   " (in 'string', line 216, column 2 to line 218, column 3)",
-  " (in 'string', line 220, column 2 to column 19)",
+  " (in 'string', line 220, column 2 to column 33)",
   " (in 'string', line 222, column 2 to column 29)",
   " (in 'string', line 226, column 11 to column 23)",
   " (in 'string', line 226, column 4 to column 74)",
@@ -1350,7 +1350,8 @@ public:
                              stan::model::index_uni(t)), L_Sigma));
         }
         current_statement__ = 99;
-        lp_accum__.add(stan::math::std_normal_lpdf<propto__>(L));
+        lp_accum__.add(stan::math::double_exponential_lpdf<propto__>(L, 0,
+                         0.5));
         current_statement__ = 100;
         lp_accum__.add(stan::math::exponential_lpdf<propto__>(sigma_obs, 4));
         {

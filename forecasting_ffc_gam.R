@@ -29,9 +29,9 @@ binary = function(x) {
 }
 
 # Simulation setup
- transform <- posreal; gam_fam <- tw()
+# transform <- posreal; gam_fam <- tw()
 # transform <- count; gam_fam <- nb()
-# transform <- proportional; gam_fam <- betar()
+ transform <- proportional; gam_fam <- betar()
 # transform <- binary; gam_fam <- binomial()
 
 # Simulated training and testing data; use Student-T
@@ -40,7 +40,7 @@ simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
   drift = TRUE,
-  prop_trend = 0.7,
+  prop_trend = 0.6,
   prop_train = 0.7,
   mu = -1,
   family = mvgam::student()
@@ -91,8 +91,7 @@ mod <- ffc_gam(
     fts(
       season,
       bs = 'cc',
-      k = 8,
-      time_m = 1
+      k = 8
     ),
   knots = list(season = c(0.5, 12.5)),
   time = "time",
@@ -254,6 +253,12 @@ fc_ets %>%
 
 # A spatiotemporal species distribution example
 # Download the pcod data from the sdmTMB package
+temp <- tempfile()
+download.file('https://github.com/cran/sdmTMB/raw/refs/heads/master/data/pcod.rda',
+              temp)
+load(temp)
+unlink(temp)
+
 unique(pcod$year)
 data_train <- pcod %>%
   dplyr::filter(year < 2015)

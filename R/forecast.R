@@ -68,7 +68,7 @@ forecast.fts_ts <- function(
           chains = 4,
           cores = 4,
           iter = 500,
-          adapt_delta = 0.8,
+          adapt_delta = 0.75,
           max_treedepth = 9
         )
       )
@@ -84,7 +84,7 @@ forecast.fts_ts <- function(
           chains = 4,
           cores = 4,
           iter = 500,
-          adapt_delta = 0.8,
+          adapt_delta = 0.75,
           max_treedepth = 9
         )
       )
@@ -107,7 +107,7 @@ forecast.fts_ts <- function(
         chains = 4,
         cores = 4,
         iter = 500,
-        adapt_delta = 0.8,
+        adapt_delta = 0.75,
         max_treedepth = 9
       )
     )

@@ -132,7 +132,7 @@ model {
   rho_gp ~ inv_gamma(1.499007, 5.670433);
 
   // priors for factor loading coefficients
-  L ~ std_normal();
+  L ~ double_exponential(0, 0.5);
 
   // priors for observation error
   sigma_obs ~ exponential(4);

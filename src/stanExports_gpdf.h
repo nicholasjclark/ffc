@@ -80,7 +80,7 @@ static constexpr std::array<const char*, 147> locations_array__ =
   " (in 'string', line 118, column 2 to column 21)",
   " (in 'string', line 120, column 2 to column 33)",
   " (in 'string', line 121, column 2 to column 41)",
-  " (in 'string', line 123, column 2 to column 19)",
+  " (in 'string', line 123, column 2 to column 33)",
   " (in 'string', line 125, column 2 to column 29)",
   " (in 'string', line 129, column 11 to column 23)",
   " (in 'string', line 129, column 4 to column 74)",
@@ -778,7 +778,8 @@ public:
         lp_accum__.add(stan::math::inv_gamma_lpdf<propto__>(rho_gp, 1.499007,
                          5.670433));
         current_statement__ = 52;
-        lp_accum__.add(stan::math::std_normal_lpdf<propto__>(L));
+        lp_accum__.add(stan::math::double_exponential_lpdf<propto__>(L, 0,
+                         0.5));
         current_statement__ = 53;
         lp_accum__.add(stan::math::exponential_lpdf<propto__>(sigma_obs, 4));
         {

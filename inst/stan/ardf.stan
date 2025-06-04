@@ -97,7 +97,7 @@ model {
   }
 
   // priors for factor loading coefficients
-  L ~ std_normal();
+  L ~ double_exponential(0, 0.5);
 
   // factor process errors
   to_vector(LV_z) ~ std_normal();

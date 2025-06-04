@@ -246,7 +246,7 @@ model {
   }
 
   // priors for factor loading coefficients
-  L ~ std_normal();
+  L ~ double_exponential(0, 0.5);
 
   // priors for observation error
   sigma_obs ~ exponential(4);

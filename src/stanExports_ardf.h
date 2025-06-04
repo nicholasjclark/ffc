@@ -85,7 +85,7 @@ static constexpr std::array<const char*, 119> locations_array__ =
   " (in 'string', line 82, column 4 to line 85, column 5)",
   " (in 'string', line 81, column 19 to line 86, column 3)",
   " (in 'string', line 81, column 2 to line 86, column 3)",
-  " (in 'string', line 88, column 2 to column 19)",
+  " (in 'string', line 88, column 2 to column 33)",
   " (in 'string', line 90, column 2 to column 33)",
   " (in 'string', line 92, column 2 to column 29)",
   " (in 'string', line 96, column 11 to column 23)",
@@ -624,7 +624,8 @@ public:
           }
         }
         current_statement__ = 57;
-        lp_accum__.add(stan::math::std_normal_lpdf<propto__>(L));
+        lp_accum__.add(stan::math::double_exponential_lpdf<propto__>(L, 0,
+                         0.5));
         current_statement__ = 58;
         lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
                          stan::math::to_vector(LV_z)));

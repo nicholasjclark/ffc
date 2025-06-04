@@ -21,7 +21,8 @@
 #' smoothing basis to use for the time-varying basis coefficients (eg `"tp"` for thin
 #' plate regression spline, `"cr"` for cubic regression spline).
 #' see \code{\link[mgcv]{smooth.terms}} for an over view of what is available. It is
-#' generally recommended to use one of the doubly-penalized bases (i.e. `"cs"` or `"ts"`)
+#' generally recommended that you stick with one of the doubly-penalized bases
+#' (i.e. `"cs"` or `"ts"`)
 #' as this helps to ensure the resulting basis function coefficient time series are
 #' estimated on an appropriate scale for later forecasting
 #' @param time_k the dimension of the bases to be used in the time-varying coefficient
