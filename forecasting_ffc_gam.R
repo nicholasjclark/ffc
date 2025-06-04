@@ -100,7 +100,9 @@ mod <- ffc_gam(
   time = "time",
   data = train_tsibble,
   family = gam_fam,
-  select = TRUE
+  select = TRUE # select = TRUE is basically necessary to ensure resulting
+  # basis coefficient time series are on a reasonable scale; should probably
+  # make this the default behaviour
 )
 summary(mod)
 
@@ -263,13 +265,13 @@ data_train <- pcod %>%
 data_test <- pcod %>%
   dplyr::filter(year >= 2015)
 
+# Model pcod presence / absence over space and time
 mod <- ffc_gam(
   present ~
     s(depth_scaled, k = 3) +
     fts(lon, lat, mean_only = TRUE,
         time_k = 7) +
     fts(lon, lat, k = 5,
-        bs = 'cr',
         time_k = 7),
   data = data_train,
   time = 'year',
@@ -281,24 +283,18 @@ mod <- ffc_gam(
 summary(mod)
 gratia::draw(mod)
 
-# Fit auto ARIMA models to each basis coef time series and forecast
+# Forecast and calculate probability of occurrence (expectation)
 fc <- forecast(
   object = mod,
   newdata = data_test,
-  model = 'ARIMA',
+  model = 'GPDF',
+  K = 4,
   type = 'expected',
   summary = TRUE
 )
+hist(fc$.error)
 
-ggplot(data_train,
-       aes(x = lat,
-           y = lon,
-           colour = as.factor(present))) +
-  geom_point() +
-  facet_wrap(~year) +
-  scale_colour_viridis_d() +
-  theme_bw()
-
+# Plot true out of sample occurrences
 ggplot(data_test,
        aes(x = lat,
            y = lon,
@@ -308,11 +304,72 @@ ggplot(data_test,
   scale_colour_viridis_d() +
   theme_bw()
 
+# Plot predicted probability of occurrence
 ggplot(fc %>%
          dplyr::bind_cols(data_test),
        aes(x = lat,
            y = lon,
            colour = .estimate)) +
+  facet_wrap(~year) +
+  geom_point() +
+  scale_colour_viridis_c() +
+  theme_bw()
+
+
+# Now try modelling density over space and time
+mod <- ffc_gam(
+  density ~
+    s(depth_scaled, k = 3) +
+    fts(lon, lat,
+        mean_only = TRUE,
+        time_k = 7) +
+    fts(lon, lat,
+        k = 5,
+        time_k = 7),
+  data = data_train,
+  time = 'year',
+  family = tw(),
+  engine = 'gam',
+  method = 'REML',
+  select = TRUE
+)
+summary(mod)
+gratia::draw(mod)
+
+# Forecast
+fc <- forecast(
+  object = mod,
+  newdata = data_test,
+  model = 'GPDF',
+  K = 4,
+  type = 'response',
+  summary = TRUE
+)
+plot(log(fc$.estimate + 1), log(data_test$density + 1))
+
+ggplot(data_train,
+       aes(x = lat,
+           y = lon,
+           colour = log(density + 1))) +
+  geom_point() +
+  facet_wrap(~year) +
+  scale_colour_viridis_c() +
+  theme_bw()
+
+ggplot(data_test,
+       aes(x = lat,
+           y = lon,
+           colour = log(density + 1))) +
+  facet_wrap(~year) +
+  geom_point() +
+  scale_colour_viridis_c() +
+  theme_bw()
+
+ggplot(fc %>%
+         dplyr::bind_cols(data_test),
+       aes(x = lat,
+           y = lon,
+           colour = log(.estimate + 1))) +
   facet_wrap(~year) +
   geom_point() +
   scale_colour_viridis_c() +

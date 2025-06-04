@@ -36,11 +36,6 @@ prep_tbl_ts_stan = function(.data,
     dplyr::summarise(.finalsd = max(.sd, na.rm = TRUE)) %>%
     dplyr::pull(.finalsd)
 
-  prior_alpha <- c(mean(.fulldata$.y,
-                        na.rm = TRUE),
-                   sd(.fulldata$.y,
-                        na.rm = TRUE))
-
   # Need a matrix of values for the series, excluding forecast values
   Y <- .fulldata %>%
     dplyr::select(-.sd) %>%
@@ -51,6 +46,9 @@ prep_tbl_ts_stan = function(.data,
 
   stopifnot(identical(NROW(Y), n_timepoints))
   stopifnot(identical(NCOL(Y), n_series))
+
+  # Calculate series means
+  alpha <- apply(Y, 2, function(x) mean(x, na.rm = TRUE))
 
   # Create matrix representing whether an observation was missing or not
   Y_observed <- matrix(
@@ -84,7 +82,7 @@ prep_tbl_ts_stan = function(.data,
     )],
     obs_ind = which(as.vector(Y_observed) == 1),
     family = family,
-    prior_alpha = prior_alpha,
+    alpha = alpha,
     beta = array(1)
   )
 

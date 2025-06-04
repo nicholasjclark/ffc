@@ -23,19 +23,13 @@ data {
   vector[n_nonmissing] flat_ys; // flattened nonmissing observations
   array[n_nonmissing] int<lower=0> obs_ind; // indices of nonmissing observations
   int<lower=1> family; // 1 = normal, 2 = student-t
-  vector[2] prior_alpha; // prior intercept control parameters
+  vector[n_series] alpha; // series intercepts
   vector[3] prior_ar; // prior ar coefficient control parameters
   int<lower=1> P; // AR order
   vector[1] beta; // beta coefficient (1) to use in id_glm functions
 }
 transformed data {
-  # Sampling SDs for vectorized likelihood calculations
-  vector[n_nonmissing] flat_sigma_obs = rep_each(sample_sd, n)[obs_ind];
 
-  matrix[n, n_series] sigma_obs_vec;
-  for (s in 1 : n_series) {
-    sigma_obs_vec[1 : n, s] = rep_vector(sample_sd[s], n);
-  }
 }
 parameters {
   // dynamic factor AR terms
@@ -47,11 +41,11 @@ parameters {
   // factor loading lower triangle
   vector[M] L;
 
-  // series-level intercepts
-  vector[n_series] alpha;
-
   // observation df for student-t
   real<lower=0> nu;
+
+  // observation variances
+  vector<lower=0>[n_series] sigma_obs;
 
 }
 transformed parameters {
@@ -90,8 +84,6 @@ transformed parameters {
   }
 }
 model {
-  // priors for series-level intercepts
-  target += normal_lpdf(alpha | prior_alpha[1], prior_alpha[2]);
 
   // prior for observation df parameter
   nu ~ gamma(2, 0.1);
@@ -105,13 +97,19 @@ model {
   }
 
   // priors for factor loading coefficients
-  L ~ student_t(3, 0, 1.5);
+  L ~ std_normal();
 
   // factor process errors
   to_vector(LV_z) ~ std_normal();
 
+  // priors for observation error
+  sigma_obs ~ exponential(4);
+
   {
     // likelihood functions
+    // Sampling SDs for vectorized likelihood calculations
+    vector[n_nonmissing] flat_sigma_obs = rep_each(sigma_obs, n)[obs_ind];
+
     if(family == 1) {
       matrix[n_nonmissing, 1] flat_trends;
       flat_trends[1 : n_nonmissing, 1] = to_vector(trend)[obs_ind];
@@ -127,10 +125,15 @@ model {
 generated quantities {
   // Posterior predictions
   array[n, n_series] real ypred;
+  matrix[n, n_series] sigma_obs_vec;
+  for (s in 1 : n_series) {
+    sigma_obs_vec[1 : n, s] = rep_vector(sqrt(sigma_obs[s] ^ 2 + sample_sd[s] ^ 2), n);
+  }
 
   if(family == 1) {
     for (s in 1 : n_series) {
-      ypred[1 : n, s] = normal_rng(trend[1 : n, s], sigma_obs_vec[1 : n, s]);
+      ypred[1 : n, s] = normal_rng(trend[1 : n, s],
+                                   sigma_obs_vec[1 : n, s]);
     }
   }
 

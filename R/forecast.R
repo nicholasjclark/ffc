@@ -55,7 +55,7 @@ forecast.fts_ts <- function(
     if('lag' %in% names(dots)){
       p <- dots$lag
     } else {
-      p <- 5
+      p <- 1
     }
 
     if (model == 'ARDF'){
@@ -68,7 +68,7 @@ forecast.fts_ts <- function(
           chains = 4,
           cores = 4,
           iter = 500,
-          adapt_delta = 0.7,
+          adapt_delta = 0.8,
           max_treedepth = 9
         )
       )
@@ -84,7 +84,7 @@ forecast.fts_ts <- function(
           chains = 4,
           cores = 4,
           iter = 500,
-          adapt_delta = 0.7,
+          adapt_delta = 0.8,
           max_treedepth = 9
         )
       )
@@ -107,7 +107,7 @@ forecast.fts_ts <- function(
         chains = 4,
         cores = 4,
         iter = 500,
-        adapt_delta = 0.7,
+        adapt_delta = 0.8,
         max_treedepth = 9
       )
     )
