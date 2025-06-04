@@ -86,23 +86,18 @@ mod <- ffc_gam(
     fts(
       time,
       mean_only = TRUE,
-      time_bs = 'tp',
       time_k = 60
     ) +
     fts(
       season,
       bs = 'cc',
       k = 8,
-      time_m = 1,
-      time_bs = 'tp'
+      time_m = 1
     ),
   knots = list(season = c(0.5, 12.5)),
   time = "time",
   data = train_tsibble,
-  family = gam_fam,
-  select = TRUE # select = TRUE is basically necessary to ensure resulting
-  # basis coefficient time series are on a reasonable scale; should probably
-  # make this the default behaviour
+  family = gam_fam
 )
 summary(mod)
 
@@ -271,14 +266,13 @@ mod <- ffc_gam(
     s(depth_scaled, k = 3) +
     fts(lon, lat, mean_only = TRUE,
         time_k = 7) +
-    fts(lon, lat, k = 5,
+    fts(lon, lat, k = 6,
         time_k = 7),
   data = data_train,
   time = 'year',
   family = binomial(),
   engine = 'gam',
-  method = 'REML',
-  select = TRUE
+  method = 'REML'
 )
 summary(mod)
 gratia::draw(mod)
@@ -288,7 +282,7 @@ fc <- forecast(
   object = mod,
   newdata = data_test,
   model = 'GPDF',
-  K = 4,
+  K = 3,
   type = 'expected',
   summary = TRUE
 )
@@ -324,14 +318,13 @@ mod <- ffc_gam(
         mean_only = TRUE,
         time_k = 7) +
     fts(lon, lat,
-        k = 5,
+        k = 6,
         time_k = 7),
   data = data_train,
   time = 'year',
   family = tw(),
   engine = 'gam',
-  method = 'REML',
-  select = TRUE
+  method = 'REML'
 )
 summary(mod)
 gratia::draw(mod)
@@ -341,20 +334,10 @@ fc <- forecast(
   object = mod,
   newdata = data_test,
   model = 'GPDF',
-  K = 4,
+  K = 3,
   type = 'response',
   summary = TRUE
 )
-plot(log(fc$.estimate + 1), log(data_test$density + 1))
-
-ggplot(data_train,
-       aes(x = lat,
-           y = lon,
-           colour = log(density + 1))) +
-  geom_point() +
-  facet_wrap(~year) +
-  scale_colour_viridis_c() +
-  theme_bw()
 
 ggplot(data_test,
        aes(x = lat,

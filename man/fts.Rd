@@ -10,7 +10,7 @@ fts(
   k = NA,
   time_k = 10,
   bs = "cr",
-  time_bs = "tp",
+  time_bs = "ts",
   m = NA,
   time_m = 2,
   d = NA,
@@ -51,7 +51,10 @@ basis code is given then this is used for all bases.}
 \item{time_bs}{a two letter \code{character} string indicating the (penalized)
 smoothing basis to use for the time-varying basis coefficients (eg \code{"tp"} for thin
 plate regression spline, \code{"cr"} for cubic regression spline).
-see \code{\link[mgcv]{smooth.terms}} for an over view of what is available.}
+see \code{\link[mgcv]{smooth.terms}} for an over view of what is available. It is
+generally recommended to use one of the doubly-penalized bases (i.e. \code{"cs"} or \code{"ts"})
+as this helps to ensure the resulting basis function coefficient time series are
+estimated on an appropriate scale for later forecasting}
 
 \item{m}{The order of the spline and its penalty (for smooth classes that use this) for each term. 
    If a single number is given  then it is used for all terms. A vector can be used to 
