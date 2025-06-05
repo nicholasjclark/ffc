@@ -29,9 +29,9 @@ binary = function(x) {
 }
 
 # Simulation setup
-# transform <- posreal; gam_fam <- tw()
+ transform <- posreal; gam_fam <- tw()
 # transform <- count; gam_fam <- nb()
- transform <- proportional; gam_fam <- betar()
+# transform <- proportional; gam_fam <- betar()
 # transform <- binary; gam_fam <- binomial()
 
 # Simulated training and testing data; use Student-T
@@ -111,7 +111,7 @@ fcgp <- forecast(
   object = mod,
   newdata = test_tsibble,
   model = 'GPDF',
-  K = 3, # number of factors
+  K = 2,
   # use summary = FALSE to return the full distribution
   summary = FALSE
 )
@@ -132,7 +132,7 @@ fcar <- forecast(
   object = mod,
   newdata = test_tsibble,
   model = 'ARDF',
-  K = 3,
+  K = 2,
   lag = 4, # AR order
   summary = FALSE
 )
@@ -362,3 +362,67 @@ ggplot(fc %>%
   geom_point() +
   scale_colour_viridis_c() +
   theme_bw()
+
+# A seasonal forecasting example
+# Load the AirPassengers dataset and plot the time series
+data("AirPassengers")
+plot(AirPassengers,
+     bty = "l",
+     lwd = 2,
+     col = "darkred"
+)
+
+# This plot suggests that the seasonal pattern changes over time,
+# not just in magnitude but also perhaps a bit in shape. Convert
+# to a data.frame() object
+airdat <- mvgam::series_to_mvgam(
+  AirPassengers,
+  freq = frequency(AirPassengers)
+)
+dplyr::glimpse(airdat$data_train)
+
+# Plot features of the series
+mvgam::plot_mvgam_series(
+  data = airdat$data_train,
+  newdata = airdat$data_test
+)
+
+# Now fit a model that allows both the level and
+# the seasonal shape to change over time
+mod <- ffc_gam(
+  y ~ fts(year, mean_only = TRUE,
+          time_k = 25) +
+    fts(season, bs = 'cc', k = 12,
+        time_k = 10),
+  data = airdat$data_train,
+  family = nb(),
+  time = 'time'
+)
+summary(mod)
+gratia::draw(mod)
+
+# Forecast
+fc <- forecast(
+  object = mod,
+  newdata = airdat$data_test,
+  model = 'ETS',
+  summary = TRUE
+)
+
+# Plot forecasts
+plot_dat <- airdat$data_train %>%
+  dplyr::bind_rows(airdat$data_test %>%
+                     dplyr::bind_cols(fc))
+
+ggplot(
+  plot_dat,
+  aes(x = time,
+      y = y)
+) +
+  geom_ribbon(aes(ymax = .q97.5,
+                  ymin = .q2.5),
+              alpha = 0.15) +
+  geom_ribbon(aes(ymax = .q90,
+                  ymin = .q10),
+              alpha = 0.2) +
+  geom_line()

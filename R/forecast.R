@@ -7,8 +7,8 @@
 #' factor models. Note that if a \pkg{fable} model is used,
 #' the chosen method must have an associated
 #' `generate()` method in order to simulate forecast realisations. Valid models
-#' currently include: `'ARDF'`, `'GPDF'`,
-#' `'ETS'`, `'ARIMA'`, `'AR'`, `'NAIVE'`, and `'NNETAR'`
+#' currently include: `'ARDF'`, `'GPDF'`, '`VARDF`,
+#' `'ETS'`, `'ARIMA'`, `'AR'`, `'RW'`, `'NAIVE'`, and `'NNETAR'`
 #' @param h A positive `integer` specifying the length of the forecast
 #' horizon
 #' @param times A positive `integer` specifying the number of forecast
@@ -120,7 +120,7 @@ forecast.fts_ts <- function(
     object_sds <- object_tsbl %>%
       as.data.frame() %>%
       dplyr::group_by(.basis, .realisation) %>%
-      dplyr::summarise(.sd = mean(.sd))
+      dplyr::summarise(.sd = max(.sd))
 
     if (stationary) {
       out <- object_tsbl %>%
@@ -430,16 +430,63 @@ forecast.ffc_gam <- function(
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
-    functional_fc <- suppressWarnings(
-      forecast(
-        object = functional_coefs,
-        h = max_horizon,
-        times = 1000,
-        model = model,
-        stationary = stationary,
-        ...
+    if(model %in% c('ARDF', 'GPDF', 'VARDF') &
+       any(grepl('_mean', unique(functional_coefs$.basis)))) {
+      # For factor models, it will very often make sense to forecast any
+      # _mean basis (i.e. level shifts) separately as they can behave very
+      # differently to remaining basis coefficient time series
+      functional_fc_others <- suppressWarnings(
+        forecast(
+          object = functional_coefs %>%
+            dplyr::filter(!grepl('_mean', .basis)),
+          h = max_horizon,
+          times = 1000,
+          model = model,
+          stationary = stationary,
+          ...
+        )
       )
-    )
+
+      if('.time' %in% colnames(functional_fc_others)){
+        functional_fc_others <- functional_fc_others %>%
+          dplyr::select(-.time)
+      }
+
+      functional_fc_mean <- suppressWarnings(
+        forecast(
+          object = functional_coefs %>%
+            dplyr::filter(grepl('_mean', .basis)),
+          h = max_horizon,
+          times = 1000,
+          model = 'ETS',
+          stationary = FALSE,
+          ...
+        )
+      ) %>%
+        tsibble::as_tibble() %>%
+        dplyr::select(dplyr::any_of(names(functional_fc_others)))
+
+      if(!time_var %in% colnames(functional_fc_mean) &
+         is.null(attr(intermed_coefs, "index"))){
+        functional_fc_mean <- functional_fc_mean %>%
+          dplyr::mutate({{time_var}} := .time)
+      }
+
+      functional_fc <- functional_fc_others %>%
+        dplyr::bind_rows(functional_fc_mean)
+
+    } else {
+      functional_fc <- suppressWarnings(
+        forecast(
+          object = functional_coefs,
+          h = max_horizon,
+          times = 1000,
+          model = model,
+          stationary = stationary,
+          ...
+        )
+      )
+    }
 
     if (!is.null(attr(intermed_coefs, "index"))) {
       functional_fc <- functional_fc %>%
@@ -448,7 +495,8 @@ forecast.ffc_gam <- function(
             dplyr::select(!!time_var, !!attr(intermed_coefs, "index")) %>%
             dplyr::distinct(),
           by = dplyr::join_by(!!attr(intermed_coefs, "index"))
-        )
+        ) %>%
+        dplyr::rename(.time = !!time_var)
 
     } else if(time_var %in% colnames(functional_fc)){
       functional_fc <- functional_fc %>%
