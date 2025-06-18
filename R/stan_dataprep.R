@@ -30,10 +30,13 @@ prep_tbl_ts_stan = function(.data,
 
   n_timepoints <- length(unique(.fulldata$.time))
 
+  # Extract observation error for the last training time period
+  # per series
   sample_sd <- .fulldata %>%
+    dplyr::filter(complete.cases(.)) %>%
     dplyr::group_by(.series) %>%
     dplyr::arrange(.time) %>%
-    dplyr::summarise(.finalsd = max(.sd, na.rm = TRUE)) %>%
+    dplyr::summarise(.finalsd = tail(.sd, 1)) %>%
     dplyr::pull(.finalsd)
 
   # Need a matrix of values for the series, excluding forecast values

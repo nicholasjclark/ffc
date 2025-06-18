@@ -404,7 +404,7 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = airdat$data_test,
-  model = 'ETS',
+  model = 'GPDF',
   summary = TRUE
 )
 
