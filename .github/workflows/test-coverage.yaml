@@ -30,6 +30,12 @@ jobs:
              tsibble
              fable
 
+      - name: Ensure configure file is executable
+        run: |
+          ## --------------------------------------------------------------------
+          chmod +x configure
+        shell: bash
+
       - name: Test coverage
         run: |
           cov <- covr::package_coverage(
