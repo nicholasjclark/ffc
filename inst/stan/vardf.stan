@@ -119,10 +119,10 @@ data {
 }
 transformed data {
 
-  # Error variances (fixed to 1)
+  // Error variances (fixed to 1)
   vector[K] sigma = rep_vector(1.0, K);
 
-  # Zero vector
+  // Zero vector
   vector[K] zero_vec = rep_vector(0.0, K);
 }
 parameters {

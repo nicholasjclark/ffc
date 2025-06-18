@@ -52,7 +52,8 @@ basis code is given then this is used for all bases.}
 smoothing basis to use for the time-varying basis coefficients (eg \code{"tp"} for thin
 plate regression spline, \code{"cr"} for cubic regression spline).
 see \code{\link[mgcv]{smooth.terms}} for an over view of what is available. It is
-generally recommended to use one of the doubly-penalized bases (i.e. \code{"cs"} or \code{"ts"})
+generally recommended that you stick with one of the doubly-penalized bases
+(i.e. \code{"cs"} or \code{"ts"})
 as this helps to ensure the resulting basis function coefficient time series are
 estimated on an appropriate scale for later forecasting}
 
