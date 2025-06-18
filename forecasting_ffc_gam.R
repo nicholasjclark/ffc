@@ -291,7 +291,6 @@ fc <- forecast(
   type = 'expected',
   summary = TRUE
 )
-hist(fc$.error)
 
 # Plot true out of sample occurrences
 ggplot(data_test,

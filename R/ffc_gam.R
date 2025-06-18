@@ -206,6 +206,7 @@ update_mod_data <- function(
 
   if (length(vars_to_add)) {
     orig_names <- colnames(gam_object$model)
+    orig_att <- attributes(gam_object$model)
     for (i in 1:length(vars_to_add)) {
       gam_object$model <- cbind(
         gam_object$model,
@@ -213,6 +214,8 @@ update_mod_data <- function(
       )
     }
     colnames(gam_object$model) <- c(orig_names, vars_to_add)
+    mostattributes(gam_object$model) <- orig_att
+    attr(gam_object$model, 'names') <- c(orig_names, vars_to_add)
 
     if (inherits(data, "tbl_ts")) {
       attr(gam_object$model, "index") <- attr(data, "index")
