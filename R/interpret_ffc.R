@@ -111,6 +111,7 @@ dyn_to_spline <- function(
   time_bs <- term$time_bs
   time_m <- term$time_m
   mean_only <- term$mean_only
+  share_penalty <- term$share_penalty
 
   # Initialise a gam object so the basis functions can be evaluated
   # and extracted; just use some Gaussian outcome here as all we need
@@ -176,22 +177,39 @@ dyn_to_spline <- function(
   # Begin building the updated formula
   newform <- vector(mode = "list", length = NCOL(X))
   for (i in 1:NCOL(X)) {
-    newform[[i]] <- paste0(
-      "s(",
-      time_var,
-      ", by = ",
-      colnames(X)[i],
-      ", ",
-      "bs = '",
-      time_bs,
-      "', k = ",
-      time_k,
-      ", m = ",
-      time_m,
-      ", id = ",
-      term_id,
-      ")"
-    )
+    if (share_penalty) {
+      newform[[i]] <- paste0(
+        "s(",
+        time_var,
+        ", by = ",
+        colnames(X)[i],
+        ", ",
+        "bs = '",
+        time_bs,
+        "', k = ",
+        time_k,
+        ", m = ",
+        time_m,
+        ", id = ",
+        term_id,
+        ")"
+      )
+    } else {
+      newform[[i]] <- paste0(
+        "s(",
+        time_var,
+        ", by = ",
+        colnames(X)[i],
+        ", ",
+        "bs = '",
+        time_bs,
+        "', k = ",
+        time_k,
+        ", m = ",
+        time_m,
+        ")"
+      )
+    }
   }
 
   # Return the formula list and the design matrix

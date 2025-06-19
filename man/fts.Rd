@@ -13,6 +13,7 @@ fts(
   time_bs = "ts",
   m = NA,
   time_m = 2,
+  share_penalty = TRUE,
   d = NA,
   by = NA,
   xt = NULL,
@@ -68,6 +69,10 @@ estimated on an appropriate scale for later forecasting}
 (e.g. \code{2} for normal cubic spline penalty with 2nd derivatives).
 Only some smooth classes use this. The \code{"ps"} class can use a \code{2} item \code{array}
 giving the basis and penalty order separately.}
+
+\item{share_penalty}{\code{logical} specifying whether the time-varying coefficient smooths for
+this term should all share a smoothing penalty. Defaults to \code{TRUE}, but changing to \code{FALSE}
+will give more flexibility to capture time-varying functions.}
 
 \item{d}{array of marginal basis dimensions. For example if you want a smooth for 3 covariates 
 made up of a tensor product of a 2 dimensional t.p.r.s. basis and a 1-dimensional basis, then 
