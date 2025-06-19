@@ -55,6 +55,7 @@ ffc models"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/
 <span>  time_bs <span class="op">=</span> <span class="st">"ts"</span>,</span>
 <span>  m <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  time_m <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  share_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  d <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  by <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  xt <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -129,6 +130,12 @@ estimated on an appropriate scale for later forecasting</p></dd>
 (e.g. <code>2</code> for normal cubic spline penalty with 2nd derivatives).
 Only some smooth classes use this. The <code>"ps"</code> class can use a <code>2</code> item <code>array</code>
 giving the basis and penalty order separately.</p></dd>
+
+
+<dt id="arg-share-penalty">share_penalty<a class="anchor" aria-label="anchor" href="#arg-share-penalty"></a></dt>
+<dd><p><code>logical</code> specifying whether the time-varying coefficient smooths for
+this term should all share a smoothing penalty. Defaults to <code>TRUE</code>, but changing to <code>FALSE</code>
+will give more flexibility to capture time-varying functions.</p></dd>
 
 
 <dt id="arg-d">d<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
