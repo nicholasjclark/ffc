@@ -133,7 +133,7 @@ fts_coefs.ffc_gam <- function(
               )
               if (!is.null(attr(object$model, "index"))) {
                 repdat[[attr(object$model, "index")]] <-
-                  object$model[[attr(object$model, "index")]]
+                  unique(object$model[[attr(object$model, "index")]])
               }
 
               repdat

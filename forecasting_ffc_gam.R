@@ -392,7 +392,7 @@ mod <- ffc_gam(
   y ~ fts(year, mean_only = TRUE,
           time_k = 25) +
     fts(season, bs = 'cc', k = 12,
-        time_k = 10),
+        time_k = 10, ),
   data = airdat$data_train,
   family = nb(),
   time = 'time'
