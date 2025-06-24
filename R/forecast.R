@@ -120,7 +120,7 @@ forecast.fts_ts <- function(
     object_sds <- object_tsbl %>%
       as.data.frame() %>%
       dplyr::group_by(.basis, .realisation) %>%
-      dplyr::summarise(.sd = max(.sd))
+      dplyr::summarise(.sd = tail(.sd, 1))
 
     if (stationary) {
       out <- object_tsbl %>%

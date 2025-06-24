@@ -44,8 +44,8 @@ from the \pkg{fable} package or one of the built-in Bayesian dynamic
 factor models. Note that if a \pkg{fable} model is used,
 the chosen method must have an associated
 \code{generate()} method in order to simulate forecast realisations. Valid models
-currently include: \code{'ARDF'}, \code{'GPDF'},
-\code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'NAIVE'}, and \code{'NNETAR'}}
+currently include: \code{'ARDF'}, \code{'GPDF'}, '\code{VARDF},
+\code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'RW'}, \code{'NAIVE'}, and \code{'NNETAR'}}
 
 \item{stationary}{If \code{TRUE}, the fitted time series models are
 constrained to be stationary. Default is \code{FALSE}. This option

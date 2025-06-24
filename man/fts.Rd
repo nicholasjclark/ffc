@@ -13,6 +13,7 @@ fts(
   time_bs = "ts",
   m = NA,
   time_m = 2,
+  share_penalty = TRUE,
   d = NA,
   by = NA,
   xt = NULL,
@@ -52,7 +53,8 @@ basis code is given then this is used for all bases.}
 smoothing basis to use for the time-varying basis coefficients (eg \code{"tp"} for thin
 plate regression spline, \code{"cr"} for cubic regression spline).
 see \code{\link[mgcv]{smooth.terms}} for an over view of what is available. It is
-generally recommended to use one of the doubly-penalized bases (i.e. \code{"cs"} or \code{"ts"})
+generally recommended that you stick with one of the doubly-penalized bases
+(i.e. \code{"cs"} or \code{"ts"})
 as this helps to ensure the resulting basis function coefficient time series are
 estimated on an appropriate scale for later forecasting}
 
@@ -67,6 +69,10 @@ estimated on an appropriate scale for later forecasting}
 (e.g. \code{2} for normal cubic spline penalty with 2nd derivatives).
 Only some smooth classes use this. The \code{"ps"} class can use a \code{2} item \code{array}
 giving the basis and penalty order separately.}
+
+\item{share_penalty}{\code{logical} specifying whether the time-varying coefficient smooths for
+this term should all share a smoothing penalty. Defaults to \code{TRUE}, but changing to \code{FALSE}
+will give more flexibility to capture time-varying functions.}
 
 \item{d}{array of marginal basis dimensions. For example if you want a smooth for 3 covariates 
 made up of a tensor product of a 2 dimensional t.p.r.s. basis and a 1-dimensional basis, then 

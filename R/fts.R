@@ -31,6 +31,9 @@
 #'  (e.g. `2` for normal cubic spline penalty with 2nd derivatives).
 #'  Only some smooth classes use this. The `"ps"` class can use a `2` item `array`
 #'  giving the basis and penalty order separately.
+#' @param share_penalty `logical` specifying whether the time-varying coefficient smooths for
+#' this term should all share a smoothing penalty. Defaults to `TRUE`, but changing to `FALSE`
+#' will give more flexibility to capture time-varying functions.
 #' @param by a `factor` variable of the same dimension as each covariate, used to create
 #'  a replicate of the smooth for each factor level.
 #' @rdname fts
@@ -54,6 +57,7 @@ fts <- function(
     time_bs = "ts",
     m = NA,
     time_m = 2,
+    share_penalty = TRUE,
     d = NA,
     by = NA,
     xt = NULL,
@@ -113,7 +117,8 @@ fts <- function(
       time_k = time_k,
       time_m = time_m,
       label = label,
-      mean_only = mean_only
+      mean_only = mean_only,
+      share_penalty = share_penalty
     )
   )
 }

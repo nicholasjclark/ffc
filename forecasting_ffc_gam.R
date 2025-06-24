@@ -404,7 +404,7 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = airdat$data_test,
-  model = 'ETS',
+  model = 'GPDF',
   summary = TRUE
 )
 
@@ -425,3 +425,77 @@ ggplot(
                   ymin = .q10),
               alpha = 0.2) +
   geom_line()
+
+# An example of forecasting particulate matter over Graz-Mitte, Austria
+temp <- tempfile()
+download.file('https://github.com/cran/ftsa/raw/refs/heads/master/data/pm_10_GR.rda',
+              temp)
+load(temp)
+unlink(temp)
+
+pm_dat <- do.call(
+  rbind,
+  lapply(
+    seq_len(NCOL(pm_10_GR$y)), function(x){
+      data.frame(pm = pm_10_GR$y[, x],
+                 interval = 1 : 48,
+                 time = x)
+    })
+)
+
+ggplot(pm_dat %>%
+         dplyr::filter(time > 175),
+       aes(x = interval, y = pm, colour = time, group = time)) +
+  geom_line() +
+  scale_colour_viridis_c()
+
+# Forecast two days ahead
+dat_train <- pm_dat %>%
+  dplyr::filter(time <= 180)
+dat_test <- pm_dat %>%
+  dplyr::filter(time > 180)
+
+# Use thin-plate basis functions (which are orthogonal) for the curve
+# so they can be forecasted with independent ARIMA
+# models
+mod <- ffc_gam(
+  pm ~
+    fts(time, mean_only = TRUE, time_k = 100) +
+    fts(interval, k = 30, bs = 'tp', time_k = 100,
+        share_penalty = FALSE),
+  data = dat_train,
+  time = 'time',
+  family = tw(),
+  engine = 'bam',
+  discrete = TRUE,
+  select = TRUE,
+  nthreads = 4
+)
+summary(mod, re.test = FALSE)
+fts_coefs(mod, summary = FALSE) %>% autoplot()
+
+# Forecast basis coefficient time series with ARIMA models
+fcar <- forecast(
+  object = mod,
+  newdata = dat_test,
+  summary = TRUE
+)
+
+# Plot forecasts against the true curves
+ggplot(
+  dat_test %>%
+    dplyr::bind_cols(fcar),
+  aes(x = interval,
+      y = pm)
+) +
+  geom_ribbon(aes(ymax = .q97.5,
+                  ymin = .q2.5),
+              alpha = 0.3,
+              fill = 'darkred') +
+  geom_ribbon(aes(ymax = .q90,
+                  ymin = .q10),
+              alpha = 0.3,
+              fill = 'darkred') +
+  geom_line(linewidth = 1.5, col = 'white') +
+  geom_line() +
+  facet_wrap(~time)
