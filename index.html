@@ -156,59 +156,59 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Formula:</span></span>
 <span><span class="co">#&gt; deaths ~ sex + offset(log(population)) + s(year, by = fts_year1_mean, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 35, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_1, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_2, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_3, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_4, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_5, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_6, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_7, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_8, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_9, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_1, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_2, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_3, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_4, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_5, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_6, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_7, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_8, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_9, </span></span>
-<span><span class="co">#&gt;     bs = "tp", k = 15, m = 1, id = 2)</span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 35, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_1, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_2, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_3, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_4, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_5, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_6, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_7, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_8, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_9, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_1, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_2, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_3, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_4, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_5, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_6, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_7, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_8, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_9, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric coefficients:</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span><span class="co">#&gt; (Intercept) -5.648962   0.004043 -1397.3   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; sexmale      0.576491   0.004981   115.7   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept) -5.648061   0.004039 -1398.2   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; sexmale      0.574335   0.004986   115.2   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Approximate significance of smooth terms:</span></span>
-<span><span class="co">#&gt;                                       edf Ref.df Chi.sq p-value    </span></span>
-<span><span class="co">#&gt; s(year):fts_year1_mean             32.132 34.000  13231  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1 10.900 12.503  16347  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2  8.447 10.019  10379  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3 10.230 11.993   9668  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4  8.431 10.173   8575  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5  9.712 11.552   8476  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6  8.082  9.678   8746  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7  9.568 11.356   7817  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8  7.156  7.834  11575  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9  6.714  7.907   6110  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1   11.400 12.813  19904  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2    9.299 10.761  11592  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3   11.094 12.785  12961  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4    9.494 11.291  12259  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5   10.654 12.497  14720  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6    8.898 10.721  12319  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   10.098 11.999  11878  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8    7.148  7.738  13955  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9    6.167  7.130   6963  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt;                                      edf Ref.df Chi.sq p-value    </span></span>
+<span><span class="co">#&gt; s(year):fts_year1_mean             32.05     34  10342  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1 14.50     15  16349  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2 12.85     15  10267  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3 14.49     15   9610  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4 13.48     15   8470  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5 14.41     15   8433  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6 13.35     15   8667  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7 14.35     15   7764  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8 10.12     15  11476  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9 13.05     15   6036  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1   14.44     15  19549  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2   12.95     15  11146  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3   14.64     15  12750  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4   13.75     15  11841  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5   14.56     15  14649  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6   13.74     15  12002  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   14.52     15  11843  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8   10.19     15  13491  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9   12.44     15   6716  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; R-sq.(adj) =  0.986   Deviance explained = 97.6%</span></span>
-<span><span class="co">#&gt; fREML =  21810  Scale est. = 1         n = 8282</span></span></code></pre></div>
+<span><span class="co">#&gt; fREML =  22189  Scale est. = 1         n = 8282</span></span></code></pre></div>
 <p>View predicted functional curves using a fixed offset (where <code>population = 1</code>), which allows us to calculate a standardized rate of mortality</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdat</span> <span class="op">&lt;-</span> <span class="va">qld_mortality</span></span>
@@ -288,16 +288,16 @@
 <span><span class="co">#&gt; # A tibble: 7,790 × 5</span></span>
 <span><span class="co">#&gt;    .basis         .time .estimate .realisation  year</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;          &lt;int&gt;     &lt;dbl&gt;        &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_year1_mean  1980     0.383            1  1980</span></span>
-<span><span class="co">#&gt;  2 fts_year1_mean  1981     0.361            1  1981</span></span>
-<span><span class="co">#&gt;  3 fts_year1_mean  1982     0.401            1  1982</span></span>
-<span><span class="co">#&gt;  4 fts_year1_mean  1983     0.323            1  1983</span></span>
-<span><span class="co">#&gt;  5 fts_year1_mean  1984     0.314            1  1984</span></span>
-<span><span class="co">#&gt;  6 fts_year1_mean  1985     0.320            1  1985</span></span>
-<span><span class="co">#&gt;  7 fts_year1_mean  1986     0.275            1  1986</span></span>
-<span><span class="co">#&gt;  8 fts_year1_mean  1987     0.252            1  1987</span></span>
-<span><span class="co">#&gt;  9 fts_year1_mean  1988     0.231            1  1988</span></span>
-<span><span class="co">#&gt; 10 fts_year1_mean  1989     0.252            1  1989</span></span>
+<span><span class="co">#&gt;  1 fts_year1_mean  1980     0.376            1  1980</span></span>
+<span><span class="co">#&gt;  2 fts_year1_mean  1981     0.358            1  1981</span></span>
+<span><span class="co">#&gt;  3 fts_year1_mean  1982     0.394            1  1982</span></span>
+<span><span class="co">#&gt;  4 fts_year1_mean  1983     0.300            1  1983</span></span>
+<span><span class="co">#&gt;  5 fts_year1_mean  1984     0.326            1  1984</span></span>
+<span><span class="co">#&gt;  6 fts_year1_mean  1985     0.337            1  1985</span></span>
+<span><span class="co">#&gt;  7 fts_year1_mean  1986     0.269            1  1986</span></span>
+<span><span class="co">#&gt;  8 fts_year1_mean  1987     0.261            1  1987</span></span>
+<span><span class="co">#&gt;  9 fts_year1_mean  1988     0.235            1  1988</span></span>
+<span><span class="co">#&gt; 10 fts_year1_mean  1989     0.275            1  1989</span></span>
 <span><span class="co">#&gt; # ℹ 7,780 more rows</span></span></code></pre></div>
 <p>The basis function coefficient time series can be plotted using <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -310,36 +310,33 @@
 <span>  h <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">5</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Registered S3 method overwritten by 'tsibble':</span></span>
-<span><span class="co">#&gt;   method               from </span></span>
-<span><span class="co">#&gt;   as_tibble.grouped_df dplyr</span></span>
 <span><span class="va">functional_fc</span></span>
 <span><span class="co">#&gt; # A tsibble: 4,750 x 6 [1Y]</span></span>
 <span><span class="co">#&gt; # Key:       .basis, .realisation, .model, .rep [950]</span></span>
 <span><span class="co">#&gt;    .basis                     .realisation .model .time .rep   .sim</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;                             &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.74</span></span>
-<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.74</span></span>
-<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.73</span></span>
-<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.74</span></span>
+<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.69</span></span>
+<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.71</span></span>
+<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.74</span></span>
+<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.75</span></span>
 <span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.76</span></span>
-<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.74</span></span>
-<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.74</span></span>
-<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.73</span></span>
-<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.73</span></span>
-<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.74</span></span>
+<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.69</span></span>
+<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.75</span></span>
+<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.86</span></span>
+<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.99</span></span>
+<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      5.11</span></span>
 <span><span class="co">#&gt; # ℹ 4,740 more rows</span></span></code></pre></div>
 <p>Another example showing univariate time series modelling and forecasting</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://fable.tidyverts.org" class="external-link">fable</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tsibble.tidyverts.org" class="external-link">tsibble</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
-<p>Our aim here is to forecast the number of domestic holiday travellers to Melbourne, Australia. The data can be found in the <code><a href="https://tsibble.tidyverts.org/reference/tourism.html" class="external-link">tsibble::tourism</a></code> data set. For now we need to explicitly add the <code>quarter</code> and <code>time</code> variables to the data, but in future this will be done automatically for seamless integration with the <code>tsibbleverse</code></p>
+<p>Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the <code><a href="https://tsibble.tidyverts.org/reference/tourism.html" class="external-link">tsibble::tourism</a></code> data set. For now we need to explicitly add the <code>quarter</code> and <code>time</code> variables to the data, but in future this will be done automatically for seamless integration with the <code>tsibbleverse</code></p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tourism_melb</span> <span class="op">&lt;-</span> <span class="va">tourism</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
 <span>    <span class="va">Region</span> <span class="op">==</span> <span class="st">"Melbourne"</span>,</span>
-<span>    <span class="va">Purpose</span> <span class="op">==</span> <span class="st">"Holiday"</span></span>
+<span>    <span class="va">Purpose</span> <span class="op">==</span> <span class="st">"Visiting"</span></span>
 <span>  <span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    quarter <span class="op">=</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/quarter.html" class="external-link">quarter</a></span><span class="op">(</span><span class="va">Quarter</span><span class="op">)</span>,</span>
@@ -348,18 +345,18 @@
 <span><span class="va">tourism_melb</span></span>
 <span><span class="co">#&gt; # A tsibble: 80 x 7 [1Q]</span></span>
 <span><span class="co">#&gt; # Key:       Region, State, Purpose [1]</span></span>
-<span><span class="co">#&gt;    Quarter Region    State    Purpose Trips quarter  time</span></span>
-<span><span class="co">#&gt;      &lt;qtr&gt; &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;   &lt;dbl&gt;   &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 1998 Q1 Melbourne Victoria Holiday  428.       1     1</span></span>
-<span><span class="co">#&gt;  2 1998 Q2 Melbourne Victoria Holiday  424.       2     2</span></span>
-<span><span class="co">#&gt;  3 1998 Q3 Melbourne Victoria Holiday  450.       3     3</span></span>
-<span><span class="co">#&gt;  4 1998 Q4 Melbourne Victoria Holiday  451.       4     4</span></span>
-<span><span class="co">#&gt;  5 1999 Q1 Melbourne Victoria Holiday  412.       1     5</span></span>
-<span><span class="co">#&gt;  6 1999 Q2 Melbourne Victoria Holiday  355.       2     6</span></span>
-<span><span class="co">#&gt;  7 1999 Q3 Melbourne Victoria Holiday  362.       3     7</span></span>
-<span><span class="co">#&gt;  8 1999 Q4 Melbourne Victoria Holiday  342.       4     8</span></span>
-<span><span class="co">#&gt;  9 2000 Q1 Melbourne Victoria Holiday  434.       1     9</span></span>
-<span><span class="co">#&gt; 10 2000 Q2 Melbourne Victoria Holiday  403.       2    10</span></span>
+<span><span class="co">#&gt;    Quarter Region    State    Purpose  Trips quarter  time</span></span>
+<span><span class="co">#&gt;      &lt;qtr&gt; &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;   &lt;int&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1 1998 Q1 Melbourne Victoria Visiting  666.       1     1</span></span>
+<span><span class="co">#&gt;  2 1998 Q2 Melbourne Victoria Visiting  601.       2     2</span></span>
+<span><span class="co">#&gt;  3 1998 Q3 Melbourne Victoria Visiting  529.       3     3</span></span>
+<span><span class="co">#&gt;  4 1998 Q4 Melbourne Victoria Visiting  575.       4     4</span></span>
+<span><span class="co">#&gt;  5 1999 Q1 Melbourne Victoria Visiting  623.       1     5</span></span>
+<span><span class="co">#&gt;  6 1999 Q2 Melbourne Victoria Visiting  530.       2     6</span></span>
+<span><span class="co">#&gt;  7 1999 Q3 Melbourne Victoria Visiting  479.       3     7</span></span>
+<span><span class="co">#&gt;  8 1999 Q4 Melbourne Victoria Visiting  538.       4     8</span></span>
+<span><span class="co">#&gt;  9 2000 Q1 Melbourne Victoria Visiting  618.       1     9</span></span>
+<span><span class="co">#&gt; 10 2000 Q2 Melbourne Victoria Visiting  549.       2    10</span></span>
 <span><span class="co">#&gt; # ℹ 70 more rows</span></span></code></pre></div>
 <p>Split into training and testing folds. We wil aim to forecast the last 5 quarters of the data</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -382,7 +379,6 @@
 <span>    <span class="co"># Time-varying seasonality</span></span>
 <span>    <span class="fu"><a href="reference/fts.html">fts</a></span><span class="op">(</span></span>
 <span>      <span class="va">quarter</span>,</span>
-<span>      bs <span class="op">=</span> <span class="st">"tp"</span>,</span>
 <span>      k <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>      time_k <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>      time_m <span class="op">=</span> <span class="fl">1</span></span>
