@@ -323,7 +323,7 @@ forecast.ffc_gam <- function(
 
   # Take full draws of beta coefficients
   orig_betas <- mgcv::rmvn(
-    n = 1000,
+    n = 200,
     mu = coef(object),
     V = vcov(object)
   )
@@ -365,7 +365,7 @@ forecast.ffc_gam <- function(
     intermed_coefs <- fts_coefs(
       object,
       summary = FALSE,
-      times = 1000
+      times = 200
     )
 
     # Calculate mean + SD or quantiles
@@ -440,7 +440,7 @@ forecast.ffc_gam <- function(
           object = functional_coefs %>%
             dplyr::filter(!grepl('_mean', .basis)),
           h = max_horizon,
-          times = 1000,
+          times = 200,
           model = model,
           stationary = stationary,
           ...
@@ -457,7 +457,7 @@ forecast.ffc_gam <- function(
           object = functional_coefs %>%
             dplyr::filter(grepl('_mean', .basis)),
           h = max_horizon,
-          times = 1000,
+          times = 200,
           model = 'ETS',
           stationary = FALSE,
           ...
@@ -480,7 +480,7 @@ forecast.ffc_gam <- function(
         forecast(
           object = functional_coefs,
           h = max_horizon,
-          times = 1000,
+          times = 200,
           model = model,
           stationary = stationary,
           ...
@@ -523,7 +523,7 @@ forecast.ffc_gam <- function(
         dplyr::mutate(.weight = norm_quantiles(.realisation)) %>%
         dplyr::group_by(.basis) %>%
         dplyr::sample_n(
-          size = 1000,
+          size = 200,
           replace = TRUE,
           weight = .weight
         )
@@ -537,7 +537,7 @@ forecast.ffc_gam <- function(
         dplyr::group_by(.basis, .time) %>%
         dplyr::mutate(
           .realisation = 1,
-          .rep = 1:1000
+          .rep = 1:200
         )
     }
 
