@@ -5,6 +5,7 @@
 #'
 #' @name fts_coefs.ffc_gam
 #' @importFrom mgcv predict.gam predict.bam
+#' @importFrom rlang := !!
 #' @param object \code{list} object of class \code{ffc_gam}. See [ffc_gam()]
 #' @param summary `Logical`. Should summary statistics of the coefficient
 #' time series be returned instead of realized curves? Default is `TRUE`. If
@@ -61,7 +62,7 @@ fts_coefs.ffc_gam <- function(
 
     # Extract estimated coefficients
     betas <- mgcv::rmvn(
-      n = 1000,
+      n = 500,
       mu = coef(object),
       V = vcov(object)
     )
@@ -90,57 +91,115 @@ fts_coefs.ffc_gam <- function(
         object$smooth[[sm]]$last.para
         preds <- matrix(
           NA,
-          nrow = 1000,
+          nrow = 500,
           ncol = NROW(pred_dat)
         )
-        for (i in 1:1000) {
+        for (i in 1:500) {
           preds[i, ] <- as.vector(lp %*% betas[i, beta_idx])
         }
 
         # Return in tidy format
         if (summary) {
-          dat <- data.frame(
+          # dat <- data.frame(
+          #   .basis = by_var,
+          #   .time = unique_times,
+          #   .estimate = apply(preds, 2, mean),
+          #   .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x)))
+          # )
+          # dat$time_var <- unique_times
+          # colnames(dat) <- c(
+          #   ".basis",
+          #   ".time",
+          #   ".estimate",
+          #   ".se",
+          #   time_var
+          # )
+
+          # Create a tibble summarizing the predictions across replications
+          dat <- tibble::tibble(
+            # Assign the basis variable (e.g., spline basis or grouping variable)
             .basis = by_var,
+
+            # Assign the unique time points
             .time = unique_times,
+
+            # Compute the mean estimate across replications for each time point (column-wise mean)
             .estimate = apply(preds, 2, mean),
-            .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x)))
+
+            # Compute the standard error for each time point:
+            # standard deviation divided by the square root of the number of replications
+            .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x))),
+
+            # Dynamically name the time variable column using `:=`
+            # and `!!` from `rlang`
+            !!time_var := unique_times
           )
-          dat$time_var <- unique_times
-          colnames(dat) <- c(
-            ".basis",
-            ".time",
-            ".estimate",
-            ".se",
-            time_var
-          )
+
         } else {
-          dat <- do.call(
-            rbind,
-            lapply(1:times, function(x) {
-              repdat <- data.frame(
-                .basis = by_var,
-                .time = unique_times,
-                .estimate = preds[x, ],
-                .rep = x
-              )
-              repdat$time_var <- unique_times
-              colnames(repdat) <- c(
-                ".basis",
-                ".time",
-                ".estimate",
-                ".realisation",
-                time_var
-              )
-              if (!is.null(attr(object$model, "index"))) {
-                repdat[[attr(object$model, "index")]] <-
-                  unique(object$model[[attr(object$model, "index")]])
-              }
+          # dat <- do.call(
+          #   rbind,
+          #   lapply(1:times, function(x) {
+          #     repdat <- data.frame(
+          #       .basis = by_var,
+          #       .time = unique_times,
+          #       .estimate = preds[x, ],
+          #       .rep = x
+          #     )
+          #     repdat$time_var <- unique_times
+          #     colnames(repdat) <- c(
+          #       ".basis",
+          #       ".time",
+          #       ".estimate",
+          #       ".realisation",
+          #       time_var
+          #     )
+          #     if (!is.null(attr(object$model, "index"))) {
+          #       repdat[[attr(object$model, "index")]] <-
+          #         unique(object$model[[attr(object$model, "index")]])
+          #     }
+          #
+          #     repdat
+          #   })
+          # )
 
-              repdat
-            })
-          )
+          # Use map_dfr() to iterate over 1:times and bind the resulting data
+          # frames row-wise
+          dat <- purrr::map_dfr(1:times, function(x) {
+
+            # Create a tibble for the current replication
+            # .basis, .time, and .estimate are populated from vectors
+            # .realisation is the current iteration index
+            # `!!time_var := unique_times` dynamically names the column using
+            # the value of `time_var`
+            repdat <- tibble::tibble(
+              .basis = by_var,
+              .time = unique_times,
+              .estimate = preds[x, ],
+              .realisation = x,
+              !!time_var := unique_times
+            )
+
+            # If the model has an "index" attribute, add a column with
+            # its unique values
+            # This is useful for time series or panel data where an index
+            # (e.g., subject ID) is needed
+            if (!is.null(attr(object$model, "index"))) {
+
+              # Get the name of the index column
+              index_name <- attr(object$model, "index")
+
+              # Add the index values
+              repdat <- dplyr::mutate(
+                repdat,
+                !!index_name := unique(object$model[[index_name]])
+              )
+              #repdat[[index_name]] <- unique(object$model[[index_name]])
+            }
+
+            # Return the tibble for this iteration
+            repdat
+          })
         }
-
         dat
       })
     )
