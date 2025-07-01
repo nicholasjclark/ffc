@@ -29,8 +29,8 @@ binary = function(x) {
 }
 
 # Simulation setup
- transform <- posreal; gam_fam <- tw()
-# transform <- count; gam_fam <- nb()
+# transform <- posreal; gam_fam <- tw()
+ transform <- count; gam_fam <- nb()
 # transform <- proportional; gam_fam <- betar()
 # transform <- binary; gam_fam <- binomial()
 
@@ -40,7 +40,7 @@ simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
   drift = TRUE,
-  prop_trend = 0.6,
+  prop_trend = 0.4,
   prop_train = 0.7,
   mu = -1,
   family = mvgam::student()
@@ -404,7 +404,7 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = airdat$data_test,
-  model = 'ETS',
+  model = 'GPDF',
   summary = TRUE
 )
 

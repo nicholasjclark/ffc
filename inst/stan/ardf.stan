@@ -3,15 +3,18 @@ functions {
   vector rep_each(vector x, int K) {
     int N = rows(x);
     vector[N * K] y;
-    int pos = 1;
-    for (n in 1 : N) {
-      for (k in 1 : K) {
-        y[pos] = x[n];
-        pos += 1;
-      }
+
+    for (n in 1:N) {
+     // Compute start and end positions for the block
+      int start = (n - 1) * K + 1;
+      int end = n * K;
+
+      // Assign the same value to a block of y
+      y[start:end] = rep_vector(x[n], K);
     }
-    return y;
-  }
+
+  return y;
+ }
 }
 data {
   int<lower=0> n; // number of timepoints per series
@@ -23,7 +26,7 @@ data {
   vector[n_nonmissing] flat_ys; // flattened nonmissing observations
   array[n_nonmissing] int<lower=0> obs_ind; // indices of nonmissing observations
   int<lower=1> family; // 1 = normal, 2 = student-t
-  vector[n_series] alpha; // series intercepts
+  row_vector[n_series] alpha; // series intercepts
   vector[3] prior_ar; // prior ar coefficient control parameters
   int<lower=1> P; // AR order
   vector[1] beta; // beta coefficient (1) to use in id_glm functions
@@ -55,33 +58,32 @@ transformed parameters {
 
   // factor loadings, with constraints
   {
-    int index;
-    index = 0;
+    int index = 0;
     for (j in 1 : K) {
       for (s in j : n_series) {
-        index = index + 1;
+        index += 1;
         Lambda[s, j] = L[index];
       }
     }
   }
 
-  // derived latent factors
-  matrix[n, K] LV  = rep_matrix(0, n, K);
-  LV[1, 1 : K] = LV_z[1, 1 : K];
-  for (j in 1 : K) {
-    for (p in 1 : P) {
-      for (t in (P + 1) : n){
-        LV[t, j] += ar[p, j] * LV[t - p, j] + LV_z[t, j];
+  // initialize latent factor matrix with LV_z
+  matrix[n, K] LV = LV_z;
+
+  // apply AR structure to compute derived latent factors
+  for (j in 1:K) {
+    for (t in (P + 1):n) {
+      real ar_sum = 0;
+      for (p in 1:P) {
+        ar_sum += ar[p, j] * LV[t - p, j];
       }
+      LV[t, j] += ar_sum;
     }
   }
 
   // derived series-level trends
-  for (i in 1 : n) {
-    for (s in 1 : n_series) {
-      trend[i, s] = alpha[s] + dot_product(Lambda[s,  : ], LV[i,  : ]);
-    }
-  }
+  trend = LV * Lambda' + rep_matrix(alpha', n)';
+
 }
 model {
 

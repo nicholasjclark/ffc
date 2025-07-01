@@ -38,6 +38,8 @@ forecast.fts_ts <- function(
 
   # Check arguments
   validate_pos_integer(h)
+  validate_pos_integer(times)
+
   if (stationary & !identical(model, "ARIMA")) {
     stop("stationary = TRUE only works with model = 'ARIMA'")
   }
@@ -68,6 +70,7 @@ forecast.fts_ts <- function(
           chains = 4,
           cores = 4,
           iter = 500,
+          warmup = 450,
           adapt_delta = 0.75,
           max_treedepth = 9
         )
@@ -84,6 +87,7 @@ forecast.fts_ts <- function(
           chains = 4,
           cores = 4,
           iter = 500,
+          warmup = 450,
           adapt_delta = 0.75,
           max_treedepth = 9
         )
@@ -107,6 +111,7 @@ forecast.fts_ts <- function(
         chains = 4,
         cores = 4,
         iter = 500,
+        warmup = 450,
         adapt_delta = 0.75,
         max_treedepth = 9
       )
@@ -310,8 +315,6 @@ forecast.ffc_gam <- function(
     )
   )
 
-  # validate_proportional(min(probs))
-  # validate_proportional(max(probs))
   if(model %in% c('ARDF', 'GPDF', 'VARDF')) quantile_fc <- FALSE
 
   # Extract the full linear predictor matrix
@@ -566,18 +569,16 @@ forecast.ffc_gam <- function(
     intermed_betas <- orig_betas[, -fts_coefs, drop = FALSE]
 
     # Calculate intermediate linear predictors
-    intermed_linpreds <- matrix(
-      as.vector(
-        t(apply(
-          as.matrix(intermed_betas),
-          1,
-          function(row) {
-            intermed_lpmat %*% row +
-              attr(orig_lpmat, "model.offset")
-          }
-        ))
-      ),
-      nrow = NROW(intermed_betas)
+    model_offset <- attr(orig_lpmat, "model.offset")
+
+    # Compute linear predictors using matrix multiplication
+    intermed_linpreds <- intermed_betas %*%
+      t(intermed_lpmat)
+    intermed_linpreds <- sweep(
+      intermed_linpreds,
+      2,
+      model_offset,
+      "+"
     )
 
     # Join forecasts to the basis function evaluations
@@ -622,11 +623,6 @@ forecast.ffc_gam <- function(
         -.rep
       )
 
-    # Should now have n_draws * n_sims draws for each row of newdata
-    # if (!NROW(orig_lpmat) * n_draws * n_sims == NROW(fts_fc)) {
-    #   stop("Wrong dimensions in forecast coefs; need to check on this")
-    # }
-
     # Should also have same ncols as number of fts basis functions
     if (
       !NCOL(fts_fc) - 2 ==
@@ -648,16 +644,21 @@ forecast.ffc_gam <- function(
     # Add the draw-specific row predictions to the
     # intermediate prediction matrix
     unique_draws <- unique(fts_fc$.draw)
-    full_linpreds <- do.call(
-      rbind,
-      lapply(
-        unique_draws,
-        function(x) {
-          fc_linpreds[which(fts_fc$.draw == x)]
-        }
-      )
-    ) +
-      intermed_linpreds
+
+    # Filter fc_linpreds by each unique draw and collect results
+    draw_linpreds <- purrr::map(unique_draws, function(x) {
+      # Select predictions corresponding to the current draw
+      fc_linpreds[fts_fc %>%
+                    dplyr::filter(.draw == x) %>%
+                    dplyr::row_number()]
+    })
+
+    # Combine all filtered predictions into a matrix
+    draw_linpreds_mat <- draw_linpreds %>%
+      purrr::reduce(rbind)
+
+    # Add intermediate linear predictors to the full set
+    full_linpreds <- draw_linpreds_mat + intermed_linpreds
   }
 
   # Now can proceed to send full_linpreds to the relevant

@@ -3,37 +3,36 @@ functions {
   vector rep_each(vector x, int K) {
     int N = rows(x);
     vector[N * K] y;
-    int pos = 1;
-    for (n in 1 : N) {
-      for (k in 1 : K) {
-        y[pos] = x[n];
-        pos += 1;
-      }
+
+    for (n in 1:N) {
+     // Compute start and end positions for the block
+      int start = (n - 1) * K + 1;
+      int end = n * K;
+
+      // Assign the same value to a block of y
+      y[start:end] = rep_vector(x[n], K);
     }
-    return y;
+
+   return y;
   }
   /* Spectral density GP eigenvalues*/
   /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
   real lambda_gp(real L, int m) {
-    real lam;
-    lam = ((m * pi()) / (2 * L)) ^ 2;
-    return lam;
+    return square((m * pi()) / (2 * L));
   }
   /* Spectral density GP eigenfunctions*/
   /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
   vector phi_SE(real L, int m, vector x) {
-    vector[rows(x)] fi;
-    fi = 1 / sqrt(L) * sin(m * pi() / (2 * L) * (x + L));
-    return fi;
+    return inv_sqrt(L) * sin((m * pi()) / (2 * L) * (x + L));
+
   }
   /* Spectral density squared exponential Gaussian Process*/
   /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
   real spd_SE(real alpha, real rho, real w) {
-    real S;
-    S = (alpha ^ 2) * sqrt(2 * pi()) * rho * exp(-0.5 * (rho ^ 2) * (w ^ 2));
-    return S;
+    return square(alpha) * sqrt(2 * pi()) * rho * exp(-0.5 * square(rho * w));
   }
 }
+
 data {
   int<lower=0> n; // number of timepoints per series
   int<lower=0> K; // number of dynamic factors
@@ -44,28 +43,23 @@ data {
   vector[n_nonmissing] flat_ys; // flattened nonmissing observations
   array[n_nonmissing] int<lower=0> obs_ind; // indices of nonmissing observations
   int<lower=1> family; // 1 = normal, 2 = student-t
-  vector[n_series] alpha; // series intercepts
+  row_vector[n_series] alpha; // series intercepts
   vector[1] beta; // beta coefficient (1) to use in id_glm functions
 }
+
 transformed data {
-  // gp phi
-  vector<lower=1>[n] times;
-  vector[n] times_cent;
-  real mean_times;
-  real<lower=0> boundary;
-  int<lower=1> num_gp_basis;
-  num_gp_basis = min(25, n);
-  matrix[n, num_gp_basis] gp_phi;
-  for (t in 1 : n) {
-    times[t] = t;
-  }
-  mean_times = mean(times);
-  times_cent = times - mean_times;
-  boundary = (5.0 / 4) * (max(times_cent) - min(times_cent));
-  for (m in 1 : num_gp_basis) {
-    gp_phi[ : , m] = phi_SE(boundary, m, times_cent);
-  }
+ // Create centered time vector and GP basis functions
+ vector[n] times = linspaced_vector(n, 1, n);
+ vector[n] times_cent = times - mean(times);
+ real boundary = 1.25 * (max(times_cent) - min(times_cent));
+ int num_gp_basis = min(25, n);
+ matrix[n, num_gp_basis] gp_phi;
+
+ // Compute GP basis functions
+ for (m in 1:num_gp_basis)
+   gp_phi[, m] = phi_SE(boundary, m, times_cent);
 }
+
 parameters {
   // gp length scale parameters
   vector<lower=0>[K] rho_gp;
@@ -83,6 +77,7 @@ parameters {
   vector<lower=0>[n_series] sigma_obs;
 
 }
+
 transformed parameters {
   // trends and dynamic factor loading matrix
   matrix[n, n_series] trend;
@@ -95,11 +90,10 @@ transformed parameters {
 
   // factor loadings, with constraints
   {
-    int index;
-    index = 0;
+    int index = 0;
     for (j in 1 : K) {
       for (s in j : n_series) {
-        index = index + 1;
+        index += 1;
         Lambda[s, j] = L[index];
       }
     }
@@ -116,12 +110,9 @@ transformed parameters {
   LV = gp_phi * SPD_beta;
 
   // derived series-level trends
-  for (i in 1 : n) {
-    for (s in 1 : n_series) {
-      trend[i, s] = alpha[s] + dot_product(Lambda[s,  : ], LV[i,  : ]);
-    }
-  }
+  trend = LV * Lambda' + rep_matrix(alpha', n)';
 }
+
 model {
 
   // prior for observation df parameter
@@ -153,6 +144,7 @@ model {
     }
   }
 }
+
 generated quantities {
   // Posterior predictions
   array[n, n_series] real ypred;

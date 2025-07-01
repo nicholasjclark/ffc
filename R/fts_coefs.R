@@ -39,6 +39,9 @@ fts_coefs.ffc_gam <- function(
     message("No functional smooths using fts() were included in this model")
     return(NULL)
   } else {
+    # Sanity check
+    validate_pos_integer(times)
+
     # Time variable
     time_var <- object$time_var
 
@@ -48,6 +51,17 @@ fts_coefs.ffc_gam <- function(
       min(object$model[, time_var]),
       max(object$model[, time_var])
     )
+
+    # Extract unique index values for data that were provided as
+    # tsibbles
+    if (!is.null(attr(object$model, "index"))) {
+
+      # Get the name of the index column
+      index_name <- attr(object$model, "index")
+
+      # Extract unique index values
+      unique_indices <- unique(object$model[[index_name]])
+    }
 
     # Smooth names
     sm_names <- unlist(
@@ -62,147 +76,82 @@ fts_coefs.ffc_gam <- function(
 
     # Extract estimated coefficients
     betas <- mgcv::rmvn(
-      n = 500,
+      n = times,
       mu = coef(object),
       V = vcov(object)
     )
 
-    # Loop across fts smooths and calculate time-varying coefficients
-    validate_pos_integer(times)
-    fts_preds <- do.call(
-      rbind,
-      lapply(fts_idx, function(sm) {
-        # Create prediction grid
-        by_var <- object$smooth[[sm]]$by
-        pred_dat <- data.frame(
-          by_var = 1,
-          time_var = unique_times
-        )
-        colnames(pred_dat) <- c(by_var, time_var)
+    # Use map_dfr() to iterate over each smooth index in fts_idx and
+    # bind results row-wise
+    fts_preds <- purrr::map_dfr(fts_idx, function(sm) {
 
-        # Create linear predictor matrix from the grid
-        lp <- mgcv::PredictMat(
-          object$smooth[[sm]],
-          data = pred_dat,
-        )
+      # Extract the 'by' variable name for the current smooth
+      by_var <- object$smooth[[sm]]$by
 
-        # Calculate mean and SE of predictions
-        beta_idx <- object$smooth[[sm]]$first.para:
+      # Create a prediction grid with the 'by' variable set to 1 and
+      # time variable set to unique time points
+      pred_dat <- tibble::tibble(
+        !!by_var := 1,
+        !!time_var := unique_times
+      )
+
+      # Generate the linear predictor matrix for the current smooth
+      lp <- mgcv::PredictMat(
+        object$smooth[[sm]],
+        data = pred_dat
+      )
+
+      # Identify the indices of the coefficients relevant to this smooth
+      beta_idx <- object$smooth[[sm]]$first.para:
         object$smooth[[sm]]$last.para
-        preds <- matrix(
-          NA,
-          nrow = 500,
-          ncol = NROW(pred_dat)
+
+      # Preallocate a matrix to store predictions for each simulation
+      preds <- matrix(NA, nrow = times, ncol = nrow(pred_dat))
+
+      # Fill the prediction matrix by multiplying the predictor matrix with
+      # the sampled coefficients
+      for (i in 1:times) {
+        preds[i, ] <- as.vector(lp %*% betas[i, beta_idx])
+      }
+
+      # If summary output is requested, compute mean and standard error
+      # across simulations
+      if (summary) {
+        dat <- tibble::tibble(
+          .basis = by_var,
+          .time = unique_times,
+          .estimate = apply(preds, 2, mean),
+          .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x))),
+          !!time_var := unique_times
         )
-        for (i in 1:500) {
-          preds[i, ] <- as.vector(lp %*% betas[i, beta_idx])
-        }
-
-        # Return in tidy format
-        if (summary) {
-          # dat <- data.frame(
-          #   .basis = by_var,
-          #   .time = unique_times,
-          #   .estimate = apply(preds, 2, mean),
-          #   .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x)))
-          # )
-          # dat$time_var <- unique_times
-          # colnames(dat) <- c(
-          #   ".basis",
-          #   ".time",
-          #   ".estimate",
-          #   ".se",
-          #   time_var
-          # )
-
-          # Create a tibble summarizing the predictions across replications
-          dat <- tibble::tibble(
-            # Assign the basis variable (e.g., spline basis or grouping variable)
+      } else {
+        # Otherwise, return all simulation replicates in long format
+        # using map_dfr()
+        dat <- purrr::map_dfr(1:times, function(x) {
+          repdat <- tibble::tibble(
             .basis = by_var,
-
-            # Assign the unique time points
             .time = unique_times,
-
-            # Compute the mean estimate across replications for each time point (column-wise mean)
-            .estimate = apply(preds, 2, mean),
-
-            # Compute the standard error for each time point:
-            # standard deviation divided by the square root of the number of replications
-            .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x))),
-
-            # Dynamically name the time variable column using `:=`
-            # and `!!` from `rlang`
+            .estimate = preds[x, ],
+            .realisation = x,
             !!time_var := unique_times
           )
 
-        } else {
-          # dat <- do.call(
-          #   rbind,
-          #   lapply(1:times, function(x) {
-          #     repdat <- data.frame(
-          #       .basis = by_var,
-          #       .time = unique_times,
-          #       .estimate = preds[x, ],
-          #       .rep = x
-          #     )
-          #     repdat$time_var <- unique_times
-          #     colnames(repdat) <- c(
-          #       ".basis",
-          #       ".time",
-          #       ".estimate",
-          #       ".realisation",
-          #       time_var
-          #     )
-          #     if (!is.null(attr(object$model, "index"))) {
-          #       repdat[[attr(object$model, "index")]] <-
-          #         unique(object$model[[attr(object$model, "index")]])
-          #     }
-          #
-          #     repdat
-          #   })
-          # )
-
-          # Use map_dfr() to iterate over 1:times and bind the resulting data
-          # frames row-wise
-          dat <- purrr::map_dfr(1:times, function(x) {
-
-            # Create a tibble for the current replication
-            # .basis, .time, and .estimate are populated from vectors
-            # .realisation is the current iteration index
-            # `!!time_var := unique_times` dynamically names the column using
-            # the value of `time_var`
-            repdat <- tibble::tibble(
-              .basis = by_var,
-              .time = unique_times,
-              .estimate = preds[x, ],
-              .realisation = x,
-              !!time_var := unique_times
+          # If the model has an index attribute, add it to the output
+          if (!is.null(attr(object$model, "index"))) {
+            repdat <- dplyr::mutate(
+              repdat,
+              !!index_name := unique_indices
             )
+          }
 
-            # If the model has an "index" attribute, add a column with
-            # its unique values
-            # This is useful for time series or panel data where an index
-            # (e.g., subject ID) is needed
-            if (!is.null(attr(object$model, "index"))) {
+          repdat
+        })
+      }
 
-              # Get the name of the index column
-              index_name <- attr(object$model, "index")
+      # Return the tidy data for this smooth
+      dat
+    })
 
-              # Add the index values
-              repdat <- dplyr::mutate(
-                repdat,
-                !!index_name := unique(object$model[[index_name]])
-              )
-              #repdat[[index_name]] <- unique(object$model[[index_name]])
-            }
-
-            # Return the tibble for this iteration
-            repdat
-          })
-        }
-        dat
-      })
-    )
     class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
     attr(fts_preds, "time_var") <- time_var
     attr(fts_preds, "index") <- attr(object$model, "index")

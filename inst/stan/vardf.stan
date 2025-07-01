@@ -3,14 +3,17 @@ functions {
   vector rep_each(vector x, int K) {
     int N = rows(x);
     vector[N * K] y;
-    int pos = 1;
-    for (n in 1 : N) {
-      for (k in 1 : K) {
-        y[pos] = x[n];
-        pos += 1;
-      }
+
+    for (n in 1:N) {
+     // Compute start and end positions for the block
+      int start = (n - 1) * K + 1;
+      int end = n * K;
+
+      // Assign the same value to a block of y
+      y[start:end] = rep_vector(x[n], K);
     }
-    return y;
+
+   return y;
   }
 
   /* Function to compute the matrix square root */
@@ -113,7 +116,7 @@ data {
   vector[n_nonmissing] flat_ys; // flattened nonmissing observations
   array[n_nonmissing] int<lower=0> obs_ind; // indices of nonmissing observations
   int<lower=1> family; // 1 = normal, 2 = student-t
-  vector[n_series] alpha; // series intercepts
+  row_vector[n_series] alpha; // series intercepts
   int<lower=1> P; // AR order
   vector[1] beta; // beta coefficient (1) to use in id_glm functions
 }
@@ -174,11 +177,10 @@ transformed parameters {
 
   // factor loadings, with constraints
   {
-    int index;
-    index = 0;
+    int index = 0;
     for (j in 1 : K) {
       for (s in j : n_series) {
-        index = index + 1;
+        index += 1;
         Lambda[s, j] = L[index];
       }
     }
@@ -200,11 +202,7 @@ transformed parameters {
   }
 
   // derived series-level trends
-  for (i in 1 : n) {
-    for (s in 1 : n_series) {
-      trend[i, s] = alpha[s] + dot_product(Lambda[s,  : ], LV[i,  : ]);
-    }
-  }
+  trend = LV * Lambda' + rep_matrix(alpha', n)';
 }
 model {
   // factor mean parameters

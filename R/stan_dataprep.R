@@ -13,9 +13,14 @@ prep_tbl_ts_stan = function(.data,
   .fulldata <- expand_tbl_ts(.data, h) %>%
 
     # add 'series' indicator
-    dplyr::mutate(.series = factor(.basis,
-                                   levels = set_series_levels(unique(.basis))),
-                  .y = .estimate) %>%
+    dplyr::mutate(
+      .series = factor(
+        .basis,
+        levels = set_series_levels(unique(.basis)
+        )
+      ),
+      .y = .estimate
+    ) %>%
     dplyr::arrange(.series, .time) %>%
     dplyr::select(.series, .time, .y, .sd)
 
