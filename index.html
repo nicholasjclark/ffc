@@ -80,7 +80,7 @@
 <div class="section level2">
 <h2 id="a-brief-example">A brief example<a class="anchor" aria-label="anchor" href="#a-brief-example"></a>
 </h2>
-<p>Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia</p>
+<p>Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">ffc</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
@@ -287,17 +287,17 @@
 <span><span class="va">functional_coefs</span></span>
 <span><span class="co">#&gt; # A tibble: 7,790 × 5</span></span>
 <span><span class="co">#&gt;    .basis         .time .estimate .realisation  year</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;          &lt;int&gt;     &lt;dbl&gt;        &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_year1_mean  1980     0.376            1  1980</span></span>
-<span><span class="co">#&gt;  2 fts_year1_mean  1981     0.358            1  1981</span></span>
-<span><span class="co">#&gt;  3 fts_year1_mean  1982     0.394            1  1982</span></span>
-<span><span class="co">#&gt;  4 fts_year1_mean  1983     0.300            1  1983</span></span>
-<span><span class="co">#&gt;  5 fts_year1_mean  1984     0.326            1  1984</span></span>
-<span><span class="co">#&gt;  6 fts_year1_mean  1985     0.337            1  1985</span></span>
-<span><span class="co">#&gt;  7 fts_year1_mean  1986     0.269            1  1986</span></span>
-<span><span class="co">#&gt;  8 fts_year1_mean  1987     0.261            1  1987</span></span>
-<span><span class="co">#&gt;  9 fts_year1_mean  1988     0.235            1  1988</span></span>
-<span><span class="co">#&gt; 10 fts_year1_mean  1989     0.275            1  1989</span></span>
+<span><span class="co">#&gt;  * &lt;chr&gt;          &lt;int&gt;     &lt;dbl&gt;        &lt;int&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1 fts_year1_mean  1980     0.369            1  1980</span></span>
+<span><span class="co">#&gt;  2 fts_year1_mean  1981     0.373            1  1981</span></span>
+<span><span class="co">#&gt;  3 fts_year1_mean  1982     0.397            1  1982</span></span>
+<span><span class="co">#&gt;  4 fts_year1_mean  1983     0.293            1  1983</span></span>
+<span><span class="co">#&gt;  5 fts_year1_mean  1984     0.300            1  1984</span></span>
+<span><span class="co">#&gt;  6 fts_year1_mean  1985     0.325            1  1985</span></span>
+<span><span class="co">#&gt;  7 fts_year1_mean  1986     0.271            1  1986</span></span>
+<span><span class="co">#&gt;  8 fts_year1_mean  1987     0.250            1  1987</span></span>
+<span><span class="co">#&gt;  9 fts_year1_mean  1988     0.238            1  1988</span></span>
+<span><span class="co">#&gt; 10 fts_year1_mean  1989     0.254            1  1989</span></span>
 <span><span class="co">#&gt; # ℹ 7,780 more rows</span></span></code></pre></div>
 <p>The basis function coefficient time series can be plotted using <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -315,16 +315,16 @@
 <span><span class="co">#&gt; # Key:       .basis, .realisation, .model, .rep [950]</span></span>
 <span><span class="co">#&gt;    .basis                     .realisation .model .time .rep   .sim</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;                             &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.69</span></span>
-<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.71</span></span>
-<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.74</span></span>
-<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.75</span></span>
-<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.76</span></span>
-<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.69</span></span>
-<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.75</span></span>
-<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.86</span></span>
-<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.99</span></span>
-<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      5.11</span></span>
+<span><span class="co">#&gt;  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.56</span></span>
+<span><span class="co">#&gt;  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.50</span></span>
+<span><span class="co">#&gt;  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.44</span></span>
+<span><span class="co">#&gt;  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.40</span></span>
+<span><span class="co">#&gt;  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.42</span></span>
+<span><span class="co">#&gt;  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.56</span></span>
+<span><span class="co">#&gt;  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.52</span></span>
+<span><span class="co">#&gt;  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.46</span></span>
+<span><span class="co">#&gt;  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.42</span></span>
+<span><span class="co">#&gt; 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.42</span></span>
 <span><span class="co">#&gt; # ℹ 4,740 more rows</span></span></code></pre></div>
 <p>Another example showing univariate time series modelling and forecasting</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
