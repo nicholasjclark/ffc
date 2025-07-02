@@ -42,7 +42,7 @@ pak::pak("nicholasjclark/ffc")
 ```
 
 ## A brief example
-Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia
+Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia.
 ```{r, message=FALSE, warning=FALSE}
 library(ffc)
 library(ggplot2)

@@ -44,7 +44,7 @@ pak::pak("nicholasjclark/ffc")
 
 Load the in-built Queensland Mortality data, which contains the number
 of deaths per age category over time in the state of Queensland,
-Australia
+Australia.
 
 ``` r
 library(ffc)
@@ -300,17 +300,17 @@ functional_coefs <- fts_coefs(
 functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
-#>    <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.376            1  1980
-#>  2 fts_year1_mean  1981     0.358            1  1981
-#>  3 fts_year1_mean  1982     0.394            1  1982
-#>  4 fts_year1_mean  1983     0.300            1  1983
-#>  5 fts_year1_mean  1984     0.326            1  1984
-#>  6 fts_year1_mean  1985     0.337            1  1985
-#>  7 fts_year1_mean  1986     0.269            1  1986
-#>  8 fts_year1_mean  1987     0.261            1  1987
-#>  9 fts_year1_mean  1988     0.235            1  1988
-#> 10 fts_year1_mean  1989     0.275            1  1989
+#>  * <chr>          <int>     <dbl>        <int> <int>
+#>  1 fts_year1_mean  1980     0.369            1  1980
+#>  2 fts_year1_mean  1981     0.373            1  1981
+#>  3 fts_year1_mean  1982     0.397            1  1982
+#>  4 fts_year1_mean  1983     0.293            1  1983
+#>  5 fts_year1_mean  1984     0.300            1  1984
+#>  6 fts_year1_mean  1985     0.325            1  1985
+#>  7 fts_year1_mean  1986     0.271            1  1986
+#>  8 fts_year1_mean  1987     0.250            1  1987
+#>  9 fts_year1_mean  1988     0.238            1  1988
+#> 10 fts_year1_mean  1989     0.254            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -343,16 +343,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.69
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.71
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.74
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.75
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.76
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.69
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.75
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.86
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.99
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      5.11
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.56
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.50
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.44
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.40
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.42
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.56
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.52
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.46
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.42
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.42
 #> # ℹ 4,740 more rows
 ```
 

@@ -152,12 +152,17 @@ fts_coefs.ffc_gam <- function(
       dat
     })
 
-    class(fts_preds) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
-    attr(fts_preds, "time_var") <- time_var
-    attr(fts_preds, "index") <- attr(object$model, "index")
-    attr(fts_preds, "index2") <- attr(object$model, "index2")
-    attr(fts_preds, "interval") <- attr(object$model, "interval")
-    attr(fts_preds, "summarized") <- isTRUE(summary)
+    # Structure the object and return
+    fts_preds <- structure(
+      fts_preds,
+      class = c("fts_ts", "tbl_df", "tbl", "data.frame"),
+      time_var = time_var,
+      index = attr(object$model, "index"),
+      index2 = attr(object$model, "index2"),
+      interval = attr(object$model, "interval"),
+      summarized = isTRUE(summary)
+    )
+
     return(fts_preds)
   }
 }

@@ -390,6 +390,9 @@ forecast.ffc_gam <- function(
         )
     }
 
+    # Structure the functional_coefs object for automatic
+    # recognition of time signatures (if the data provided are
+    # a tsibble format)
     if (!is.null(attr(intermed_coefs, "index"))) {
       functional_coefs <- functional_coefs %>%
         dplyr::left_join(
@@ -399,12 +402,16 @@ forecast.ffc_gam <- function(
           by = dplyr::join_by(.time)
         )
     }
-    class(functional_coefs) <- c("fts_ts", "tbl_df", "tbl", "data.frame")
-    attr(functional_coefs, "time_var") <- attr(intermed_coefs, "time_var")
-    attr(functional_coefs, "index") <- attr(intermed_coefs, "index")
-    attr(functional_coefs, "index2") <- attr(intermed_coefs, "index2")
-    attr(functional_coefs, "interval") <- attr(intermed_coefs, "interval")
-    attr(functional_coefs, "summarized") <- attr(intermed_coefs, "summarized")
+
+    functional_coefs <- structure(
+      functional_coefs,
+      class = c("fts_ts", "tbl_df", "tbl", "data.frame"),
+      time_var = attr(intermed_coefs, "time_var"),
+      index = attr(intermed_coefs, "index"),
+      index2 = attr(intermed_coefs, "index2"),
+      interval = attr(intermed_coefs, "interval"),
+      summarized = attr(intermed_coefs, "summarized")
+    )
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
@@ -413,6 +420,9 @@ forecast.ffc_gam <- function(
       # For factor models, it will very often make sense to forecast any
       # _mean basis (i.e. level shifts) separately as they can behave very
       # differently to remaining basis coefficient time series
+
+      # First fit the dynamic factor model for all non (_mean)
+      # basis functions
       functional_fc_others <- suppressWarnings(
         forecast(
           object = functional_coefs %>%
@@ -430,6 +440,7 @@ forecast.ffc_gam <- function(
           dplyr::select(-.time)
       }
 
+      # Now forecast the _mean basis with an ETS() model
       functional_fc_mean <- suppressWarnings(
         forecast(
           object = functional_coefs %>%
@@ -450,6 +461,7 @@ forecast.ffc_gam <- function(
           dplyr::mutate({{time_var}} := .time)
       }
 
+      # Bind the two forecasts together
       functional_fc <- functional_fc_others %>%
         dplyr::bind_rows(functional_fc_mean)
 
@@ -466,24 +478,31 @@ forecast.ffc_gam <- function(
       )
     }
 
-    if (!is.null(attr(intermed_coefs, "index"))) {
+    # Ensure original time structure is preserved
+    index_var <- attr(intermed_coefs, "index")
+
+    if (!is.null(index_var)) {
+      # Join original time data using the index attribute
       functional_fc <- functional_fc %>%
         dplyr::left_join(
           interpreted$orig_data %>%
-            dplyr::select(!!time_var, !!attr(intermed_coefs, "index")) %>%
+            dplyr::select(!!time_var, !!index_var) %>%
             dplyr::distinct(),
-          by = dplyr::join_by(!!attr(intermed_coefs, "index"))
+          by = dplyr::join_by(!!index_var)
         ) %>%
         dplyr::rename(.time = !!time_var)
 
-    } else if(time_var %in% colnames(functional_fc)){
+    } else if (time_var %in% colnames(functional_fc)) {
+      # Replace .time column with time_var if available
       functional_fc <- functional_fc %>%
         tsibble::as_tibble() %>%
         dplyr::select(-.time) %>%
-        dplyr::bind_cols(functional_fc %>%
-                           tsibble::as_tibble() %>%
-                           dplyr::select(!!time_var) %>%
-                           dplyr::rename(.time = !!time_var))
+        dplyr::bind_cols(
+          functional_fc %>%
+            tsibble::as_tibble() %>%
+            dplyr::select(!!time_var) %>%
+            dplyr::rename(.time = !!time_var)
+        )
     }
 
     # Only need to return forecasts for those times that are
@@ -557,20 +576,14 @@ forecast.ffc_gam <- function(
     )
 
     # Join forecasts to the basis function evaluations
-    fts_fc <- data.frame(
-      interpreted$data[grep("fts_", colnames(interpreted$data))]
-    ) %>%
-      dplyr::bind_cols(
-        data.frame(
-          .time = interpreted$data[[time_var]],
-          .row = 1:length(interpreted$data[[1]])
-        )
+    fts_fc <- interpreted$data %>%
+      dplyr::select(tidyr::matches("^fts_")) %>%
+      dplyr::mutate(
+        .time = interpreted$data[[time_var]],
+        .row = dplyr::row_number()
       ) %>%
       tidyr::pivot_longer(
-        cols = !tidyr::contains(c(
-          ".time",
-          ".row"
-        )),
+        cols = tidyr::starts_with("fts_"),,
         names_to = ".basis",
         values_to = ".evaluation"
       ) %>%
