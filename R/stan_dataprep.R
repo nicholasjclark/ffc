@@ -16,8 +16,7 @@ prep_tbl_ts_stan = function(.data,
     dplyr::mutate(
       .series = factor(
         .basis,
-        levels = set_series_levels(unique(.basis)
-        )
+        levels = set_series_levels(unique(.basis))
       ),
       .y = .estimate
     ) %>%

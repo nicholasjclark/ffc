@@ -106,6 +106,7 @@ functions {
     return phiGamma;
   }
 }
+
 data {
   int<lower=0> n; // number of timepoints per series
   int<lower=0> K; // number of dynamic factors
@@ -120,6 +121,7 @@ data {
   int<lower=1> P; // AR order
   vector[1] beta; // beta coefficient (1) to use in id_glm functions
 }
+
 transformed data {
 
   // Error variances (fixed to 1)
@@ -128,6 +130,7 @@ transformed data {
   // Zero vector
   vector[K] zero_vec = rep_vector(0.0, K);
 }
+
 parameters {
   // unconstrained VAR partial autocorrelations
   array[P] matrix[K, K] P_real;
@@ -152,10 +155,14 @@ parameters {
   vector<lower=0>[n_series] sigma_obs;
 
 }
+
 transformed parameters {
-  // trends and dynamic factor loading matrix
-  matrix[n, n_series] trend;
+  // dynamic factor loading matrix
   matrix[n_series, K] Lambda = rep_matrix(0, n_series, K);
+
+  // inverted partial autocorrelation hyperpriors
+  real Psd_diag = inv_sqrt(Pomega[1]);
+  real Psd_offdiag = inv_sqrt(Pomega[2]);
 
   // constrained VAR matrices
   array[P] matrix[K, K] A;
@@ -189,21 +196,26 @@ transformed parameters {
   // derived stationary VAR latent factors
   {
     array[P] matrix[K, K] Ptilde;
-    array[2, P] matrix[K, K] phiGamma;
     for (i in 1 : P) Ptilde[i] = P_realtoP(P_real[i]);
-    phiGamma = rev_mapping(Ptilde, Sigma);
+    array[2, P] matrix[K, K] phiGamma = rev_mapping(Ptilde, Sigma);
     A = phiGamma[1];
-    for(i in 1 : P) {
-      for(j in 1 : P) {
-        if(i <= j) Gamma[((i-1)*K+1):(i*K), ((j-1)*K+1):(j*K)] = phiGamma[2, j-i+1];
-        else Gamma[((i-1)*K+1):(i*K), ((j-1)*K+1):(j*K)] = phiGamma[2, i-j+1]';
+    for (d in 0:(P - 1)) {
+      matrix[K, K] block = phiGamma[2, d + 1];
+      for (i in 1:(P - d)) {
+        int row_start = (i - 1) * K + 1;
+        int col_start = (i + d - 1) * K + 1;
+        Gamma[row_start : (row_start + K - 1), col_start : (col_start + K - 1)] = block;
+        if (d > 0) {
+          Gamma[col_start : (col_start + K - 1), row_start : (row_start + K - 1)] = block';
+        }
       }
     }
   }
 
   // derived series-level trends
-  trend = LV * Lambda' + rep_matrix(alpha', n)';
+  matrix[n, n_series] trend = LV * Lambda' + rep_matrix(alpha', n)';
 }
+
 model {
   // factor mean parameters
   array[n] vector[K] mu;
@@ -219,10 +231,10 @@ model {
   Pomega ~ gamma(1.365, 0.071);
 
   for (s in 1 : P) {
-    diagonal(P_real[s]) ~ normal(Pmu[1], 1 / sqrt(Pomega[1]));
+    diagonal(P_real[s]) ~ normal(Pmu[1], Psd_diag);
      for(i in 1 : K) {
        for(j in 1 : K) {
-        if(i != j) P_real[s, i, j] ~ normal(Pmu[2], 1 / sqrt(Pomega[2]));
+        if(i != j) P_real[s, i, j] ~ normal(Pmu[2], Psd_offdiag);
       }
     }
   }
@@ -265,26 +277,28 @@ model {
     }
   }
 }
+
 generated quantities {
-  // Posterior predictions
   array[n, n_series] real ypred;
+  vector[n] nu_vec;
+  vector[n_series] sigma_combined;
   matrix[n, n_series] sigma_obs_vec;
-  for (s in 1 : n_series) {
-    sigma_obs_vec[1 : n, s] = rep_vector(sqrt(sigma_obs[s] ^ 2 + sample_sd[s] ^ 2), n);
-  }
 
-  if(family == 1) {
-    for (s in 1 : n_series) {
-      ypred[1 : n, s] = normal_rng(trend[1 : n, s],
-                                   sigma_obs_vec[1 : n, s]);
-    }
-  }
+  // Precompute combined standard deviations
+  for (s in 1 : n_series)
+    sigma_combined[s] = sqrt(square(sigma_obs[s]) + square(sample_sd[s]));
 
-  if(family == 2) {
-    vector[n] nu_vec = rep_vector(nu, n);
-    for (s in 1 : n_series) {
-      ypred[1 : n, s] = student_t_rng(nu_vec, trend[1 : n, s],
-                                      sigma_obs_vec[1 : n, s]);
-    }
+  // Broadcast to full matrix
+  for (s in 1 : n_series)
+    sigma_obs_vec[, s] = rep_vector(sigma_combined[s], n);
+
+  // Posterior predictions
+  if (family == 1) {
+    for (s in 1 : n_series)
+      ypred[, s] = normal_rng(trend[, s], sigma_obs_vec[, s]);
+  } else if (family == 2) {
+    nu_vec = rep_vector(nu, n);
+    for (s in 1 : n_series)
+      ypred[, s] = student_t_rng(nu_vec, trend[, s], sigma_obs_vec[, s]);
   }
 }

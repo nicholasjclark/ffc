@@ -33,229 +33,204 @@ forecast.fts_ts <- function(
     h = 1,
     times = 25,
     stationary = FALSE,
-    ...) {
+    ...
+) {
+  # Ensure required fable package is installed
   insight::check_if_installed("fable")
 
-  # Check arguments
+  # Validate forecast horizon and simulation count
   validate_pos_integer(h)
   validate_pos_integer(times)
 
+  # Stationarity check for ARIMA model
   if (stationary & !identical(model, "ARIMA")) {
     stop("stationary = TRUE only works with model = 'ARIMA'")
   }
 
-  # Convert time-varying coefficients to tsibble
+  # Convert functional time series to tsibble format
   object_tsbl <- fts_ts_2_tsbl(object)
 
-  if (model %in% c('ARDF', 'VARDF')){
-    dots <- list(...)
-    if('K' %in% names(dots)){
-      K <- dots$K
-    } else {
-      K <- 2
-    }
-    if('lag' %in% names(dots)){
-      p <- dots$lag
-    } else {
-      p <- 1
-    }
-
-    if (model == 'ARDF'){
-      return(
-        train_ardf(
-          .data = object_tsbl,
-          specials = list(K = K,
-                          p = p),
-          h = h,
-          chains = 4,
-          cores = 4,
-          iter = 500,
-          warmup = 450,
-          adapt_delta = 0.75,
-          max_treedepth = 9
-        )
-      )
-    }
-
-    if (model == 'VARDF'){
-      return(
-        train_vardf(
-          .data = object_tsbl,
-          specials = list(K = K,
-                          p = p),
-          h = h,
-          chains = 4,
-          cores = 4,
-          iter = 500,
-          warmup = 450,
-          adapt_delta = 0.75,
-          max_treedepth = 9
-        )
-      )
-    }
-  }
-
-  if (model == 'GPDF'){
-    dots <- list(...)
-    if('K' %in% names(dots)){
-      K <- dots$K
-    } else {
-      K <- 2
-    }
-
+  # Use Stan dynamic factor model for forecasts if specified
+  if (model %in% c("ARDF", "VARDF", "GPDF")) {
     return(
-      train_gpdf(
-        .data = object_tsbl,
-        specials = list(K = K),
-        h = h,
-        chains = 4,
-        cores = 4,
-        iter = 500,
-        warmup = 450,
-        adapt_delta = 0.75,
-        max_treedepth = 9
-      )
+      stan_forecast(object_tsbl, model, h, ...)
     )
   }
 
-  # If .sd is included, use the variance inflation method
-  # to update forecast uncertainties
+  # If using fable, check for uncertainty estimates and simulate forecasts
   if (exists(".sd", object_tsbl)) {
-    # Calculate SDs
     object_sds <- object_tsbl %>%
       as.data.frame() %>%
       dplyr::group_by(.basis, .realisation) %>%
       dplyr::summarise(.sd = tail(.sd, 1))
-
-    if (stationary) {
-      out <- object_tsbl %>%
-        # Fit the forecasting model(s) to each basis coefficient
-        # time series
-        fabletools::model(
-          do.call(
-            what = `::`,
-            args = list("fable", model)
-          )(.estimate,
-            order_constraint = (p + q + P + Q <= 6) & (d + D == 0))
-        ) %>%
-        # Simulate future paths for each coefficient time series
-        forecast(
-          h = h
-        ) %>%
-        # Tidy the names
-        dplyr::mutate(.model = model) %>%
-        # Add the SDs to the tibble and use them to modify
-        # the forecast uncertainty
-        dplyr::left_join(object_sds,
-          by = dplyr::join_by(.basis, .realisation)
-        ) %>%
-        dplyr::mutate(.estimate = vctrs::new_vctr(
-          purrr::map2(
-            .estimate,
-            .sd,
-            \(x, y) generate(
-              distributional::dist_normal(
-                mean = mean(x),
-                sd = sqrt(distributional::parameters(x)$sigma^2 + y^2)
-              ),
-              times = times
-            )
-          ),
-          class = "distribution"
-        )) %>%
-        tidyr::unnest(
-          cols = .estimate
-        ) %>%
-        tidyr::unnest(
-          cols = .estimate
-        ) %>%
-        dplyr::rename(".sim" = ".estimate") %>%
-        dplyr::group_by(.basis, .realisation) %>%
-        dplyr::mutate(.rep = rep(1:times, h)) %>%
-        dplyr::ungroup()
-    } else {
-      out <- object_tsbl %>%
-        # Fit the forecasting model(s) to each basis coefficient
-        # time series
-        fabletools::model(
-          do.call(
-            what = `::`,
-            args = list("fable", model)
-          )(.estimate)
-        ) %>%
-        # Simulate future paths for each coefficient time series
-        forecast(
-          h = h
-        ) %>%
-        # Tidy the names
-        dplyr::mutate(.model = model) %>%
-        # Add the SDs to the tibble and use them to modify
-        # the forecast uncertainty
-        dplyr::left_join(object_sds,
-          by = dplyr::join_by(.basis, .realisation)
-        ) %>%
-        dplyr::mutate(.estimate = vctrs::new_vctr(
-          purrr::map2(
-            .estimate,
-            .sd,
-            \(x, y) generate(
-              distributional::dist_normal(
-                mean = mean(x),
-                sd = sqrt(distributional::parameters(x)$sigma^2 + y^2)
-              ),
-              times = times
-            )
-          ),
-          class = "distribution"
-        )) %>%
-        tidyr::unnest(
-          cols = .estimate
-        ) %>%
-        tidyr::unnest(
-          cols = .estimate
-        ) %>%
-        dplyr::rename(".sim" = ".estimate") %>%
-        dplyr::group_by(.basis, .realisation) %>%
-        dplyr::mutate(.rep = rep(1:times, h)) %>%
-        dplyr::ungroup()
-    }
   } else {
-    # Else do not modify forecast variances
-    if (stationary) {
-      out <- object_tsbl %>%
-        # Fit the forecasting model(s) to each basis coefficient
-        # time series
-        fabletools::model(
-          do.call(
-            what = `::`,
-            args = list("fable", model)
-          )(.estimate,
-            order_constraint = (p + q + P + Q <= 6) & (d + D == 0))
-        ) %>%
-        # Simulate future paths for each coefficient time series
-        fabletools::generate(
-          h = h,
-          times = times
-        ) %>%
-        # Tidy the names
-        dplyr::mutate(.model = model)
-    } else {
-      out <- object_tsbl %>%
-        fabletools::model(
-          do.call(
-            what = `::`,
-            args = list("fable", model)
-          )(.estimate)
-        ) %>%
-        fabletools::generate(
-          h = h,
-          times = times
-        ) %>%
-        dplyr::mutate(.model = model)
-    }
+    object_sds <- NULL
   }
 
-  return(out)
+  return(
+    fable_forecast(
+      object_tsbl = object_tsbl,
+      model = model,
+      h = h,
+      times = times,
+      stationary = stationary,
+      object_sds = object_sds
+    )
+  )
+}
+
+#' Extract model-specific parameters from function arguments
+#' Defaults: K = 2 (number of factors), lag = 1 (time lag)
+#' @noRd
+extract_model_params <- function(...) {
+  dots <- list(...)
+  K <- if ("K" %in% names(dots)) dots$K else 2
+  lag <- if ("lag" %in% names(dots)) dots$lag else 1
+  list(
+    K = K,
+    p = lag
+  )
+}
+
+#' Fit Stan dynamic factor model based on model type
+#' Supported models: ARDF, VARDF, GPDF
+#' @noRd
+stan_forecast <- function(object_tsbl, model, h, ...) {
+  params <- extract_model_params(...)
+
+  if (model == "ARDF") {
+    train_ardf(
+      .data = object_tsbl,
+      specials = params,
+      h = h,
+      family = gaussian(),
+      chains = 4,
+      cores = 4,
+      iter = 500,
+      warmup = 450,
+      adapt_delta = 0.75,
+      max_treedepth = 9
+    )
+  } else if (model == "VARDF") {
+    train_vardf(
+      .data = object_tsbl,
+      specials = params,
+      h = h,
+      family = gaussian(),
+      chains = 4,
+      cores = 4,
+      iter = 500,
+      warmup = 450,
+      adapt_delta = 0.75,
+      max_treedepth = 9
+    )
+  } else if (model == "GPDF") {
+    train_gpdf(
+      .data = object_tsbl,
+      specials = list(K = params$K),
+      h = h,
+      family = gaussian(),
+      chains = 4,
+      cores = 4,
+      iter = 500,
+      warmup = 450,
+      adapt_delta = 0.75,
+      max_treedepth = 9
+    )
+  }
+}
+
+#' Adjust forecast uncertainty using variance inflation
+#' Combines model forecast with estimated standard deviation
+#' to simulate more realistic forecast distributions
+#' @noRd
+adjust_forecast_uncertainty <- function(
+    forecast_df,
+    object_sds,
+    times,
+    h
+) {
+  forecast_df %>%
+    dplyr::left_join(
+      object_sds,
+      by = dplyr::join_by(.basis, .realisation)
+    ) %>%
+    dplyr::mutate(
+      .estimate = vctrs::new_vctr(
+        purrr::map2(
+          .estimate, .sd,
+          \(x, y) generate(
+            distributional::dist_normal(
+              mean = mean(x),
+              sd = sqrt(
+                distributional::parameters(x)$sigma^2 + y^2
+              )
+            ),
+            times = times
+          )
+        ),
+        class = "distribution"
+      )
+    ) %>%
+    tidyr::unnest(cols = .estimate) %>%
+    tidyr::unnest(cols = .estimate) %>%
+    dplyr::rename(".sim" = ".estimate") %>%
+    dplyr::group_by(.basis, .realisation) %>%
+    dplyr::mutate(.rep = rep(1:times, h)) %>%
+    dplyr::ungroup()
+}
+
+#' Simulate forecasts using fable models
+#' If stationary = TRUE, apply order constraints to ARIMA
+#' If uncertainty estimates are available, adjust forecasts
+#' @noRd
+fable_forecast <- function(
+    object_tsbl,
+    model,
+    h,
+    times,
+    stationary = FALSE,
+    object_sds = NULL
+) {
+  # Construct model call with optional constraints
+  model_call <- if (stationary) {
+    do.call(
+      `::`,
+      list("fable", model)
+    )(
+      .estimate,
+      order_constraint = (p + q + P + Q <= 6) & (d + D == 0)
+    )
+  } else {
+    do.call(
+      `::`,
+      list("fable", model)
+    )(.estimate)
+  }
+
+  # Adjust observation variance if necessary
+  if (!is.null(object_sds)) {
+    forecast_df <- object_tsbl %>%
+      fabletools::model(model_call) %>%
+      forecast(h = h) %>%
+      dplyr::mutate(.model = model)
+
+    return(
+      adjust_forecast_uncertainty(
+        forecast_df = forecast_df,
+        object_sds = object_sds,
+        times = times,
+        h = h
+      )
+    )
+  } else {
+    forecast_df <- object_tsbl %>%
+      fabletools::model(model_call) %>%
+      fabletools::generate(h = h, times = times) %>%
+      dplyr::mutate(.model = model)
+
+    return(forecast_df)
+  }
 }
 
 #' Forecasting `ffc_gam` models
@@ -644,21 +619,16 @@ forecast.ffc_gam <- function(
     # Add the draw-specific row predictions to the
     # intermediate prediction matrix
     unique_draws <- unique(fts_fc$.draw)
-
-    # Filter fc_linpreds by each unique draw and collect results
-    draw_linpreds <- purrr::map(unique_draws, function(x) {
-      # Select predictions corresponding to the current draw
-      fc_linpreds[fts_fc %>%
-                    dplyr::filter(.draw == x) %>%
-                    dplyr::row_number()]
-    })
-
-    # Combine all filtered predictions into a matrix
-    draw_linpreds_mat <- draw_linpreds %>%
-      purrr::reduce(rbind)
-
-    # Add intermediate linear predictors to the full set
-    full_linpreds <- draw_linpreds_mat + intermed_linpreds
+    full_linpreds <- do.call(
+      rbind,
+      lapply(
+        unique_draws,
+        function(x) {
+          fc_linpreds[which(fts_fc$.draw == x)]
+        }
+      )
+    ) +
+      intermed_linpreds
   }
 
   # Now can proceed to send full_linpreds to the relevant

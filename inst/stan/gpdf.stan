@@ -4,31 +4,34 @@ functions {
     int N = rows(x);
     vector[N * K] y;
 
-    for (n in 1:N) {
+    for (n in 1 : N) {
      // Compute start and end positions for the block
       int start = (n - 1) * K + 1;
       int end = n * K;
 
       // Assign the same value to a block of y
-      y[start:end] = rep_vector(x[n], K);
+      y[start : end] = rep_vector(x[n], K);
     }
 
    return y;
   }
+
   /* Spectral density GP eigenvalues*/
   /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
   real lambda_gp(real L, int m) {
     return square((m * pi()) / (2 * L));
   }
+
   /* Spectral density GP eigenfunctions*/
   /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
   vector phi_SE(real L, int m, vector x) {
     return inv_sqrt(L) * sin((m * pi()) / (2 * L) * (x + L));
 
   }
+
   /* Spectral density squared exponential Gaussian Process*/
   /* see Riutort-Mayol et al 2023 for details (https://doi.org/10.1007/s11222-022-10167-2)*/
-  real spd_SE(real alpha, real rho, real w) {
+  vector spd_SE(real alpha, real rho, vector w) {
     return square(alpha) * sqrt(2 * pi()) * rho * exp(-0.5 * square(rho * w));
   }
 }
@@ -54,10 +57,13 @@ transformed data {
  real boundary = 1.25 * (max(times_cent) - min(times_cent));
  int num_gp_basis = min(25, n);
  matrix[n, num_gp_basis] gp_phi;
+ vector[num_gp_basis] lambda_gp_vals;
 
- // Compute GP basis functions
- for (m in 1:num_gp_basis)
+ // Compute GP basis functions and lambdas
+ for (m in 1 : num_gp_basis) {
    gp_phi[, m] = phi_SE(boundary, m, times_cent);
+   lambda_gp_vals[m] = sqrt(lambda_gp(boundary, m));
+ }
 }
 
 parameters {
@@ -75,18 +81,11 @@ parameters {
 
   // observation variances
   vector<lower=0>[n_series] sigma_obs;
-
 }
 
 transformed parameters {
-  // trends and dynamic factor loading matrix
-  matrix[n, n_series] trend;
+  // dynamic factor loading matrix
   matrix[n_series, K] Lambda = rep_matrix(0, n_series, K);
-
-  // gp spectral densities
-  matrix[n, K] LV;
-  matrix[num_gp_basis, K] diag_SPD;
-  matrix[num_gp_basis, K] SPD_beta;
 
   // factor loadings, with constraints
   {
@@ -100,21 +99,17 @@ transformed parameters {
   }
 
   // derived latent factors
-  for (m in 1 : num_gp_basis) {
-    for (j in 1 : K) {
-      diag_SPD[m, j] = sqrt(spd_SE(1.0, rho_gp[j],
-                            sqrt(lambda_gp(boundary, m))));
-    }
+  matrix[num_gp_basis, K] SPD_beta;
+  for (j in 1 : K) {
+    SPD_beta[, j] = sqrt(spd_SE(1.0, rho_gp[j], lambda_gp_vals)) .* b_gp[, j];
   }
-  SPD_beta = diag_SPD .* b_gp;
-  LV = gp_phi * SPD_beta;
+  matrix[n, K] LV = gp_phi * SPD_beta;
 
   // derived series-level trends
-  trend = LV * Lambda' + rep_matrix(alpha', n)';
+  matrix[n, n_series] trend = LV * Lambda' + rep_matrix(alpha', n)';
 }
 
 model {
-
   // prior for observation df parameter
   nu ~ gamma(2, 0.1);
 
@@ -146,25 +141,26 @@ model {
 }
 
 generated quantities {
-  // Posterior predictions
   array[n, n_series] real ypred;
+  vector[n] nu_vec;
+  vector[n_series] sigma_combined;
   matrix[n, n_series] sigma_obs_vec;
-  for (s in 1 : n_series) {
-    sigma_obs_vec[1 : n, s] = rep_vector(sqrt(sigma_obs[s] ^ 2 + sample_sd[s] ^ 2), n);
-  }
 
-  if(family == 1) {
-    for (s in 1 : n_series) {
-      ypred[1 : n, s] = normal_rng(trend[1 : n, s],
-                                   sigma_obs_vec[1 : n, s]);
-    }
-  }
+  // Precompute combined standard deviations
+  for (s in 1 : n_series)
+    sigma_combined[s] = sqrt(square(sigma_obs[s]) + square(sample_sd[s]));
 
-  if(family == 2) {
-    vector[n] nu_vec = rep_vector(nu, n);
-    for (s in 1 : n_series) {
-      ypred[1 : n, s] = student_t_rng(nu_vec, trend[1 : n, s],
-                                      sigma_obs_vec[1 : n, s]);
-    }
+  // Broadcast to full matrix
+  for (s in 1 : n_series)
+    sigma_obs_vec[, s] = rep_vector(sigma_combined[s], n);
+
+  // Posterior predictions
+  if (family == 1) {
+    for (s in 1 : n_series)
+      ypred[, s] = normal_rng(trend[, s], sigma_obs_vec[, s]);
+  } else if (family == 2) {
+    nu_vec = rep_vector(nu, n);
+    for (s in 1 : n_series)
+      ypred[, s] = student_t_rng(nu_vec, trend[, s], sigma_obs_vec[, s]);
   }
 }

@@ -10,12 +10,13 @@ functions {
       int end = n * K;
 
       // Assign the same value to a block of y
-      y[start:end] = rep_vector(x[n], K);
+      y[start : end] = rep_vector(x[n], K);
     }
 
   return y;
  }
 }
+
 data {
   int<lower=0> n; // number of timepoints per series
   int<lower=0> K; // number of dynamic factors
@@ -31,9 +32,11 @@ data {
   int<lower=1> P; // AR order
   vector[1] beta; // beta coefficient (1) to use in id_glm functions
 }
+
 transformed data {
 
 }
+
 parameters {
   // dynamic factor AR terms
   array[P, K] real<lower=-1, upper=1> ar;
@@ -67,24 +70,20 @@ transformed parameters {
     }
   }
 
-  // initialize latent factor matrix with LV_z
+  // derived latent factors
   matrix[n, K] LV = LV_z;
-
-  // apply AR structure to compute derived latent factors
-  for (j in 1:K) {
-    for (t in (P + 1):n) {
-      real ar_sum = 0;
-      for (p in 1:P) {
-        ar_sum += ar[p, j] * LV[t - p, j];
+  for (j in 1 : K) {
+    for (p in 1 : P) {
+      for (t in (P + 1) : n){
+        LV[t, j] += ar[p, j] * LV[t - p, j];
       }
-      LV[t, j] += ar_sum;
     }
   }
 
   // derived series-level trends
   trend = LV * Lambda' + rep_matrix(alpha', n)';
-
 }
+
 model {
 
   // prior for observation df parameter
@@ -124,26 +123,29 @@ model {
     }
   }
 }
+
 generated quantities {
-  // Posterior predictions
   array[n, n_series] real ypred;
+  vector[n] nu_vec;
+  vector[n_series] sigma_combined;
   matrix[n, n_series] sigma_obs_vec;
-  for (s in 1 : n_series) {
-    sigma_obs_vec[1 : n, s] = rep_vector(sqrt(sigma_obs[s] ^ 2 + sample_sd[s] ^ 2), n);
-  }
 
-  if(family == 1) {
-    for (s in 1 : n_series) {
-      ypred[1 : n, s] = normal_rng(trend[1 : n, s],
-                                   sigma_obs_vec[1 : n, s]);
-    }
-  }
+  // Precompute combined standard deviations
+  for (s in 1 : n_series)
+    sigma_combined[s] = sqrt(square(sigma_obs[s]) + square(sample_sd[s]));
 
-  if(family == 2) {
-    vector[n] nu_vec = rep_vector(nu, n);
-    for (s in 1 : n_series) {
-      ypred[1 : n, s] = student_t_rng(nu_vec, trend[1 : n, s],
-                                      sigma_obs_vec[1 : n, s]);
-    }
+  // Broadcast to full matrix
+  for (s in 1 : n_series)
+    sigma_obs_vec[, s] = rep_vector(sigma_combined[s], n);
+
+  // Posterior predictions
+  if (family == 1) {
+    for (s in 1 : n_series)
+      ypred[, s] = normal_rng(trend[, s], sigma_obs_vec[, s]);
+  } else if (family == 2) {
+    nu_vec = rep_vector(nu, n);
+    for (s in 1 : n_series)
+      ypred[, s] = student_t_rng(nu_vec, trend[, s], sigma_obs_vec[, s]);
   }
 }
+

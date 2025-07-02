@@ -5,7 +5,7 @@
 #'
 #' @name fts_coefs.ffc_gam
 #' @importFrom mgcv predict.gam predict.bam
-#' @importFrom rlang := !!
+#' @importFrom rlang := !! !!!
 #' @param object \code{list} object of class \code{ffc_gam}. See [ffc_gam()]
 #' @param summary `Logical`. Should summary statistics of the coefficient
 #' time series be returned instead of realized curves? Default is `TRUE`. If
