@@ -380,15 +380,18 @@ forecast.ffc_gam <- function(
     # Structure the functional_coefs object for automatic
     # recognition of time signatures (if the data provided are
     # a tsibble format)
-    if (!is.null(attr(intermed_coefs, "index"))) {
-      functional_coefs <- functional_coefs %>%
-        dplyr::left_join(
-          intermed_coefs %>%
-            dplyr::select(.time, !!attr(intermed_coefs, "index")) %>%
-            dplyr::distinct(),
-          by = dplyr::join_by(.time)
-        )
-    }
+      if (!is.null(attr(intermed_coefs, "index"))) {
+        if (!attr(intermed_coefs, "index") %in% names(functional_coefs)){
+          functional_coefs <- functional_coefs %>%
+            dplyr::left_join(
+              intermed_coefs %>%
+                dplyr::select(.time, !!attr(intermed_coefs, "index")) %>%
+                dplyr::distinct(),
+              by = dplyr::join_by(.time)
+            )
+        }
+      }
+
 
     functional_coefs <- structure(
       functional_coefs,
@@ -474,6 +477,7 @@ forecast.ffc_gam <- function(
       functional_fc <- functional_fc %>%
         dplyr::left_join(
           interpreted$orig_data %>%
+            tibble::as_tibble() %>%
             dplyr::select(!!time_var, !!index_var) %>%
             dplyr::distinct(),
           by = dplyr::join_by(!!index_var)
