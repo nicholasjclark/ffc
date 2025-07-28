@@ -21,7 +21,7 @@ prep_tbl_ts_stan = function(.data,
       .y = .estimate
     ) %>%
     dplyr::arrange(.series, .time) %>%
-    dplyr::select(.series, .time, .y, .sd)
+    dplyr::select(.series, .time, .y)
 
   # Pull some key arguments
   family <- ifelse(family$family == 'gaussian', 1, 2)
@@ -34,18 +34,8 @@ prep_tbl_ts_stan = function(.data,
 
   n_timepoints <- length(unique(.fulldata$.time))
 
-  # Extract observation error for the last training time period
-  # per series
-  sample_sd <- .fulldata %>%
-    dplyr::filter(complete.cases(.)) %>%
-    dplyr::group_by(.series) %>%
-    dplyr::arrange(.time) %>%
-    dplyr::summarise(.finalsd = tail(.sd, 1)) %>%
-    dplyr::pull(.finalsd)
-
   # Need a matrix of values for the series, excluding forecast values
   Y <- .fulldata %>%
-    dplyr::select(-.sd) %>%
     tidyr::pivot_wider(names_from = '.series',
                        values_from = '.y') %>%
     dplyr::select(-.time) %>%
@@ -81,7 +71,6 @@ prep_tbl_ts_stan = function(.data,
     n = n_timepoints,
     K = K,
     n_series = n_series,
-    sample_sd = sample_sd,
     M = K * (n_series - K) + K * (K - 1) / 2 + K,
     n_nonmissing = length(which(Y_observed == 1)),
     flat_ys = as.vector(Y)[which(
@@ -122,10 +111,6 @@ extract_stan_fc = function(stanfit,
                            .data,
                            model_data,
                            h){
-
-  # Get forecast times
-  min_time <- min(.data$.time)
-  max_time <- max(.data$.time) + h
 
   # Extract forecast distributions for each series
   preds <- as.matrix(stanfit, pars = 'ypred')
