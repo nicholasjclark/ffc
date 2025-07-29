@@ -403,8 +403,7 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = airdat$data_test,
-  model = 'GPDF',
-  K = 3,
+  model = 'ARIMA',
   summary = TRUE
 )
 
@@ -421,8 +420,8 @@ ggplot(
   geom_ribbon(aes(ymax = .q97.5,
                   ymin = .q2.5),
               alpha = 0.15) +
-  geom_ribbon(aes(ymax = .q90,
-                  ymin = .q10),
+  geom_ribbon(aes(ymax = .q90.0,
+                  ymin = .q10.0),
               alpha = 0.2) +
   geom_line()
 
