@@ -139,3 +139,90 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
     )
   }
 }
+
+#' Forecast functional coefficients
+#' @param functional_coefs Functional coefficients
+#' @param model Forecasting model
+#' @param stationary Stationarity constraint
+#' @param max_horizon Maximum horizon
+#' @param time_var Time variable
+#' @param ... Additional arguments
+#' @return Forecasted coefficients
+#' @noRd
+forecast_functional_coefficients <- function(functional_coefs, model, stationary,
+                                             max_horizon, time_var, ...) {
+
+  if (model %in% c('ARDF', 'GPDF', 'VARDF') &&
+      any(grepl('_mean', unique(functional_coefs$.basis)))) {
+
+    # Forecast non-mean and mean separately
+    forecast_mixed_coefficients(functional_coefs, max_horizon, time_var, model, stationary, ...)
+
+  } else {
+    # Standard forecasting
+    suppressWarnings(
+      forecast(
+        object = functional_coefs,
+        h = max_horizon,
+        times = 200,
+        model = model,
+        stationary = stationary,
+        ...
+      )
+    )
+  }
+}
+
+#' Forecast mixed coefficient types (mean and non-mean)
+#' @param functional_coefs Functional coefficients
+#' @param max_horizon Maximum horizon
+#' @param time_var Time variable
+#' @param model Forecasting model
+#' @param stationary Stationarity constraint
+#' @param ... Additional arguments
+#' @return Mixed forecasts
+#' @noRd
+forecast_mixed_coefficients <- function(functional_coefs, max_horizon, time_var,
+                                        model, stationary, ...) {
+
+  # Forecast non-mean basis functions
+  fc_others <- suppressWarnings(
+    forecast(
+      object = functional_coefs %>% dplyr::filter(!grepl('_mean', .basis)),
+      h = max_horizon,
+      times = 200,
+      model = model,
+      stationary = stationary,
+      ...
+    )
+  )
+
+  if ('.time' %in% colnames(fc_others)) {
+    fc_others <- fc_others %>% dplyr::select(-.time)
+  }
+
+  # Forecast mean basis with ARIMA
+  fc_mean <- suppressWarnings(
+    forecast(
+      object = functional_coefs %>% dplyr::filter(grepl('_mean', .basis)),
+      h = max_horizon,
+      times = 200,
+      model = 'ARIMA',
+      stationary = FALSE,
+      ...
+    )
+  ) %>%
+    tsibble::as_tibble() %>%
+    dplyr::select(dplyr::any_of(names(fc_others)))
+
+  # Add time variable if needed
+  if (!time_var %in% colnames(fc_mean) &
+      is.null(attr(functional_coefs, "index"))) {
+    fc_mean <- fc_mean %>% dplyr::mutate({{time_var}} := .time)
+  }
+
+  # Combine forecasts
+  fc_others %>%
+    dplyr::mutate(.rep = as.character(.rep)) %>%
+    dplyr::bind_rows(fc_mean)
+}

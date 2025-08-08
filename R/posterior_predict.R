@@ -1,15 +1,18 @@
-#' Normalise quantiles into sampling weights
+#' Generate predictions from linear predictors
+#'
+#' @param object Model object
+#' @param linpreds Matrix of linear predictors
+#' @param type Type of prediction ("link", "expected", "response")
+#' @return Matrix of predictions
 #' @noRd
-norm_quantiles <- function(x) {
-  xhat <- vector(length = length(x))
-  for (i in seq_along(x)) {
-    if (x[i] < 50) {
-      xhat[i] <- (50 - x[i]) / 50
-    } else {
-      xhat[i] <- (x[i] - 50) / 50
-    }
-  }
-  1.1 - xhat
+generate_predictions <- function(object, linpreds, type) {
+
+  switch(type,
+         "link" = linpreds,
+         "expected" = posterior_epred(object, linpreds),
+         "response" = posterior_predict(object, linpreds),
+         stop("Invalid prediction type: ", type, call. = FALSE)
+  )
 }
 
 #' Posterior expectations
