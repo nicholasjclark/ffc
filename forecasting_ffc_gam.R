@@ -40,7 +40,7 @@ simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
   drift = TRUE,
-  prop_trend = 0.8,
+  prop_trend = 0.6,
   prop_train = 0.7,
   mu = -1,
   family = mvgam::student()
@@ -86,7 +86,8 @@ mod <- ffc_gam(
     fts(
       time,
       mean_only = TRUE,
-      time_k = 60
+      time_k = 60,
+      time_m = 1
     ) +
     fts(
       season,
@@ -389,7 +390,7 @@ mvgam::plot_mvgam_series(
 # the seasonal shape to change over time
 mod <- ffc_gam(
   y ~ fts(year, mean_only = TRUE,
-          time_k = 25) +
+          time_k = 25, time_m = 1) +
     fts(season, bs = 'cc', k = 12,
         time_k = 10, share_penalty = FALSE),
   data = airdat$data_train,
@@ -403,7 +404,7 @@ gratia::draw(mod)
 fc <- forecast(
   object = mod,
   newdata = airdat$data_test,
-  model = 'ARIMA',
+  model = 'GPDF',
   summary = TRUE
 )
 
