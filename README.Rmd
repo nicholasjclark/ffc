@@ -75,7 +75,7 @@ head(qld_mortality, 15)
 ```
 
 Visualise the observed mortality curves over time using the log10 scale
-```{r, warning=FALSE}
+```{r mortality-curves, warning=FALSE, fig.alt="Time series plots showing observed mortality rates by age in Queensland from 1980-2020, separated by sex. The log-scale plots reveal characteristic J-shaped curves that shift downward over time, indicating systematic improvements in mortality across all age groups for both males and females."}
 ggplot(
   data = qld_mortality,
   aes(
@@ -93,7 +93,7 @@ ggplot(
 ```
 
 Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
-```{r}
+```{r fit-model, fig.show='hide'}
 mod <- ffc_gam(
   deaths ~
     offset(log(population)) +
@@ -122,12 +122,12 @@ mod <- ffc_gam(
 ```
 
 Inspect the model summary; notice in the `Formula` slot how the basis functions are modelled as `by` variables within independent smooths of `year` that share their smoothing parameters
-```{r}
+```{r model-summary}
 summary(mod)
 ```
 
 View predicted functional curves using a fixed offset (where `population = 1`), which allows us to calculate a standardized rate of mortality
-```{r}
+```{r predicted-curves, fig.alt="Model predictions showing expected mortality curves by age and year. The smooth curves demonstrate how the functional relationship between age and mortality has evolved over four decades, with consistent downward shifts indicating systematic improvements in survival rates across all age groups."}
 newdat <- qld_mortality
 newdat$population <- 1
 newdat$preds <- predict(
@@ -153,7 +153,7 @@ ggplot(
 ```
 
 Using support from the `marginaleffects` 📦, we can make easily predict changes in mortality rate for specific age groups. For example, here is the expected decline in mortality rate for 17 year-olds in Queensland over the study period
-```{r warning=FALSE}
+```{r mortality-trends, warning=FALSE, fig.alt="Predicted mortality trends for 17-year-olds in Queensland from 1980-2020, showing approximately 70% decline in mortality rates. Separate lines for males and females reveal similar downward trends with males having consistently higher mortality rates."}
 library(marginaleffects)
 plot_predictions(
   mod,
@@ -174,7 +174,7 @@ plot_predictions(
 ```
 
 And here are the slopes of this change
-```{r, warning=FALSE}
+```{r mortality-derivatives, warning=FALSE, fig.alt="First derivatives of mortality rate changes for 17-year-olds, showing the rate of improvement over time. The plots reveal periods of faster and slower mortality improvements, with fluctuations around zero indicating varying rates of change in survival trends."}
 plot_slopes(
   mod,
   variables = "year",
@@ -206,7 +206,7 @@ plot_slopes(
 This demonstrates how `ffc` captures evolving functional relationships that traditional time series models would miss.
 
 The time-varying coefficients can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future. Using `summary = FALSE` will return draws of each coefficient time series from the model's empirical Bayesian posterior distribution (you can control the number of draws that are returned using the `times` argument):
-```{r}
+```{r extract-coefficients}
 functional_coefs <- fts_coefs(
   mod,
   summary = FALSE,
@@ -216,12 +216,12 @@ functional_coefs
 ```
 
 The basis function coefficient time series can be plotted using `autoplot()`
-```{r}
+```{r plot-coefficients, fig.alt="Time series plots of functional basis coefficients extracted from the mortality model. Multiple panels show how different basis function coefficients evolved over time, revealing complex temporal dependencies that inform functional forecasting."}
 autoplot(functional_coefs)
 ```
 
 Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
-```{r, warning=FALSE}
+```{r forecast-coefficients, warning=FALSE}
 functional_fc <- forecast(
   object = functional_coefs,
   h = 5,
@@ -238,7 +238,7 @@ library(dplyr)
 ```
 
 Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
-```{r}
+```{r tourism-data}
 tourism_melb <- tourism %>%
   filter(
     Region == "Melbourne",
@@ -252,7 +252,7 @@ tourism_melb
 ```
 
 Split into training and testing folds. We wil aim to forecast the last 5 quarters of the data
-```{r}
+```{r train-test-split}
 train <- tourism_melb %>%
   dplyr::slice_head(n = 75)
 
@@ -261,7 +261,7 @@ test <- tourism_melb %>%
 ```
 
 Now fit an `ffc_gam`. We use time-varying level and time-varying seasonality components, together with a Tweedie observation model (because our outcome, `Trips`, consists of non-negative real values). This model is simpler so we use the `'gam'` engine for fitting:
-```{r}
+```{r fit-tourism-model, fig.show='hide'}
 mod <- ffc_gam(
   Trips ~
     # Use mean_only = TRUE to model a time-varying mean
@@ -286,12 +286,12 @@ mod <- ffc_gam(
 ```
 
 Draw the time-varying basis coefficients, this time using `gratia`
-```{r}
+```{r tourism-coefficients, fig.alt="Smooth plots showing time-varying coefficients for the tourism model. The upper panel shows the time-varying level component while the lower panel displays seasonal coefficients that change over time, demonstrating how seasonality patterns evolve."}
 gratia::draw(mod)
 ```
 
 Compute forecast distribution by fitting the basis coefficient time series models in parallel (which is automatically supported within the `fable` package). Here we fit independent exponential smoothing models to each coefficient time series
-```{r}
+```{r tourism-forecast, fig.show='hide'}
 fc <- forecast(
   object = mod,
   newdata = test,
@@ -301,7 +301,7 @@ fc <- forecast(
 ```
 
 Convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
-```{r, warning=FALSE}
+```{r build-fable, warning=FALSE}
 test[["value"]] <- fc
 
 fc_ffc <- fabletools:::build_fable(
@@ -312,7 +312,7 @@ fc_ffc <- fabletools:::build_fable(
 ```
 
 Plot the forecast distribution along with the observed data
-```{r}
+```{r plot-ffc-forecast, fig.alt="FFC forecast plot showing predicted tourism visits to Melbourne with uncertainty bands. The forecast captures both level and seasonal patterns, with prediction intervals reflecting uncertainty in future tourist arrivals."}
 fc_ffc %>%
   autoplot(train) +
   geom_line(
@@ -323,7 +323,7 @@ fc_ffc %>%
 ```
 
 Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster
-```{r}
+```{r arima-comparison, fig.alt="ARIMA forecast comparison showing simpler time series model predictions for Melbourne tourism. While faster to compute, this approach captures less complex temporal structure compared to the functional forecasting approach."}
 train %>%
   model(
     arima = ARIMA(Trips)
@@ -339,7 +339,7 @@ train %>%
   ggtitle("ARIMA forecast")
 ```
 
-```{r}
+```{r ets-comparison, fig.alt="ETS (Exponential Smoothing) forecast comparison for Melbourne tourism data. This traditional approach provides baseline performance for evaluating the added value of functional forecasting methods."}
 train %>%
   model(
     ets = ETS(Trips)

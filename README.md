@@ -101,8 +101,8 @@ ggplot(
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-4-1.png" alt="plot of chunk unnamed-chunk-4" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-4</p>
+<img src="man/figures/README-mortality-curves-1.png" alt="Time series plots showing observed mortality rates by age in Queensland from 1980-2020, separated by sex. The log-scale plots reveal characteristic J-shaped curves that shift downward over time, indicating systematic improvements in mortality across all age groups for both males and females." width="100%" />
+<p class="caption">plot of chunk mortality-curves</p>
 </div>
 
 Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
@@ -228,8 +228,8 @@ ggplot(
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-7-1.png" alt="plot of chunk unnamed-chunk-7" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-7</p>
+<img src="man/figures/README-predicted-curves-1.png" alt="Model predictions showing expected mortality curves by age and year. The smooth curves demonstrate how the functional relationship between age and mortality has evolved over four decades, with consistent downward shifts indicating systematic improvements in survival rates across all age groups." width="100%" />
+<p class="caption">plot of chunk predicted-curves</p>
 </div>
 
 Using support from the `marginaleffects` 📦, we can make easily predict changes in mortality rate for specific age groups. For example, here is the expected decline in mortality rate for 17 year-olds in Queensland over the study period
@@ -255,8 +255,8 @@ plot_predictions(
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-8-1.png" alt="plot of chunk unnamed-chunk-8" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-8</p>
+<img src="man/figures/README-mortality-trends-1.png" alt="Predicted mortality trends for 17-year-olds in Queensland from 1980-2020, showing approximately 70% decline in mortality rates. Separate lines for males and females reveal similar downward trends with males having consistently higher mortality rates." width="100%" />
+<p class="caption">plot of chunk mortality-trends</p>
 </div>
 
 And here are the slopes of this change
@@ -285,8 +285,8 @@ plot_slopes(
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-9-1.png" alt="plot of chunk unnamed-chunk-9" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-9</p>
+<img src="man/figures/README-mortality-derivatives-1.png" alt="First derivatives of mortality rate changes for 17-year-olds, showing the rate of improvement over time. The plots reveal periods of faster and slower mortality improvements, with fluctuations around zero indicating varying rates of change in survival trends." width="100%" />
+<p class="caption">plot of chunk mortality-derivatives</p>
 </div>
 
 **Key insights from this analysis:**
@@ -309,16 +309,16 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.374            1  1980
-#>  2 fts_year1_mean  1981     0.378            1  1981
-#>  3 fts_year1_mean  1982     0.398            1  1982
-#>  4 fts_year1_mean  1983     0.298            1  1983
-#>  5 fts_year1_mean  1984     0.318            1  1984
-#>  6 fts_year1_mean  1985     0.326            1  1985
-#>  7 fts_year1_mean  1986     0.263            1  1986
+#>  1 fts_year1_mean  1980     0.382            1  1980
+#>  2 fts_year1_mean  1981     0.367            1  1981
+#>  3 fts_year1_mean  1982     0.413            1  1982
+#>  4 fts_year1_mean  1983     0.313            1  1983
+#>  5 fts_year1_mean  1984     0.304            1  1984
+#>  6 fts_year1_mean  1985     0.320            1  1985
+#>  7 fts_year1_mean  1986     0.270            1  1986
 #>  8 fts_year1_mean  1987     0.259            1  1987
-#>  9 fts_year1_mean  1988     0.240            1  1988
-#> 10 fts_year1_mean  1989     0.252            1  1989
+#>  9 fts_year1_mean  1988     0.255            1  1988
+#> 10 fts_year1_mean  1989     0.275            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -329,8 +329,8 @@ autoplot(functional_coefs)
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-11-1.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-11</p>
+<img src="man/figures/README-plot-coefficients-1.png" alt="Time series plots of functional basis coefficients extracted from the mortality model. Multiple panels show how different basis function coefficients evolved over time, revealing complex temporal dependencies that inform functional forecasting." width="100%" />
+<p class="caption">plot of chunk plot-coefficients</p>
 </div>
 
 Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
@@ -346,16 +346,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.81
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.90
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.98
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      5.06
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      5.15
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.81
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.86
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.94
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      5.06
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      5.12
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.90
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.93
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.99
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      5.03
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      5.05
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.89
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.87
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.87
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.87
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.94
 #> # ℹ 4,740 more rows
 ```
 
@@ -440,8 +440,8 @@ gratia::draw(mod)
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-17-1.png" alt="plot of chunk unnamed-chunk-17" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-17</p>
+<img src="man/figures/README-tourism-coefficients-1.png" alt="Smooth plots showing time-varying coefficients for the tourism model. The upper panel shows the time-varying level component while the lower panel displays seasonal coefficients that change over time, demonstrating how seasonality patterns evolve." width="100%" />
+<p class="caption">plot of chunk tourism-coefficients</p>
 </div>
 
 Compute forecast distribution by fitting the basis coefficient time series models in parallel (which is automatically supported within the `fable` package). Here we fit independent exponential smoothing models to each coefficient time series
@@ -480,8 +480,8 @@ fc_ffc %>%
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-20-1.png" alt="plot of chunk unnamed-chunk-20" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-20</p>
+<img src="man/figures/README-plot-ffc-forecast-1.png" alt="FFC forecast plot showing predicted tourism visits to Melbourne with uncertainty bands. The forecast captures both level and seasonal patterns, with prediction intervals reflecting uncertainty in future tourist arrivals." width="100%" />
+<p class="caption">plot of chunk plot-ffc-forecast</p>
 </div>
 
 Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster
@@ -503,8 +503,8 @@ train %>%
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-21-1.png" alt="plot of chunk unnamed-chunk-21" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-21</p>
+<img src="man/figures/README-arima-comparison-1.png" alt="ARIMA forecast comparison showing simpler time series model predictions for Melbourne tourism. While faster to compute, this approach captures less complex temporal structure compared to the functional forecasting approach." width="100%" />
+<p class="caption">plot of chunk arima-comparison</p>
 </div>
 
 
@@ -525,8 +525,8 @@ train %>%
 ```
 
 <div class="figure">
-<img src="man/figures/README-unnamed-chunk-22-1.png" alt="plot of chunk unnamed-chunk-22" width="100%" />
-<p class="caption">plot of chunk unnamed-chunk-22</p>
+<img src="man/figures/README-ets-comparison-1.png" alt="ETS (Exponential Smoothing) forecast comparison for Melbourne tourism data. This traditional approach provides baseline performance for evaluating the added value of functional forecasting methods." width="100%" />
+<p class="caption">plot of chunk ets-comparison</p>
 </div>
 
 ## Getting help
