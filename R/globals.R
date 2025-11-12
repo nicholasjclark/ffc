@@ -23,6 +23,8 @@ utils::globalVariables(
     "D",
     "p",
     "P",
-    "Q"
+    "Q",
+    ".series",
+    ".y"
   )
 )

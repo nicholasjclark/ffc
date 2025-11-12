@@ -60,6 +60,18 @@ whose coefficients were estimated as time-varying, so the user need only supply 
 that includes variables that were used in the original \code{data} that was supplied to
 \code{ffc_gam()}
 }
+\examples{
+# Fit a model and generate predictions
+mod <- ffc_gam(
+  deaths ~ offset(log(population)) + sex + 
+    fts(age, k = 8, bs = "cr", time_k = 10),
+  time = "year", 
+  data = qld_mortality,
+  family = poisson(),
+  engine = "bam"
+)
+preds <- predict(mod, type = "response")
+}
 \seealso{
 \code{\link[=ffc_gam]{ffc_gam()}}, \code{\link[=fts]{fts()}}
 }

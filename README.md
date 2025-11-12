@@ -1,50 +1,61 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
 
 # ffc
 
 <!-- badges: start -->
-
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/ffc)](https://CRAN.R-project.org/package=ffc)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![CRAN status](https://www.r-pkg.org/badges/version/ffc)](https://CRAN.R-project.org/package=ffc)
 [![R-CMD-check](https://github.com/nicholasjclark/ffc/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/nicholasjclark/ffc/actions/workflows/R-CMD-check.yaml)
-[![Codecov test
-coverage](https://codecov.io/gh/nicholasjclark/ffc/graph/badge.svg)](https://app.codecov.io/gh/nicholasjclark/ffc)
+[![Codecov test coverage](https://codecov.io/gh/nicholasjclark/ffc/graph/badge.svg)](https://app.codecov.io/gh/nicholasjclark/ffc)
 <!-- badges: end -->
 
 # ffc
 
 > **F**unctional **F**ore**C**asting
 
-The goal of the `ffc` 📦 is to perform functional regression using
-Generalized Additive Models (GAMs). The package integrates with the
-extremely flexible <a href="https://cran.r-project.org/package=mgcv"
-target="_blank"><code>mgcv</code></a> package to enable functional
-responses to be modelled and predicted using a broad range of predictor
-effects. Key among these types of predictors are *dynamic functional
-predictors* using a new `fts()` term, which sets up functional
-predictors whose coefficients are modelled as time-varying. These
-time-varying coefficients can then be forecasted ahead using a variety
-of efficient forecasting algorithms, providing unmatched flexibility to
-model and predict how functional responses change over time.
+The goal of the `ffc` 📦 is to **forecast complex, time-changing functional relationships** using Generalized Additive Models (GAMs). 
+
+**Key benefits:**
+- Model functional responses that change shape over time (not just magnitude)
+- Forecast entire curves into the future, not just single values  
+- Handle complex multivariate time series with functional structure
+- Seamless integration with the powerful `mgcv` and `fable` ecosystems
+
+The package introduces **dynamic functional predictors** using the new `fts()` term, which creates time-varying coefficients that can be forecasted using efficient Stan-based algorithms.
 
 ## Installation
 
-You can install the development version of ffc from
-[GitHub](https://github.com/) with:
+You can install the development version of ffc from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
 pak::pak("nicholasjclark/ffc")
 ```
 
-## A brief example
+## Quick Start
 
-Load the in-built Queensland Mortality data, which contains the number
-of deaths per age category over time in the state of Queensland,
-Australia.
+
+``` r
+# Fit a model with time-varying coefficients
+mod <- ffc_gam(
+  response ~ fts(predictor, time_k = 10),  
+  data = your_data,
+  time = "time_column",
+  family = gaussian()
+)
+
+# Forecast the functional coefficients
+fc <- forecast(mod, newdata = future_data, model = "ARDF")
+```
+
+## Detailed Example: Queensland Mortality Data
+Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia.
 
 ``` r
 library(ffc)
@@ -89,19 +100,12 @@ ggplot(
   scale_y_log10()
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-4-1.png" alt="plot of chunk unnamed-chunk-4" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-4</p>
+</div>
 
-Fit a model to estimate how the log(mortality) curve changed over time
-using `deaths` as the outcome and using a time-varying function of `age`
-as the primary predictor. Using `fts()`, we model the age-death
-functions hierarchically using thin plate basis functions whose
-coefficients are allowed to vary over time, where `time = 'year'`. The
-hierarchical formulation allows a shared time-varying level to be
-modelled, along with deviations around that time-varying level for each
-sex. We use the `bam()` engine (as opposed to `gam()`) for parameter
-estimation, given the large size of the dataset. In future, other
-engines such as `brm()` and `mvgam()`, will be made available for full
-luxury Bayesian inference.
+Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
 
 ``` r
 mod <- ffc_gam(
@@ -131,9 +135,7 @@ mod <- ffc_gam(
 )
 ```
 
-Inspect the model summary; notice in the `Formula` slot how the basis
-functions are modelled as `by` variables within independent smooths of
-`year` that share their smoothing parameters
+Inspect the model summary; notice in the `Formula` slot how the basis functions are modelled as `by` variables within independent smooths of `year` that share their smoothing parameters
 
 ``` r
 summary(mod)
@@ -198,9 +200,7 @@ summary(mod)
 #> fREML =  22189  Scale est. = 1         n = 8282
 ```
 
-View predicted functional curves using a fixed offset (where
-`population = 1`), which allows us to calculate a standardized rate of
-mortality
+View predicted functional curves using a fixed offset (where `population = 1`), which allows us to calculate a standardized rate of mortality
 
 ``` r
 newdat <- qld_mortality
@@ -227,12 +227,12 @@ ggplot(
   scale_y_log10()
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-7-1.png" alt="plot of chunk unnamed-chunk-7" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-7</p>
+</div>
 
-Using support from the `marginaleffects` 📦, we can make easily predict
-changes in mortality rate for specific age groups. For example, here is
-the expected decline in mortality rate for 17 year-olds in Queensland
-over the study period
+Using support from the `marginaleffects` 📦, we can make easily predict changes in mortality rate for specific age groups. For example, here is the expected decline in mortality rate for 17 year-olds in Queensland over the study period
 
 ``` r
 library(marginaleffects)
@@ -254,7 +254,10 @@ plot_predictions(
   scale_y_log10()
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-8-1.png" alt="plot of chunk unnamed-chunk-8" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-8</p>
+</div>
 
 And here are the slopes of this change
 
@@ -281,15 +284,20 @@ plot_slopes(
   )
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-9-1.png" alt="plot of chunk unnamed-chunk-9" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-9</p>
+</div>
 
-The time-varying coefficients can be extracted into a `tidy` format
-using `fts_coefs()`, which will facilitate the use of time series models
-to enable efficient forecasting of the entire curve into the future.
-Using `summary = FALSE` will return draws of each coefficient time
-series from the model’s empirical Bayesian posterior distribution (you
-can control the number of draws that are returned using the `times`
-argument):
+**Key insights from this analysis:**
+- The characteristic J-shaped mortality curves show systematic downward shifts over four decades
+- Mortality rates for 17-year-olds dropped by approximately 70% (from ~6e-04 to ~2e-04) between 1980-2020
+- The rate of mortality improvement varies over time, with periods of faster and slower decline
+- The functional approach captures both overall level changes and subtle age-specific temporal patterns
+
+This demonstrates how `ffc` captures evolving functional relationships that traditional time series models would miss.
+
+The time-varying coefficients can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future. Using `summary = FALSE` will return draws of each coefficient time series from the model's empirical Bayesian posterior distribution (you can control the number of draws that are returned using the `times` argument):
 
 ``` r
 functional_coefs <- fts_coefs(
@@ -301,36 +309,31 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.369            1  1980
-#>  2 fts_year1_mean  1981     0.373            1  1981
-#>  3 fts_year1_mean  1982     0.397            1  1982
-#>  4 fts_year1_mean  1983     0.293            1  1983
-#>  5 fts_year1_mean  1984     0.300            1  1984
-#>  6 fts_year1_mean  1985     0.325            1  1985
-#>  7 fts_year1_mean  1986     0.271            1  1986
-#>  8 fts_year1_mean  1987     0.250            1  1987
-#>  9 fts_year1_mean  1988     0.238            1  1988
-#> 10 fts_year1_mean  1989     0.254            1  1989
+#>  1 fts_year1_mean  1980     0.374            1  1980
+#>  2 fts_year1_mean  1981     0.378            1  1981
+#>  3 fts_year1_mean  1982     0.398            1  1982
+#>  4 fts_year1_mean  1983     0.298            1  1983
+#>  5 fts_year1_mean  1984     0.318            1  1984
+#>  6 fts_year1_mean  1985     0.326            1  1985
+#>  7 fts_year1_mean  1986     0.263            1  1986
+#>  8 fts_year1_mean  1987     0.259            1  1987
+#>  9 fts_year1_mean  1988     0.240            1  1988
+#> 10 fts_year1_mean  1989     0.252            1  1989
 #> # ℹ 7,780 more rows
 ```
 
-The basis function coefficient time series can be plotted using
-`autoplot()`
+The basis function coefficient time series can be plotted using `autoplot()`
 
 ``` r
 autoplot(functional_coefs)
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-11-1.png" alt="plot of chunk unnamed-chunk-11" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-11</p>
+</div>
 
-Clearly there is a lot of structure and dependence here, suggesting that
-a dynamic factor model fitted to these coefficient time series would be
-valuable for creating functional forecasts. But for now we can apply any
-model from the `fable` 📦 to these replicate time series and generate
-future forecast realisations, which can be summarised to approximate the
-full uncertainty in our coefficient forecast distributions. Again here
-you can control the number of forecast paths that are simulated from the
-underlying time series models using the `times` argument
+Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
 
 ``` r
 functional_fc <- forecast(
@@ -343,16 +346,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.56
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.50
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.44
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.40
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.42
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.56
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.52
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.46
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.42
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.42
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.81
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.90
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.98
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      5.06
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      5.15
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.81
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.86
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.94
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      5.06
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      5.12
 #> # ℹ 4,740 more rows
 ```
 
@@ -364,11 +367,7 @@ library(tsibble)
 library(dplyr)
 ```
 
-Our aim here is to forecast the number of domestic visitors to
-Melbourne, Australia. The data can be found in the `tsibble::tourism`
-data set. For now we need to explicitly add the `quarter` and `time`
-variables to the data, but in future this will be done automatically for
-seamless integration with the `tsibbleverse`
+Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
 
 ``` r
 tourism_melb <- tourism %>%
@@ -398,8 +397,7 @@ tourism_melb
 #> # ℹ 70 more rows
 ```
 
-Split into training and testing folds. We wil aim to forecast the last 5
-quarters of the data
+Split into training and testing folds. We wil aim to forecast the last 5 quarters of the data
 
 ``` r
 train <- tourism_melb %>%
@@ -409,10 +407,7 @@ test <- tourism_melb %>%
   dplyr::slice_tail(n = 5)
 ```
 
-Now fit an `ffc_gam`. We use time-varying level and time-varying
-seasonality components, together with a Tweedie observation model
-(because our outcome, `Trips`, consists of non-negative real values).
-This model is simpler so we use the `'gam'` engine for fitting:
+Now fit an `ffc_gam`. We use time-varying level and time-varying seasonality components, together with a Tweedie observation model (because our outcome, `Trips`, consists of non-negative real values). This model is simpler so we use the `'gam'` engine for fitting:
 
 ``` r
 mod <- ffc_gam(
@@ -444,12 +439,12 @@ Draw the time-varying basis coefficients, this time using `gratia`
 gratia::draw(mod)
 ```
 
-<img src="man/figures/README-unnamed-chunk-16-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-17-1.png" alt="plot of chunk unnamed-chunk-17" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-17</p>
+</div>
 
-Compute forecast distribution by fitting the basis coefficient time
-series models in parallel (which is automatically supported within the
-`fable` package). Here we fit independent exponential smoothing models
-to each coefficient time series
+Compute forecast distribution by fitting the basis coefficient time series models in parallel (which is automatically supported within the `fable` package). Here we fit independent exponential smoothing models to each coefficient time series
 
 ``` r
 fc <- forecast(
@@ -460,8 +455,7 @@ fc <- forecast(
 )
 ```
 
-Convert resulting forecasts to a `fable` object for automatic plotting
-and/or scoring of forecasts
+Convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
 
 ``` r
 test[["value"]] <- fc
@@ -485,10 +479,12 @@ fc_ffc %>%
   ggtitle("FFC forecast")
 ```
 
-<img src="man/figures/README-unnamed-chunk-19-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-20-1.png" alt="plot of chunk unnamed-chunk-20" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-20</p>
+</div>
 
-Compare to forecasts from automatic ARIMA and ETS models, which are
-simpler to code and of course a bit faster
+Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster
 
 ``` r
 train %>%
@@ -506,7 +502,11 @@ train %>%
   ggtitle("ARIMA forecast")
 ```
 
-<img src="man/figures/README-unnamed-chunk-20-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-21-1.png" alt="plot of chunk unnamed-chunk-21" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-21</p>
+</div>
+
 
 ``` r
 train %>%
@@ -524,20 +524,16 @@ train %>%
   ggtitle("ETS forecast")
 ```
 
-<img src="man/figures/README-unnamed-chunk-21-1.png" width="100%" />
+<div class="figure">
+<img src="man/figures/README-unnamed-chunk-22-1.png" alt="plot of chunk unnamed-chunk-22" width="100%" />
+<p class="caption">plot of chunk unnamed-chunk-22</p>
+</div>
 
 ## Getting help
-
-If you encounter a clear bug, please file an issue with a minimal
-reproducible example on
-[GitHub](https://github.com/nicholasjclark/ffc/issues)
+If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/nicholasjclark/ffc/issues)
 
 ## Contributing
-
-Contributions are very welcome, but please see our [Code of
-Conduct](https://github.com/nicholasjclark/ffc/blob/main/.github/CODE_OF_CONDUCT.md)
-when you are considering changes that you would like to make.
+Contributions are very welcome, but please see our [Code of Conduct](https://github.com/nicholasjclark/ffc/blob/main/.github/CODE_OF_CONDUCT.md) when you are considering changes that you would like to make.
 
 ## License
-
 The `ffc` project is licensed under an `MIT` open source license

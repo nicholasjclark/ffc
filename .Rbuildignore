@@ -8,3 +8,6 @@
 ^\.claude$
 ^claude\.exe$
 ^CLAUDE\.md$
+^tasks/$
+^future-tasks/$
+^completed-tasks/$

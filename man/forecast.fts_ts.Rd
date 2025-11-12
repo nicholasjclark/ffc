@@ -44,6 +44,21 @@ to the specified \code{model} to train a forecasting model that will then be
 extrapolated \code{h} timesteps into the future. A total of \code{times} forecast realisations
 will be returned for each basis coefficient
 }
+\examples{
+\donttest{
+# Extract coefficients and generate forecasts
+mod <- ffc_gam(
+  deaths ~ offset(log(population)) + sex + 
+    fts(age, k = 8, bs = "cr", time_k = 10),
+  time = "year", 
+  data = qld_mortality,
+  family = poisson(),
+  engine = "bam"
+)
+coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+forecast(coefs, h = 3, model = "ARIMA")
+}
+}
 \seealso{
 \code{\link[=predict]{predict()}}, \code{\link[=fts]{fts()}}
 }

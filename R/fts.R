@@ -47,6 +47,9 @@
 #' @return A class \code{fts.spec} object defining the smooth function
 #' to be evaluated and configured for estimating time-varying basis function coefficients
 #' @author Nicholas J Clark
+#' @examples
+#' # Define a time-varying smooth function of age
+#' fts(age, k = 8, bs = "cr", time_k = 10)
 #' @export
 fts <- function(
     ...,

@@ -26,6 +26,20 @@
 #' replicate realisation (`.rep`) at each timestep in the forecast horizon `h`
 #' @seealso [predict()], [fts()]
 #' @author Nicholas J Clark
+#' @examples
+#' \donttest{
+#' # Extract coefficients and generate forecasts
+#' mod <- ffc_gam(
+#'   deaths ~ offset(log(population)) + sex + 
+#'     fts(age, k = 8, bs = "cr", time_k = 10),
+#'   time = "year", 
+#'   data = qld_mortality,
+#'   family = poisson(),
+#'   engine = "bam"
+#' )
+#' coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+#' forecast(coefs, h = 3, model = "ARIMA")
+#' }
 #' @export
 forecast.fts_ts <- function(
     object,

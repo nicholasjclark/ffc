@@ -30,7 +30,15 @@ knitr::opts_chunk$set(
 
 > **F**unctional **F**ore**C**asting
 
-The goal of the `ffc` 📦 is to perform functional regression using Generalized Additive Models (GAMs). The package integrates with the extremely flexible [`mgcv`](https://cran.r-project.org/package=mgcv){target="_blank"} package to enable functional responses to be modelled and predicted using a broad range of predictor effects. Key among these types of predictors are *dynamic functional predictors* using a new `fts()` term, which sets up functional predictors whose coefficients are modelled as time-varying. These time-varying coefficients can then be forecasted ahead using a variety of efficient forecasting algorithms, providing unmatched flexibility to model and predict how functional responses change over time.
+The goal of the `ffc` 📦 is to **forecast complex, time-changing functional relationships** using Generalized Additive Models (GAMs). 
+
+**Key benefits:**
+- Model functional responses that change shape over time (not just magnitude)
+- Forecast entire curves into the future, not just single values  
+- Handle complex multivariate time series with functional structure
+- Seamless integration with the powerful `mgcv` and `fable` ecosystems
+
+The package introduces **dynamic functional predictors** using the new `fts()` term, which creates time-varying coefficients that can be forecasted using efficient Stan-based algorithms.
 
 ## Installation
 
@@ -41,7 +49,22 @@ You can install the development version of ffc from [GitHub](https://github.com/
 pak::pak("nicholasjclark/ffc")
 ```
 
-## A brief example
+## Quick Start
+
+```{r eval=FALSE}
+# Fit a model with time-varying coefficients
+mod <- ffc_gam(
+  response ~ fts(predictor, time_k = 10),  
+  data = your_data,
+  time = "time_column",
+  family = gaussian()
+)
+
+# Forecast the functional coefficients
+fc <- forecast(mod, newdata = future_data, model = "ARDF")
+```
+
+## Detailed Example: Queensland Mortality Data
 Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia.
 ```{r, message=FALSE, warning=FALSE}
 library(ffc)
@@ -173,6 +196,14 @@ plot_slopes(
     linetype = "dashed"
   )
 ```
+
+**Key insights from this analysis:**
+- The characteristic J-shaped mortality curves show systematic downward shifts over four decades
+- Mortality rates for 17-year-olds dropped by approximately 70% (from ~6e-04 to ~2e-04) between 1980-2020
+- The rate of mortality improvement varies over time, with periods of faster and slower decline
+- The functional approach captures both overall level changes and subtle age-specific temporal patterns
+
+This demonstrates how `ffc` captures evolving functional relationships that traditional time series models would miss.
 
 The time-varying coefficients can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future. Using `summary = FALSE` will return draws of each coefficient time series from the model's empirical Bayesian posterior distribution (you can control the number of draws that are returned using the `times` argument):
 ```{r}

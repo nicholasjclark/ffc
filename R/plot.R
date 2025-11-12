@@ -9,6 +9,18 @@
 #' basis function coefficients extracted from an `ffc_gam` object
 #' @param ... Ignored
 #' @author Nicholas J Clark
+#' @examples
+#' # Extract and plot time-varying coefficients
+#' mod <- ffc_gam(
+#'   deaths ~ offset(log(population)) + sex + 
+#'     fts(age, k = 8, bs = "cr", time_k = 10),
+#'   time = "year", 
+#'   data = qld_mortality,
+#'   family = poisson(),
+#'   engine = "bam"
+#' )
+#' coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+#' autoplot(coefs)
 #' @export
 autoplot.fts_ts <- function(object, ...) {
   n_basis <- length(unique(object$.basis))

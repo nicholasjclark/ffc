@@ -107,6 +107,10 @@ terms such as
 By linking the smoothing parameters using the \code{id} argument, the time-varying function will
 be efficiently regularised.
 }
+\examples{
+# Define a time-varying smooth function of age
+fts(age, k = 8, bs = "cr", time_k = 10)
+}
 \author{
 Nicholas J Clark
 }

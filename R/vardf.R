@@ -20,6 +20,27 @@
 #' @author Nicholas J Clark
 #'
 #' @return A model specification
+#' @examples
+#' \donttest{
+#' # Fit a functional forecasting model, then use VARDF for forecasting
+#' library(dplyr)
+#' 
+#' # Split growth data into training and test sets
+#' train_data <- growth_data %>% filter(age_yr <= 16)
+#' test_data <- growth_data %>% filter(age_yr > 16)
+#' 
+#' # Step 1: Fit ffc_gam model with time-varying coefficients
+#' mod <- ffc_gam(
+#'   height_cm ~ fts(age_yr, by = id, time_k = 5),
+#'   data = train_data,
+#'   time = "age_yr",
+#'   family = gaussian()
+#' )
+#' 
+#' # Step 2: Use VARDF for forecasting functional coefficients
+#' fc <- forecast(mod, newdata = test_data, model = "VARDF", 
+#'                chains = 1, iter = 500)
+#' }
 #' @export
 VARDF = function(formula,
                 family = gaussian(),

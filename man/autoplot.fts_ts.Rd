@@ -15,6 +15,19 @@ basis function coefficients extracted from an \code{ffc_gam} object}
 \description{
 Produces a time series plot of basis function coefficients from \code{fts_ts} objects
 }
+\examples{
+# Extract and plot time-varying coefficients
+mod <- ffc_gam(
+  deaths ~ offset(log(population)) + sex + 
+    fts(age, k = 8, bs = "cr", time_k = 10),
+  time = "year", 
+  data = qld_mortality,
+  family = poisson(),
+  engine = "bam"
+)
+coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+autoplot(coefs)
+}
 \author{
 Nicholas J Clark
 }

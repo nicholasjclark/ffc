@@ -25,6 +25,17 @@
 #' @seealso [ffc_gam()], [fts()]
 #' @method predict ffc_gam
 #' @author Nicholas J Clark
+#' @examples
+#' # Fit a model and generate predictions
+#' mod <- ffc_gam(
+#'   deaths ~ offset(log(population)) + sex + 
+#'     fts(age, k = 8, bs = "cr", time_k = 10),
+#'   time = "year", 
+#'   data = qld_mortality,
+#'   family = poisson(),
+#'   engine = "bam"
+#' )
+#' preds <- predict(mod, type = "response")
 #' @export
 predict.ffc_gam <- function(
     object,

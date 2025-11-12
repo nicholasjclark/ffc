@@ -38,6 +38,12 @@ Rscript -e "devtools::document()"
 Rscript -e "pkgdown::build_site()"
 ```
 
+### Package Checking
+```bash
+# Check package for errors, warnings, and notes
+Rscript -e "devtools::check()"
+```
+
 ### Stan Model Management
 ```bash
 # After modifying .stan files in inst/stan/:
