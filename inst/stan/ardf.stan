@@ -21,7 +21,6 @@ data {
   int<lower=0> n; // number of timepoints per series
   int<lower=0> K; // number of dynamic factors
   int<lower=0> n_series; // number of series
-  vector[n_series] sample_sd; // known sampling SDs
   int<lower=0> M; // number of nonzero lower-triangular factor loadings
   int<lower=0> n_nonmissing; // number of nonmissing observations
   vector[n_nonmissing] flat_ys; // flattened nonmissing observations
@@ -108,7 +107,6 @@ model {
 
   {
     // likelihood functions
-    // Sampling SDs for vectorized likelihood calculations
     vector[n_nonmissing] flat_sigma_obs = rep_each(sigma_obs, n)[obs_ind];
 
     if(family == 1) {
@@ -127,16 +125,11 @@ model {
 generated quantities {
   array[n, n_series] real ypred;
   vector[n] nu_vec;
-  vector[n_series] sigma_combined;
   matrix[n, n_series] sigma_obs_vec;
-
-  // Precompute combined standard deviations
-  for (s in 1 : n_series)
-    sigma_combined[s] = sqrt(square(sigma_obs[s]) + square(sample_sd[s]));
 
   // Broadcast to full matrix
   for (s in 1 : n_series)
-    sigma_obs_vec[, s] = rep_vector(sigma_combined[s], n);
+    sigma_obs_vec[, s] = rep_vector(sigma_obs[s], n);
 
   // Posterior predictions
   if (family == 1) {
@@ -148,4 +141,3 @@ generated quantities {
       ypred[, s] = student_t_rng(nu_vec, trend[, s], sigma_obs_vec[, s]);
   }
 }
-

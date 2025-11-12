@@ -149,7 +149,7 @@ dyn_to_spline <- function(
   if (mean_only) {
     # Ensure a constant basis is included to capture
     # any mean-shifts in the functions over time
-    if (!any(apply(X, 2, sd) == 0)) {
+    if (!is.null(newdata) || !any(apply(X, 2, sd) == 0)) {
       orig_names <- colnames(X)
       X <- cbind(
         X,

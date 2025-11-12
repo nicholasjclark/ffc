@@ -40,7 +40,7 @@ simdat <- mvgam::sim_mvgam(
   n_series = 1,
   trend_model = mvgam::GP(),
   drift = TRUE,
-  prop_trend = 0.4,
+  prop_trend = 0.8,
   prop_train = 0.7,
   mu = -1,
   family = mvgam::student()
@@ -111,7 +111,6 @@ fcgp <- forecast(
   object = mod,
   newdata = test_tsibble,
   model = 'GPDF',
-  K = 2,
   # use summary = FALSE to return the full distribution
   summary = FALSE
 )
@@ -405,6 +404,7 @@ fc <- forecast(
   object = mod,
   newdata = airdat$data_test,
   model = 'GPDF',
+  K = 3,
   summary = TRUE
 )
 

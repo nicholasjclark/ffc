@@ -248,12 +248,6 @@ fable_forecast <- function(
 #' of the response (the mean) but ignore uncertainty in the observation process.
 #' When `response` is used (the default), the predictions take uncertainty in the observation
 #' process into account to return predictions on the outcome scale
-#' @param quantile_fc Logical. If `TRUE`, quantile forecasts are computed. If
-#' `FALSE`, forecasts are computed using a meta-analysis approach that adjusts
-#' the forecast variance based on the empirical variance of the basis function
-#' coefficient time series. Using `TRUE` will be faster but using `FALSE` may give
-#' better forecast uncertainties when the variance of the basis fucntion coefficient
-#' time series is not stable over time. Defaults to `FALSE`
 #' @param summary Should summary statistics be returned instead of the raw values?
 #' Default is `TRUE`
 #' @param robust If `FALSE` (the default) the mean is used as the measure of
@@ -274,7 +268,6 @@ forecast.ffc_gam <- function(
     object,
     newdata,
     type = "response",
-    quantile_fc = FALSE,
     model = "ARIMA",
     stationary = FALSE,
     summary = TRUE,
@@ -290,15 +283,6 @@ forecast.ffc_gam <- function(
     )
   )
 
-  if(model %in% c('ARDF', 'GPDF', 'VARDF')) quantile_fc <- FALSE
-
-  # Extract the full linear predictor matrix
-  orig_lpmat <- predict(
-    object,
-    newdata = newdata,
-    type = "lpmatrix"
-  )
-
   # Take full draws of beta coefficients
   orig_betas <- mgcv::rmvn(
     n = 200,
@@ -309,6 +293,13 @@ forecast.ffc_gam <- function(
   if (length(object$gam_init) == 0) {
     # No need to modify lpmatrix if there were no
     # fts() terms in the model
+    # Extract the full linear predictor matrix
+    orig_lpmat <- predict(
+      object,
+      newdata = newdata,
+      type = "lpmatrix"
+    )
+
     full_linpreds <- matrix(
       as.vector(
         t(apply(
@@ -323,9 +314,25 @@ forecast.ffc_gam <- function(
       nrow = NROW(orig_betas)
     )
   } else {
+    # Predict by fixing time to its last training value; this allows
+    # us to later add the uncertainty from the zero-centred time-varying
+    # basis coefficient time series
+    last_train <- max(object$model[[object$time_var]])
+    newdata_shift <- newdata
+    newdata_shift[[object$time_var]] <- last_train
+
+    orig_lpmat <- predict(
+      object,
+      newdata = newdata_shift,
+      type = "lpmatrix"
+    )
+    rm(newdata_shift, last_train)
+
     # Determine horizon (assuming equal time gaps)
     time_var <- object$time_var
 
+    # Now create basis coefficient data for forecasting, using
+    # the user-supplied newdata
     interpreted <- interpret_ffc(
       formula = object$orig_formula,
       data = newdata,
@@ -346,40 +353,21 @@ forecast.ffc_gam <- function(
       times = 200
     )
 
-    # Calculate mean + SD or quantiles
-    if (quantile_fc) {
-      functional_coefs <- intermed_coefs %>%
-        dplyr::group_by(.basis, .time) %>%
-        dplyr::summarise(
-          tibble::as_tibble_row(
-            quantile(
-              .estimate,
-              probs = seq(0.025, 0.975, length.out = 5),
-              type = 8
-            )
-          )
-        ) %>%
-        dplyr::ungroup() %>%
-        tidyr::pivot_longer(
-          cols = tidyr::contains("%"),
-          names_to = "quantile",
-          values_to = ".estimate"
-        ) %>%
-        dplyr::mutate(.realisation = as.numeric(gsub("%", "", quantile))) %>%
-        tsibble::as_tsibble(
-          key = c(.basis, .realisation),
-          index = .time
-        )
-    } else {
+    # Calculate mean and shift so that last time point
+    # is zero
+    shift_tail = function(x) x - tail(x, 1)
       functional_coefs <- intermed_coefs %>%
         dplyr::group_by(.basis, .time) %>%
         dplyr::mutate(
-          .mean = mean(.estimate),
-          .sd = sd(.estimate)
+          .mean = mean(.estimate)
         ) %>%
-        dplyr::select(.basis, .time, !!time_var, .mean, .sd) %>%
+        dplyr::select(.basis, .time, !!time_var, .mean) %>%
         dplyr::ungroup() %>%
         dplyr::distinct() %>%
+        dplyr::group_by(.basis) %>%
+        dplyr::arrange(.time) %>%
+        dplyr::mutate(.mean = shift_tail(.mean)) %>%
+        dplyr::ungroup() %>%
         dplyr::mutate(
           .realisation = 1,
           .estimate = .mean
@@ -388,20 +376,22 @@ forecast.ffc_gam <- function(
           key = c(.basis, .realisation),
           index = .time
         )
-    }
 
     # Structure the functional_coefs object for automatic
     # recognition of time signatures (if the data provided are
     # a tsibble format)
-    if (!is.null(attr(intermed_coefs, "index"))) {
-      functional_coefs <- functional_coefs %>%
-        dplyr::left_join(
-          intermed_coefs %>%
-            dplyr::select(.time, !!attr(intermed_coefs, "index")) %>%
-            dplyr::distinct(),
-          by = dplyr::join_by(.time)
-        )
-    }
+      if (!is.null(attr(intermed_coefs, "index"))) {
+        if (!attr(intermed_coefs, "index") %in% names(functional_coefs)){
+          functional_coefs <- functional_coefs %>%
+            dplyr::left_join(
+              intermed_coefs %>%
+                dplyr::select(.time, !!attr(intermed_coefs, "index")) %>%
+                dplyr::distinct(),
+              by = dplyr::join_by(.time)
+            )
+        }
+      }
+
 
     functional_coefs <- structure(
       functional_coefs,
@@ -440,14 +430,14 @@ forecast.ffc_gam <- function(
           dplyr::select(-.time)
       }
 
-      # Now forecast the _mean basis with an ETS() model
+      # Now forecast the _mean basis with an ARIMA() model
       functional_fc_mean <- suppressWarnings(
         forecast(
           object = functional_coefs %>%
             dplyr::filter(grepl('_mean', .basis)),
           h = max_horizon,
           times = 200,
-          model = 'ETS',
+          model = 'ARIMA',
           stationary = FALSE,
           ...
         )
@@ -463,6 +453,7 @@ forecast.ffc_gam <- function(
 
       # Bind the two forecasts together
       functional_fc <- functional_fc_others %>%
+        dplyr::mutate(.rep = as.character(.rep)) %>%
         dplyr::bind_rows(functional_fc_mean)
 
     } else {
@@ -486,6 +477,7 @@ forecast.ffc_gam <- function(
       functional_fc <- functional_fc %>%
         dplyr::left_join(
           interpreted$orig_data %>%
+            tibble::as_tibble() %>%
             dplyr::select(!!time_var, !!index_var) %>%
             dplyr::distinct(),
           by = dplyr::join_by(!!index_var)
@@ -512,62 +504,12 @@ forecast.ffc_gam <- function(
         .time %in% unique(interpreted$data[[time_var]])
       )
 
-    if (quantile_fc) {
-      # Sample draws based on quantile weights
-      inds_keep <- functional_fc %>%
-        tibble::as_tibble() %>%
-        dplyr::select(.basis, .realisation, .rep) %>%
-        dplyr::mutate(.weight = norm_quantiles(.realisation)) %>%
-        dplyr::group_by(.basis) %>%
-        dplyr::sample_n(
-          size = 200,
-          replace = TRUE,
-          weight = .weight
-        )
-
-      functional_fc <- inds_keep %>%
-        dplyr::left_join(functional_fc,
-          by = dplyr::join_by(.basis, .realisation, .rep),
-          relationship = "many-to-many"
-        ) %>%
-        dplyr::ungroup() %>%
-        dplyr::group_by(.basis, .time) %>%
-        dplyr::mutate(
-          .realisation = 1,
-          .rep = 1:200
-        )
-    }
-
-    # Which coefficients in lpmatrix are associated with fts objects?
-    smooth_names <- unlist(
-      purrr::map(object$smooth, "label"),
-      use.names = FALSE
-    )
-
-    fts_names <- grep(
-      ":fts_",
-      smooth_names,
-      fixed = TRUE
-    )
-
-    fts_coefs <- unlist(
-      purrr::map(
-        object$smooth[fts_names],
-        \(x) x$first.para:x$last.para
-      ),
-      use.names = FALSE
-    )
-
-    # Drop these columns from the lpmatrix and the betas
-    intermed_lpmat <- orig_lpmat[, -fts_coefs, drop = FALSE]
-    intermed_betas <- orig_betas[, -fts_coefs, drop = FALSE]
-
     # Calculate intermediate linear predictors
     model_offset <- attr(orig_lpmat, "model.offset")
 
     # Compute linear predictors using matrix multiplication
-    intermed_linpreds <- intermed_betas %*%
-      t(intermed_lpmat)
+    intermed_linpreds <- orig_betas %*%
+      t(orig_lpmat)
     intermed_linpreds <- sweep(
       intermed_linpreds,
       2,
