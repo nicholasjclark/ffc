@@ -2,7 +2,7 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: master
+    branches: [main]
 
 name: render-rmarkdown
 
@@ -31,9 +31,10 @@ jobs:
             gratia
             patchwork
             remotes
+            devtools
 
-      - name: Install ffc
-        run: Rscript -e 'remotes::install_github("nicholasjclark/ffc", upgrade_dependencies = FALSE)'
+      - name: Install local package
+        run: Rscript -e 'devtools::install(dependencies = FALSE)'
 
       - name: Render README
         run: Rscript -e 'rmarkdown::render("README.Rmd", output_format = "md_document")'
@@ -42,5 +43,6 @@ jobs:
         run: |
           git config --local user.name "$GITHUB_ACTOR"
           git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          git commit README.md index.md man/figures/README*.png -m 'Re-build README.Rmd' || echo "No changes to commit"
+          git add README.md man/figures/README*.png
+          git commit -m 'Re-build README.Rmd' || echo "No changes to commit"
           git push origin || echo "No changes to commit"
