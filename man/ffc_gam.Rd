@@ -81,6 +81,27 @@ head(predict(mod, type = "response"))
 # Extract basis coefficient time series
 (functional_ts <- fts_coefs(mod))
 
+# Binomial model with cbind() response for trials data
+data("qld_mortality")
+# Create binomial version of the data for demonstration
+qld_binomial <- qld_mortality
+qld_binomial$trials <- qld_binomial$population
+qld_binomial$successes <- qld_binomial$deaths
+
+mod_binomial <- ffc_gam(
+  cbind(successes, trials - successes) ~
+    sex +
+    fts(age,
+      k = 6, bs = "cr",
+      time_bs = "cr", time_k = 8
+    ),
+  time = "year",
+  data = qld_binomial,
+  family = binomial(),
+  engine = "bam"
+)
+summary(mod_binomial)
+
 }
 \seealso{
 \code{\link[=fts]{fts()}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
