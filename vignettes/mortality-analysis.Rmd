@@ -252,14 +252,16 @@ plot(fitted_vals, resids,
 abline(h = 0, lty = 2, col = "red")
 ```
 
-### Checking basis dimensions
+### Model diagnostics
 
-```{r basis-check}
-# Check if basis dimensions are adequate
-gam.check(mod)
-```
+For functional time series models, traditional GAM diagnostics need to be adapted. The ffc package will develop specialized diagnostic methods for:
 
-The basis dimensions appear adequate (k-index values close to 1, p-values not significant), indicating our smooths have sufficient flexibility.
+- **Basis adequacy**: Ensuring sufficient flexibility for time-varying coefficients
+- **Temporal autocorrelation**: Checking coefficient time series for proper structure  
+- **Functional residuals**: Examining residuals at both observation and functional levels
+- **Forecast validation**: Cross-validation approaches for functional forecasting
+
+Development of comprehensive diagnostic tools for ffc models is ongoing.
 
 ## Extracting time-varying coefficients
 
