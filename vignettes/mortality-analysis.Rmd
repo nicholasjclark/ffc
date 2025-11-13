@@ -319,8 +319,8 @@ The forecast includes uncertainty in both the time series models and the origina
 
 Let's demonstrate how to generate complete mortality curve forecasts by combining the forecasted coefficients with the model structure:
 
-```{r forecast-curves, fig.cap="Forecasted mortality curves for Queensland, 2021-2025. Gray ribbons show prediction intervals reflecting uncertainty in both time series models and coefficient estimation."}
-# Create prediction data for future years
+```{r forecast-curves, fig.cap="Forecasted mortality curves for Queensland, 2021-2025. Shows how the functional forecasting approach predicts future age-mortality patterns."}
+# Create forecast data for future years
 future_years <- 2021:2025
 newdata_forecast <- expand.grid(
   age = unique(qld_mortality$age),
@@ -329,30 +329,23 @@ newdata_forecast <- expand.grid(
   population = 1
 )
 
-# Generate forecasted mortality curves
-# Note: This combines the forecasted coefficients with model structure
-forecast_curves <- predict(
-  mod,
+# Generate forecasted mortality curves using forecast()
+# This integrates the time series forecasts of coefficients
+mortality_forecasts <- forecast(
+  object = mod,
   newdata = newdata_forecast,
-  type = "response",
-  # This would integrate the forecasted coefficients
-  # Implementation details would depend on final ffc API
-  se.fit = TRUE
+  h = 5,  # 5 years ahead
+  model = "ARIMA"
 )
 
-# Add predictions to forecast data
-newdata_forecast$predicted_rate <- forecast_curves$fit
-newdata_forecast$se <- forecast_curves$se.fit
-newdata_forecast$lower <- forecast_curves$fit - 1.96 * forecast_curves$se.fit
-newdata_forecast$upper <- forecast_curves$fit + 1.96 * forecast_curves$se.fit
+# Extract forecasted rates for visualization
+newdata_forecast$forecasted_rate <- as.numeric(mortality_forecasts)
 
 # Visualization
-ggplot(newdata_forecast, aes(x = age, y = predicted_rate, group = year, color = year)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = year), alpha = 0.2, color = NA) +
+ggplot(newdata_forecast, aes(x = age, y = forecasted_rate, group = year, color = year)) +
   geom_line(size = 1) +
   facet_wrap(~sex) +
   scale_color_viridis_c(name = "Year") +
-  scale_fill_viridis_c(name = "Year") +
   labs(
     x = "Age",
     y = "Forecasted mortality rate", 
@@ -361,31 +354,7 @@ ggplot(newdata_forecast, aes(x = age, y = predicted_rate, group = year, color = 
   scale_y_log10()
 ```
 
-### Forecast evaluation
-
-```{r forecast-comparison, fig.cap="Comparison of actual 2020 mortality with retrospective forecasts from 2015. Close alignment validates the forecasting approach."}
-# For validation, we could compare forecasts made from earlier years
-# with observed data (pseudo-out-of-sample validation)
-
-# This example shows conceptual validation approach
-validation_data <- qld_mortality[qld_mortality$year == 2020, ]
-validation_data$predicted_rate <- predict(mod, newdata = validation_data, type = "response")
-
-ggplot(validation_data, aes(x = age)) +
-  geom_line(aes(y = deaths / population, color = "Observed"), size = 1) +
-  geom_line(aes(y = predicted_rate, color = "Predicted"), size = 1, linetype = "dashed") +
-  facet_wrap(~sex) +
-  scale_color_manual(values = c("Observed" = "black", "Predicted" = "red")) +
-  labs(
-    x = "Age",
-    y = "Mortality rate",
-    title = "Model validation: 2020 predictions vs. observations",
-    color = "Type"
-  ) +
-  scale_y_log10()
-```
-
-This comprehensive forecasting approach enables prediction of entire functional relationships with proper uncertainty quantification.
+This comprehensive forecasting approach enables prediction of entire functional relationships by combining time series forecasts of the functional coefficients with the underlying model structure.
 
 ## Key insights and methodology
 
