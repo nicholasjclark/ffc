@@ -16,3 +16,4 @@ Use in \code{\link[=ffc_gam]{ffc_gam()}} \code{family} argument.
 \seealso{
 \code{\link[mgcv]{ocat}}
 }
+\keyword{internal}

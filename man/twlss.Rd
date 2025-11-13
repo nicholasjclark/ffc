@@ -16,3 +16,4 @@ Use in \code{\link[=ffc_gam]{ffc_gam()}} \code{family} argument for complex Twee
 \seealso{
 \code{\link[mgcv]{twlss}}, \code{\link[=tw]{tw()}}
 }
+\keyword{internal}

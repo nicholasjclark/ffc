@@ -26,3 +26,4 @@ Utility function for Tweedie family.
 \seealso{
 \code{\link[mgcv]{ldTweedie}}, \code{\link[=tw]{tw()}}
 }
+\keyword{internal}

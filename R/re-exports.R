@@ -36,6 +36,7 @@ mgcv::te
 #' @examples
 #' # Use ffc_gam() for time-varying functionality
 #' # mod <- ffc_gam(y ~ fts(x), data = data, time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv gam
 mgcv::gam
@@ -50,6 +51,7 @@ mgcv::gam
 #' @examples
 #' # Use bam engine for large datasets
 #' # mod <- ffc_gam(y ~ fts(x), data = large_data, time = "time", engine = "bam")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv bam
 mgcv::bam
@@ -63,6 +65,7 @@ mgcv::bam
 #' @seealso \code{\link[mgcv]{nb}}
 #' @examples
 #' # ffc_gam(counts ~ fts(x), data = data, family = nb(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv nb
 mgcv::nb
@@ -76,6 +79,7 @@ mgcv::nb
 #' @seealso \code{\link[mgcv]{negbin}}
 #' @examples
 #' # ffc_gam(counts ~ fts(x), data = data, family = negbin(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv negbin
 mgcv::negbin
@@ -89,6 +93,7 @@ mgcv::negbin
 #' @seealso \code{\link[mgcv]{betar}}
 #' @examples
 #' # ffc_gam(proportions ~ fts(x), data = data, family = betar(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv betar
 mgcv::betar
@@ -102,6 +107,7 @@ mgcv::betar
 #' @seealso \code{\link[mgcv]{cnorm}}
 #' @examples
 #' # ffc_gam(censored_y ~ fts(x), data = data, family = cnorm(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv cnorm
 mgcv::cnorm
@@ -115,6 +121,7 @@ mgcv::cnorm
 #' @seealso \code{\link[mgcv]{ocat}}
 #' @examples
 #' # ffc_gam(ordered_response ~ fts(x), data = data, family = ocat(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv ocat
 mgcv::ocat
@@ -128,6 +135,7 @@ mgcv::ocat
 #' @seealso \code{\link[mgcv]{scat}}
 #' @examples
 #' # ffc_gam(y ~ fts(x), data = data, family = scat(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv scat
 mgcv::scat
@@ -141,6 +149,7 @@ mgcv::scat
 #' @seealso \code{\link[mgcv]{ziP}}
 #' @examples
 #' # ffc_gam(zero_inflated_counts ~ fts(x), data = data, family = ziP(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv ziP
 mgcv::ziP
@@ -154,6 +163,7 @@ mgcv::ziP
 #' @seealso \code{\link[mgcv]{multinom}}
 #' @examples
 #' # ffc_gam(categories ~ fts(x), data = data, family = multinom(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv multinom
 mgcv::multinom
@@ -167,6 +177,7 @@ mgcv::multinom
 #' @seealso \code{\link[mgcv]{tw}}
 #' @examples
 #' # ffc_gam(continuous_with_zeros ~ fts(x), data = data, family = tw(), time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv tw
 mgcv::tw
@@ -180,6 +191,7 @@ mgcv::tw
 #' @seealso \code{\link[mgcv]{ldTweedie}}, [tw()]
 #' @examples
 #' # ldTweedie(y = data, mu = fitted_values, p = 1.5, phi = 1)
+#' @keywords internal
 #' @export
 #' @importFrom mgcv ldTweedie
 mgcv::ldTweedie
@@ -193,6 +205,7 @@ mgcv::ldTweedie
 #' @seealso \code{\link[mgcv]{rTweedie}}, [tw()]
 #' @examples
 #' # rTweedie(n = 100, mu = 1, p = 1.5, phi = 1)
+#' @keywords internal
 #' @export
 #' @importFrom mgcv rTweedie
 mgcv::rTweedie
@@ -206,6 +219,7 @@ mgcv::rTweedie
 #' @seealso \code{\link[mgcv]{twlss}}, [tw()]
 #' @examples
 #' # ffc_gam(list(y ~ fts(x), ~ s(z), ~ s(w)), family = twlss(), data = data, time = "time")
+#' @keywords internal
 #' @export
 #' @importFrom mgcv twlss
 mgcv::twlss
@@ -247,6 +261,7 @@ generics::forecast
 #' @seealso \code{\link[generics]{generate}}
 #' @examples
 #' # Used internally by forecast methods
+#' @keywords internal
 #' @importFrom generics generate
 #' @export
 generics::generate

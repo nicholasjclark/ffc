@@ -711,6 +711,11 @@ posterior_predict <- function(object,
     eta = as.vector(linpreds)
   )
 
+  # For Tweedie family, ensure mu values are non-negative
+  if (grepl("tweedie", object$family[["family"]], ignore.case = TRUE)) {
+    expected_pred_vec <- pmax(expected_pred_vec, 1e-8)
+  }
+
   # Now compute response predictions
   response_pred_vec <- rd_fun(
     mu = expected_pred_vec,

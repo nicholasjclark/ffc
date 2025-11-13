@@ -16,3 +16,4 @@ Use in \code{\link[=ffc_gam]{ffc_gam()}} \code{family} argument or Stan models.
 \seealso{
 \code{\link[mgcv]{scat}}
 }
+\keyword{internal}

@@ -50,3 +50,4 @@ Fits GAMs for large datasets using mgcv::bam. In ffc, specify
 \seealso{
 \code{\link[mgcv]{bam}}, \code{\link[=ffc_gam]{ffc_gam()}}
 }
+\keyword{internal}

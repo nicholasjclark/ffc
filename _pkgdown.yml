@@ -28,7 +28,7 @@ navbar:
 reference:
 - title: Core Functions
   desc: Main functions for functional forecasting
-- contents:
+  contents:
   - ffc_gam
   - fts
   - forecast.ffc_gam
@@ -36,6 +36,26 @@ reference:
   
 - title: Coefficient Extraction
   desc: Extract and work with time-varying coefficients
-- contents:
+  contents:
   - fts_coefs
   - autoplot.fts_ts
+
+- title: Forecasting Models
+  desc: Specialized forecasting models for time-varying coefficients
+  contents:
+  - ARDF
+  - GPDF
+  - VARDF
+
+- title: Integration with fabletools
+  desc: Convert ffc objects to work with the fabletools ecosystem
+  contents:
+  - as_fable.ffc_gam
+  - autoplot
+  - forecast
+  - model.frame.ffc_gam
+
+- title: Data
+  desc: Example datasets included with the package
+  contents:
+  - growth_data

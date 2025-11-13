@@ -44,3 +44,4 @@ gam functionality with time-varying coefficients.
 \seealso{
 \code{\link[mgcv]{gam}}, \code{\link[=ffc_gam]{ffc_gam()}}
 }
+\keyword{internal}

@@ -16,3 +16,4 @@ Used internally for forecast simulation.
 \seealso{
 \code{\link[generics]{generate}}
 }
+\keyword{internal}
