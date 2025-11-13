@@ -48,7 +48,7 @@ A model specification
 Fit a Vector autoregressive dynamic factor model using Stan
 }
 \examples{
-\donttest{
+\dontrun{
 # Fit a functional forecasting model, then use VARDF for forecasting
 library(dplyr)
 

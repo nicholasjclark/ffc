@@ -48,7 +48,7 @@ A model specification
 Fit a squared exponential GP dynamic factor model using Stan
 }
 \examples{
-\donttest{
+\dontrun{
 # Fit a functional forecasting model, then use GPDF for forecasting
 library(dplyr)
 
