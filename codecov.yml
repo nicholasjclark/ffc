@@ -1,6 +1,12 @@
 comment: false
 
 coverage:
+  ignore:
+    - "src/stanExports_*.h"
+    - "src/stanExports_*.cc"
+    - "src/init.cpp"
+    - "src/*.o"
+    - "src/*.dll"
   status:
     project:
       default:

@@ -41,7 +41,16 @@ jobs:
           cov <- covr::package_coverage(
             quiet = FALSE,
             clean = FALSE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package"),
+            exclusions = list(
+              "src/stanExports_ardf.h",
+              "src/stanExports_ardf.cc", 
+              "src/stanExports_gpdf.h",
+              "src/stanExports_gpdf.cc",
+              "src/stanExports_vardf.h", 
+              "src/stanExports_vardf.cc",
+              "src/init.cpp"
+            )
           )
           print(cov)
           covr::to_cobertura(cov)
