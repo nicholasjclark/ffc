@@ -11,3 +11,6 @@
 ^tasks/$
 ^future-tasks/$
 ^completed-tasks/$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
