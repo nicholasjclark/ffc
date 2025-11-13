@@ -32,14 +32,11 @@ jobs:
             patchwork
             remotes
 
-      - name: Install mvgam
+      - name: Install ffc
         run: Rscript -e 'remotes::install_github("nicholasjclark/ffc", upgrade_dependencies = FALSE)'
 
       - name: Render README
         run: Rscript -e 'rmarkdown::render("README.Rmd", output_format = "md_document")'
-
-      - name: Render pkgdown index
-        run: Rscript -e 'rmarkdown::render("index.Rmd", output_format = "md_document")'
 
       - name: Commit results
         run: |
