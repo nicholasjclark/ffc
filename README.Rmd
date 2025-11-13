@@ -19,30 +19,28 @@ knitr::opts_chunk$set(
 
 # ffc
 
-<!-- badges: start -->
+> **F**unctional **F**ore**C**asting
+
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN status](https://www.r-pkg.org/badges/version/ffc)](https://CRAN.R-project.org/package=ffc)
 [![R-CMD-check](https://github.com/nicholasjclark/ffc/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/nicholasjclark/ffc/actions/workflows/R-CMD-check.yaml)
 [![Codecov test coverage](https://codecov.io/gh/nicholasjclark/ffc/graph/badge.svg)](https://app.codecov.io/gh/nicholasjclark/ffc)
-<!-- badges: end -->
 
-# ffc
 
-> **F**unctional **F**ore**C**asting
-
-The goal of the `ffc` 📦 is to **forecast complex, time-changing functional relationships** using Generalized Additive Models (GAMs). 
+The goal of the `ffc` 📦 is to forecast complex, time-changing functional relationships by integrating Dynamic Factor Generalized Additive Models. 
 
 **Key benefits:**
-- Model functional responses that change shape over time (not just magnitude)
-- Forecast entire curves into the future, not just single values  
-- Handle complex multivariate time series with functional structure
-- Seamless integration with the powerful [`mgcv`](https://cran.r-project.org/package=mgcv) and [`fable`](https://fable.tidyverts.org/) ecosystems
 
-The package introduces **dynamic functional predictors** using the new `fts()` term, which creates time-varying coefficients that can be forecasted using efficient Stan-based algorithms.
+- Model functional responses that change shape over time (not just magnitude)  
+- Forecast entire curves into the future, not just single values  
+- Handle complex multivariate time series with functional structure  
+- Seamless integration with the powerful   [`mgcv`](https://cran.r-project.org/package=mgcv) and [`fable`](https://fable.tidyverts.org/) ecosystems
+
+The package introduces dynamic functional predictors using the new `fts()` term, which decomposes functional time series into time-varying basis coefficients that can be forecasted using independent time series models from the `fable` package or with efficient dynamic factor models using precompiled Stan models.
 
 ## Installation
 
-You can install the development version of ffc from [GitHub](https://github.com/) with:
+You can install the development version of `ffc` from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
@@ -51,7 +49,14 @@ pak::pak("nicholasjclark/ffc")
 
 ## Quick Start
 
+```{r include = FALSE}
+devtools::load_all()
+```
+
+
 ```{r eval=FALSE}
+library(ffc)
+
 # Fit a model with time-varying coefficients
 mod <- ffc_gam(
   response ~ fts(predictor, time_k = 10),  
@@ -66,43 +71,12 @@ fc <- forecast(mod, newdata = future_data, model = "ARDF")
 
 ## Examples
 
-### Queensland Mortality Analysis
-
-The `ffc` package excels at modeling functional relationships that evolve over time. A detailed case study using Queensland mortality data demonstrates key concepts:
-
-```{r, message=FALSE, warning=FALSE}
-library(ffc)
-library(ggplot2)
-theme_set(theme_bw())
-data("qld_mortality")
-head(qld_mortality, 10)
-```
-
-```{r mortality-preview, warning=FALSE, fig.alt="Preview of Queensland mortality data showing characteristic J-shaped curves that shift systematically over time, demonstrating functional evolution suitable for ffc modeling."}
-# Preview the functional patterns
-ggplot(
-  data = qld_mortality,
-  aes(x = age, y = deaths / population, group = year, colour = year)
-) +
-  geom_line(alpha = 0.7) +
-  facet_wrap(~sex) +
-  scale_colour_viridis_c() +
-  labs(y = "Mortality rate", title = "Evolving mortality patterns over time") +
-  scale_y_log10()
-```
-
-**Key features that make this ideal for functional forecasting:**
-- **J-shaped mortality curves** that evolve smoothly over 40 years
-- **Hierarchical structure** with sex-specific deviations from shared trends  
-- **Systematic temporal patterns** suitable for time series forecasting
-
-> **📖 For a comprehensive tutorial** covering model fitting, diagnostics, interpretation, and forecasting, see `vignette("mortality-analysis", package = "ffc")`
-
-### Tourism Forecasting with fabletools Integration
+### Tourism Forecasting with `fabletools` Integration
 ```{r, message=FALSE, warning=FALSE}
 library(fable)
 library(tsibble)
-library(dplyr)
+library(tidyverse)
+library(ggplot2); theme_set(theme_bw(base_size = 12))
 ```
 
 Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
@@ -153,12 +127,13 @@ mod <- ffc_gam(
 )
 ```
 
-Draw the time-varying basis coefficients, this time using `gratia`
+Draw the time-varying basis coefficients using support for the [`gratia`](https://gavinsimpson.github.io/gratia/) package
+
 ```{r tourism-coefficients, fig.alt="Smooth plots showing time-varying coefficients for the tourism model. The upper panel shows the time-varying level component while the lower panel displays seasonal coefficients that change over time, demonstrating how seasonality patterns evolve."}
 gratia::draw(mod)
 ```
 
-Compute forecast distribution by fitting the basis coefficient time series models in parallel (which is automatically supported within the `fable` package). Here we fit independent exponential smoothing models to each coefficient time series
+These plots show the time-varying *coefficients* for a set of basis functions. We have one function representing the mean of the series (essentially a constant) as well as three basis functions representing the quarterly seasonality. Each of these has a coefficient that can change through time, allowing the entire functional series to change shape over time. We can compute forecast distribution by fitting the basis coefficient forecast models in parallel (which is automatically supported within the `fable` package). Here we fit independent exponential smoothing models to each coefficient time series
 ```{r tourism-forecast, fig.show='hide'}
 fc <- forecast(
   object = mod,
@@ -168,7 +143,7 @@ fc <- forecast(
 )
 ```
 
-Convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
+We can also convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
 ```{r build-fable, warning=FALSE}
 # Using the new as_fable method for seamless conversion
 fc_ffc <- as_fable(mod, newdata = test, forecasts = fc)
@@ -195,7 +170,8 @@ fc_summary <- fc_ffc %>%
 fc_summary
 ```
 
-Compare FFC functional forecasting to traditional time series models
+Next we can explore how to compare forecasts from `ffc` models to traditional time series models by again leveraging the simplicity and power of the `fable` ecosystem
+
 ```{r model-comparison, warning=FALSE, fig.alt="Comprehensive model comparison showing FFC functional forecasting versus traditional ARIMA and ETS models for Melbourne tourism data. The plot demonstrates forecast performance with MAPE values in titles, revealing the added value of functional forecasting approaches."}
 # Generate FFC forecasts with different models
 fc_ffc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
@@ -240,10 +216,9 @@ p4 <- autoplot(filter(fc_traditional, .model == "ETS"), train) +
   ggtitle(paste0("Traditional ETS (MAPE: ", mape_ets, "%)"))
 
 (p1 | p2) / (p3 | p4)
-
-# Display comprehensive accuracy comparison
-rbind(acc_ffc_arima, acc_ffc_ets, acc_traditional)
 ```
+
+These plots illustrate how the `ffc` models outperform traditional forecasting models for this forecasting experiment by thinking about this as a functional time series problem.
 
 ## Getting help
 If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/nicholasjclark/ffc/issues)
