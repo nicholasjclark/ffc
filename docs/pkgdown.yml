@@ -1,0 +1,9 @@
+pandoc: '0'
+pkgdown: 2.1.1
+pkgdown_sha: ~
+articles:
+  mortality-analysis: mortality-analysis.html
+last_built: 2025-11-13T05:09Z
+urls:
+  reference: https://nicholasjclark.github.io/ffc/reference
+  article: https://nicholasjclark.github.io/ffc/articles

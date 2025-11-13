@@ -1,0 +1,14 @@
+url: https://nicholasjclark.github.io/ffc/
+
+authors:
+  Nicholas J Clark:
+    href: https://ecogambler.netlify.app/
+
+template:
+  bootstrap: 5
+  bootswatch: pulse
+
+navbar:
+  structure:
+    left: [intro, articles, reference, news]
+    right: [search, github]

@@ -8,6 +8,15 @@
 \description{
 Perform functional regression using Generalized Additive Models (GAMs) that enable functional responses to be modelled and predicted with a broad range of predictor effects. The package also handles functional predictors with time-varying coefficients that can be forecasted ahead using a variety of efficient forecasting algorithms, providing unmatched flexibility to model and predict how functional responses change over time.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://nicholasjclark.github.io/ffc}
+  \item \url{https://github.com/nicholasjclark/ffc}
+  \item Report bugs at \url{https://github.com/nicholasjclark/ffc/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Nicholas J Clark \email{nicholas.j.clark1214@gmail.com} (\href{https://orcid.org/0000-0001-7131-3301}{ORCID})
 

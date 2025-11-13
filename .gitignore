@@ -1,3 +1,6 @@
 .Rproj.user
 claude.exe
 inst/doc
+src/ffc.dll
+src/*.dll
+src/*.o
