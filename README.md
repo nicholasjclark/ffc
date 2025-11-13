@@ -25,7 +25,7 @@ The goal of the `ffc` 📦 is to **forecast complex, time-changing functional re
 - Model functional responses that change shape over time (not just magnitude)
 - Forecast entire curves into the future, not just single values  
 - Handle complex multivariate time series with functional structure
-- Seamless integration with the powerful `mgcv` and `fable` ecosystems
+- Seamless integration with the powerful [`mgcv`](https://cran.r-project.org/package=mgcv) and [`fable`](https://fable.tidyverts.org/) ecosystems
 
 The package introduces **dynamic functional predictors** using the new `fts()` term, which creates time-varying coefficients that can be forecasted using efficient Stan-based algorithms.
 
@@ -105,7 +105,7 @@ ggplot(
 <p class="caption">plot of chunk mortality-curves</p>
 </div>
 
-Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
+Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the [`mgcv::bam()`](https://rdrr.io/pkg/mgcv/man/bam.html) engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
 
 ``` r
 mod <- ffc_gam(
@@ -310,15 +310,15 @@ functional_coefs
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
 #>  1 fts_year1_mean  1980     0.382            1  1980
-#>  2 fts_year1_mean  1981     0.367            1  1981
-#>  3 fts_year1_mean  1982     0.413            1  1982
-#>  4 fts_year1_mean  1983     0.313            1  1983
-#>  5 fts_year1_mean  1984     0.304            1  1984
-#>  6 fts_year1_mean  1985     0.320            1  1985
-#>  7 fts_year1_mean  1986     0.270            1  1986
-#>  8 fts_year1_mean  1987     0.259            1  1987
-#>  9 fts_year1_mean  1988     0.255            1  1988
-#> 10 fts_year1_mean  1989     0.275            1  1989
+#>  2 fts_year1_mean  1981     0.378            1  1981
+#>  3 fts_year1_mean  1982     0.405            1  1982
+#>  4 fts_year1_mean  1983     0.320            1  1983
+#>  5 fts_year1_mean  1984     0.326            1  1984
+#>  6 fts_year1_mean  1985     0.336            1  1985
+#>  7 fts_year1_mean  1986     0.280            1  1986
+#>  8 fts_year1_mean  1987     0.278            1  1987
+#>  9 fts_year1_mean  1988     0.268            1  1988
+#> 10 fts_year1_mean  1989     0.260            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -333,7 +333,7 @@ autoplot(functional_coefs)
 <p class="caption">plot of chunk plot-coefficients</p>
 </div>
 
-Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
+Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the [`fable`](https://fable.tidyverts.org/) 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
 
 ``` r
 functional_fc <- forecast(
@@ -346,16 +346,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.90
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.93
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.99
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      5.03
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      5.05
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.89
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.87
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.87
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.82
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.79
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.74
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.67
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.61
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.83
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.84
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.85
 #>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.87
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.94
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.90
 #> # ℹ 4,740 more rows
 ```
 

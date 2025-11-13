@@ -36,7 +36,7 @@ The goal of the `ffc` 📦 is to **forecast complex, time-changing functional re
 - Model functional responses that change shape over time (not just magnitude)
 - Forecast entire curves into the future, not just single values  
 - Handle complex multivariate time series with functional structure
-- Seamless integration with the powerful `mgcv` and `fable` ecosystems
+- Seamless integration with the powerful [`mgcv`](https://cran.r-project.org/package=mgcv) and [`fable`](https://fable.tidyverts.org/) ecosystems
 
 The package introduces **dynamic functional predictors** using the new `fts()` term, which creates time-varying coefficients that can be forecasted using efficient Stan-based algorithms.
 
@@ -92,7 +92,7 @@ ggplot(
   scale_y_log10()
 ```
 
-Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the `bam()` engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
+Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the [`mgcv::bam()`](https://rdrr.io/pkg/mgcv/man/bam.html) engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
 ```{r fit-model, fig.show='hide'}
 mod <- ffc_gam(
   deaths ~
@@ -220,7 +220,7 @@ The basis function coefficient time series can be plotted using `autoplot()`
 autoplot(functional_coefs)
 ```
 
-Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the `fable` 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
+Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the [`fable`](https://fable.tidyverts.org/) 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
 ```{r forecast-coefficients, warning=FALSE}
 functional_fc <- forecast(
   object = functional_coefs,
