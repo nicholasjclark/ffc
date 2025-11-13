@@ -21,7 +21,7 @@
 #'
 #' @return A model specification
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Fit a functional forecasting model, then use ARDF for forecasting
 #' library(dplyr)
 #' 

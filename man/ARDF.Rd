@@ -48,7 +48,7 @@ A model specification
 Fit an autoregressive dymamic factor model using Stan
 }
 \examples{
-\donttest{
+\dontrun{
 # Fit a functional forecasting model, then use ARDF for forecasting
 library(dplyr)
 
