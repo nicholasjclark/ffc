@@ -10,9 +10,6 @@ articles:
   contents:
   - starts_with("mortality")
 
-exclude: |
-  CLAUDE.md
-
 template:
   bootstrap: 5
   bootswatch: pulse
