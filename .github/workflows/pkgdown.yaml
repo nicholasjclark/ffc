@@ -36,9 +36,14 @@ jobs:
           extra-packages:  |
              any::pkgdown
              local::.
-             tsibble
-             fable,
-             ggborderline
+             any::fable
+             any::fabletools
+             any::distributional
+             any::tsibble
+             any::ggborderline
+             any::marginaleffects
+             any::gratia
+             any::patchwork
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
