@@ -40,7 +40,7 @@ fts_coefs.ffc_gam <- function(
     return(NULL)
   } else {
     # Sanity check
-    validate_pos_integer(times)
+    checkmate::assert_count(times, positive = TRUE)
 
     # Time variable
     time_var <- object$time_var

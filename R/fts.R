@@ -65,7 +65,7 @@ fts <- function(
     by = NA,
     xt = NULL,
     pc = NULL) {
-  validate_pos_integer(time_k)
+  checkmate::assert_count(time_k, positive = TRUE)
 
   # Terms to be smoothed without evaluation
   vars <- as.list(substitute(list(...)))[-1]

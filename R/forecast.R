@@ -53,8 +53,8 @@ forecast.fts_ts <- function(
   insight::check_if_installed("fable")
 
   # Validate forecast horizon and simulation count
-  validate_pos_integer(h)
-  validate_pos_integer(times)
+  checkmate::assert_count(h, positive = TRUE)
+  checkmate::assert_count(times, positive = TRUE)
 
   # Stationarity check for ARIMA model
   if (stationary & !identical(model, "ARIMA")) {

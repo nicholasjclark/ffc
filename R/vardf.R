@@ -92,10 +92,10 @@ train_vardf = function(
     ...){
 
   # Validate arguments
-  validate_pos_integer(chains)
-  validate_pos_integer(cores)
-  validate_pos_integer(iter)
-  validate_pos_integer(warmup)
+  checkmate::assert_count(chains, positive = TRUE)
+  checkmate::assert_count(cores, positive = TRUE)
+  checkmate::assert_count(iter, positive = TRUE)
+  checkmate::assert_count(warmup, positive = TRUE)
 
   # Extract arguments from specials
   if(length(specials$K) > 1 || length(specials$p) > 1){
@@ -143,11 +143,11 @@ train_vardf = function(
 #' @noRd
 specials_vardf <- new_specials(
   K = function(K = 2) {
-    validate_pos_integer(K)
+    checkmate::assert_count(K, positive = TRUE)
     as.list(environment())
   },
   p = function(p = 1) {
-    validate_pos_integer(p)
+    checkmate::assert_count(p, positive = TRUE)
     as.list(environment())
   },
   .required_specials = c("K", "p")
