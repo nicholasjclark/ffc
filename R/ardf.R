@@ -1,6 +1,6 @@
-#' Fit an autoregressive dymamic factor model
+#' Fit an autoregressive dynamic factor model
 #'
-#' Fit an autoregressive dymamic factor model using Stan
+#' Fit an autoregressive dynamic factor model using Stan
 #'
 #' @importFrom fabletools new_model_class new_model_definition new_specials
 #' @param formula Model specification (see "Specials" section)

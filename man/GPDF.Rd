@@ -2,7 +2,7 @@
 % Please edit documentation in R/gpdf.R
 \name{GPDF}
 \alias{GPDF}
-\title{Fit a GP dymamic factor model}
+\title{Fit a GP dynamic factor model}
 \usage{
 GPDF(
   formula,
@@ -45,7 +45,7 @@ use as burnin}
 A model specification
 }
 \description{
-Fit a squared exponential GP dymamic factor model using Stan
+Fit a squared exponential GP dynamic factor model using Stan
 }
 \examples{
 \donttest{

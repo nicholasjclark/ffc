@@ -2,7 +2,7 @@
 % Please edit documentation in R/vardf.R
 \name{VARDF}
 \alias{VARDF}
-\title{Fit a Vector autoregressive dymamic factor model}
+\title{Fit a Vector autoregressive dynamic factor model}
 \usage{
 VARDF(
   formula,
@@ -45,7 +45,7 @@ use as burnin}
 A model specification
 }
 \description{
-Fit a Vector autoregressive dymamic factor model using Stan
+Fit a Vector autoregressive dynamic factor model using Stan
 }
 \examples{
 \donttest{

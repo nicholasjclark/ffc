@@ -1,6 +1,6 @@
-#' Fit a Vector autoregressive dymamic factor model
+#' Fit a Vector autoregressive dynamic factor model
 #'
-#' Fit a Vector autoregressive dymamic factor model using Stan
+#' Fit a Vector autoregressive dynamic factor model using Stan
 #'
 #' @importFrom fabletools new_model_class new_model_definition new_specials
 #' @param formula Model specification (see "Specials" section)

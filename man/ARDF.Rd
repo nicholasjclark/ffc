@@ -2,7 +2,7 @@
 % Please edit documentation in R/ardf.R
 \name{ARDF}
 \alias{ARDF}
-\title{Fit an autoregressive dymamic factor model}
+\title{Fit an autoregressive dynamic factor model}
 \usage{
 ARDF(
   formula,
@@ -45,7 +45,7 @@ use as burnin}
 A model specification
 }
 \description{
-Fit an autoregressive dymamic factor model using Stan
+Fit an autoregressive dynamic factor model using Stan
 }
 \examples{
 \dontrun{

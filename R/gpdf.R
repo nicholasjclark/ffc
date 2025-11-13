@@ -1,6 +1,6 @@
-#' Fit a GP dymamic factor model
+#' Fit a GP dynamic factor model
 #'
-#' Fit a squared exponential GP dymamic factor model using Stan
+#' Fit a squared exponential GP dynamic factor model using Stan
 #'
 #' @importFrom fabletools new_model_class new_model_definition new_specials
 #' @param formula Model specification (see "Specials" section)
