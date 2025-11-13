@@ -1,0 +1,41 @@
+url: https://nicholasjclark.github.io/ffc/
+
+authors:
+  Nicholas J Clark:
+    href: https://ecogambler.netlify.app/
+
+template:
+  bootstrap: 5
+  bootswatch: pulse
+  assets: pkgdown/assets
+
+home:
+  title: ffc • Functional ForeCasting
+  description: >
+    Forecast complex, time-changing functional relationships using GAMs.
+    Model functional responses that change over time, not just magnitude.
+
+navbar:
+  structure:
+    left: [intro, articles, reference, news]
+    right: [search, github]
+  components:
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/nicholasjclark/ffc
+      aria-label: GitHub
+
+reference:
+- title: Core Functions
+  desc: Main functions for functional forecasting
+- contents:
+  - ffc_gam
+  - fts
+  - forecast.ffc_gam
+  - forecast.fts_ts
+  
+- title: Coefficient Extraction
+  desc: Extract and work with time-varying coefficients
+- contents:
+  - fts_coefs
+  - autoplot.fts_ts
