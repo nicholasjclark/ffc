@@ -55,3 +55,4 @@ LinkingTo:
 SystemRequirements: GNU make
 NeedsCompilation: yes
 LazyData: true
+VignetteBuilder: knitr

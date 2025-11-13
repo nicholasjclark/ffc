@@ -54,15 +54,19 @@ mod <- ffc_gam(
 fc <- forecast(mod, newdata = future_data, model = "ARDF")
 ```
 
-## Detailed Example: Queensland Mortality Data
-Load the in-built Queensland Mortality data, which contains the number of deaths per age category over time in the state of Queensland, Australia.
+## Examples
+
+### Queensland Mortality Analysis
+
+The `ffc` package excels at modeling functional relationships that evolve over time. A detailed case study using Queensland mortality data demonstrates key concepts:
+
 
 ``` r
 library(ffc)
 library(ggplot2)
 theme_set(theme_bw())
 data("qld_mortality")
-head(qld_mortality, 15)
+head(qld_mortality, 10)
 #>    year age    sex deaths population
 #> 1  1980   0 female    190   17699.81
 #> 2  1980   1 female     20   17505.27
@@ -74,292 +78,35 @@ head(qld_mortality, 15)
 #> 8  1980   7 female      2   20475.01
 #> 9  1980   8 female      2   21599.01
 #> 10 1980   9 female      7   22170.09
-#> 11 1980  10 female      2   21750.01
-#> 12 1980  11 female      3   20866.51
-#> 13 1980  12 female      1   20384.50
-#> 14 1980  13 female      8   19848.04
-#> 15 1980  14 female     11   19505.02
 ```
 
-Visualise the observed mortality curves over time using the log10 scale
 
 ``` r
+# Preview the functional patterns
 ggplot(
   data = qld_mortality,
-  aes(
-    x = age,
-    y = deaths / population,
-    group = year,
-    colour = year
-  )
+  aes(x = age, y = deaths / population, group = year, colour = year)
 ) +
-  geom_line() +
+  geom_line(alpha = 0.7) +
   facet_wrap(~sex) +
   scale_colour_viridis_c() +
-  labs(y = "Observed log(Mortality)") +
+  labs(y = "Mortality rate", title = "Evolving mortality patterns over time") +
   scale_y_log10()
 ```
 
 <div class="figure">
-<img src="man/figures/README-mortality-curves-1.png" alt="Time series plots showing observed mortality rates by age in Queensland from 1980-2020, separated by sex. The log-scale plots reveal characteristic J-shaped curves that shift downward over time, indicating systematic improvements in mortality across all age groups for both males and females." width="100%" />
-<p class="caption">plot of chunk mortality-curves</p>
+<img src="man/figures/README-mortality-preview-1.png" alt="Preview of Queensland mortality data showing characteristic J-shaped curves that shift systematically over time, demonstrating functional evolution suitable for ffc modeling." width="100%" />
+<p class="caption">plot of chunk mortality-preview</p>
 </div>
 
-Fit a model to estimate how the log(mortality) curve changed over time using `deaths` as the outcome and using a time-varying function of `age` as the primary predictor. Using `fts()`, we model the age-death functions hierarchically using thin plate basis functions whose coefficients are allowed to vary over time, where `time = 'year'`. The hierarchical formulation allows a shared time-varying level to be modelled, along with deviations around that time-varying level for each sex. We use the [`mgcv::bam()`](https://rdrr.io/pkg/mgcv/man/bam.html) engine (as opposed to `gam()`) for parameter estimation, given the large size of the dataset. In future, other engines such as `brm()` and `mvgam()`, will be made available for full luxury Bayesian inference.
+**Key features that make this ideal for functional forecasting:**
+- **J-shaped mortality curves** that evolve smoothly over 40 years
+- **Hierarchical structure** with sex-specific deviations from shared trends  
+- **Systematic temporal patterns** suitable for time series forecasting
 
-``` r
-mod <- ffc_gam(
-  deaths ~
-    offset(log(population)) +
-    sex +
-    # Use mean_only = TRUE to model a time-varying level
-    fts(
-      year,
-      mean_only = TRUE,
-      bs = "tp",
-      time_k = 35,
-      time_m = 1
-    ) +
-    # Model the male/female deviations around the shared mean
-    fts(
-      age,
-      by = sex,
-      bs = "tp",
-      time_k = 15,
-      time_m = 1
-    ),
-  time = "year",
-  data = qld_mortality,
-  family = poisson(),
-  engine = "bam"
-)
-```
+> **📖 For a comprehensive tutorial** covering model fitting, diagnostics, interpretation, and forecasting, see `vignette("mortality-analysis", package = "ffc")`
 
-Inspect the model summary; notice in the `Formula` slot how the basis functions are modelled as `by` variables within independent smooths of `year` that share their smoothing parameters
-
-``` r
-summary(mod)
-#> 
-#> Family: poisson 
-#> Link function: log 
-#> 
-#> Formula:
-#> deaths ~ sex + offset(log(population)) + s(year, by = fts_year1_mean, 
-#>     bs = "ts", k = 35, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_1, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_2, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_3, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_4, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_5, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_6, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_7, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_8, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_9, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_1, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_2, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_3, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_4, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_5, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_6, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_7, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_8, 
-#>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexmale_9, 
-#>     bs = "ts", k = 15, m = 1, id = 2)
-#> 
-#> Parametric coefficients:
-#>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.648061   0.004039 -1398.2   <2e-16 ***
-#> sexmale      0.574335   0.004986   115.2   <2e-16 ***
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-#> 
-#> Approximate significance of smooth terms:
-#>                                      edf Ref.df Chi.sq p-value    
-#> s(year):fts_year1_mean             32.05     34  10342  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_1 14.50     15  16349  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_2 12.85     15  10267  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_3 14.49     15   9610  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_4 13.48     15   8470  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_5 14.41     15   8433  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_6 13.35     15   8667  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_7 14.35     15   7764  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_8 10.12     15  11476  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_9 13.05     15   6036  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_1   14.44     15  19549  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_2   12.95     15  11146  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_3   14.64     15  12750  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_4   13.75     15  11841  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_5   14.56     15  14649  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_6   13.74     15  12002  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_7   14.52     15  11843  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_8   10.19     15  13491  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_9   12.44     15   6716  <2e-16 ***
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-#> 
-#> R-sq.(adj) =  0.986   Deviance explained = 97.6%
-#> fREML =  22189  Scale est. = 1         n = 8282
-```
-
-View predicted functional curves using a fixed offset (where `population = 1`), which allows us to calculate a standardized rate of mortality
-
-``` r
-newdat <- qld_mortality
-newdat$population <- 1
-newdat$preds <- predict(
-  mod,
-  newdata = newdat,
-  type = "response"
-)
-
-ggplot(
-  data = newdat,
-  aes(
-    x = age,
-    y = preds,
-    group = year,
-    colour = year
-  )
-) +
-  geom_line() +
-  facet_wrap(~sex) +
-  scale_colour_viridis_c() +
-  labs(y = "Expected log10(Mortality)") +
-  scale_y_log10()
-```
-
-<div class="figure">
-<img src="man/figures/README-predicted-curves-1.png" alt="Model predictions showing expected mortality curves by age and year. The smooth curves demonstrate how the functional relationship between age and mortality has evolved over four decades, with consistent downward shifts indicating systematic improvements in survival rates across all age groups." width="100%" />
-<p class="caption">plot of chunk predicted-curves</p>
-</div>
-
-Using support from the `marginaleffects` 📦, we can make easily predict changes in mortality rate for specific age groups. For example, here is the expected decline in mortality rate for 17 year-olds in Queensland over the study period
-
-``` r
-library(marginaleffects)
-plot_predictions(
-  mod,
-  by = c("year", "sex"),
-  newdata = datagrid(
-    age = 17,
-    year = unique,
-    sex = unique,
-    population = 1
-  ),
-  type = "response"
-) +
-  labs(
-    x = "Year",
-    y = "Expected log10(Mortality)"
-  ) +
-  scale_y_log10()
-```
-
-<div class="figure">
-<img src="man/figures/README-mortality-trends-1.png" alt="Predicted mortality trends for 17-year-olds in Queensland from 1980-2020, showing approximately 70% decline in mortality rates. Separate lines for males and females reveal similar downward trends with males having consistently higher mortality rates." width="100%" />
-<p class="caption">plot of chunk mortality-trends</p>
-</div>
-
-And here are the slopes of this change
-
-``` r
-plot_slopes(
-  mod,
-  variables = "year",
-  by = c("year", "sex"),
-  newdata = datagrid(
-    age = 17,
-    year = unique,
-    sex = unique,
-    population = 1
-  ),
-  type = "response"
-) +
-  labs(
-    x = "Year",
-    y = "1st derivative of mortality rate change"
-  ) +
-  geom_hline(
-    yintercept = 0,
-    linetype = "dashed"
-  )
-```
-
-<div class="figure">
-<img src="man/figures/README-mortality-derivatives-1.png" alt="First derivatives of mortality rate changes for 17-year-olds, showing the rate of improvement over time. The plots reveal periods of faster and slower mortality improvements, with fluctuations around zero indicating varying rates of change in survival trends." width="100%" />
-<p class="caption">plot of chunk mortality-derivatives</p>
-</div>
-
-**Key insights from this analysis:**
-- The characteristic J-shaped mortality curves show systematic downward shifts over four decades
-- Mortality rates for 17-year-olds dropped by approximately 70% (from ~6e-04 to ~2e-04) between 1980-2020
-- The rate of mortality improvement varies over time, with periods of faster and slower decline
-- The functional approach captures both overall level changes and subtle age-specific temporal patterns
-
-This demonstrates how `ffc` captures evolving functional relationships that traditional time series models would miss.
-
-The time-varying coefficients can be extracted into a `tidy` format using `fts_coefs()`, which will facilitate the use of time series models to enable efficient forecasting of the entire curve into the future. Using `summary = FALSE` will return draws of each coefficient time series from the model's empirical Bayesian posterior distribution (you can control the number of draws that are returned using the `times` argument):
-
-``` r
-functional_coefs <- fts_coefs(
-  mod,
-  summary = FALSE,
-  times = 10
-)
-functional_coefs
-#> # A tibble: 7,790 × 5
-#>    .basis         .time .estimate .realisation  year
-#>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.387            1  1980
-#>  2 fts_year1_mean  1981     0.375            1  1981
-#>  3 fts_year1_mean  1982     0.424            1  1982
-#>  4 fts_year1_mean  1983     0.330            1  1983
-#>  5 fts_year1_mean  1984     0.319            1  1984
-#>  6 fts_year1_mean  1985     0.331            1  1985
-#>  7 fts_year1_mean  1986     0.270            1  1986
-#>  8 fts_year1_mean  1987     0.252            1  1987
-#>  9 fts_year1_mean  1988     0.234            1  1988
-#> 10 fts_year1_mean  1989     0.260            1  1989
-#> # ℹ 7,780 more rows
-```
-
-The basis function coefficient time series can be plotted using `autoplot()`
-
-``` r
-autoplot(functional_coefs)
-```
-
-<div class="figure">
-<img src="man/figures/README-plot-coefficients-1.png" alt="Time series plots of functional basis coefficients extracted from the mortality model. Multiple panels show how different basis function coefficients evolved over time, revealing complex temporal dependencies that inform functional forecasting." width="100%" />
-<p class="caption">plot of chunk plot-coefficients</p>
-</div>
-
-Clearly there is a lot of structure and dependence here, suggesting that a dynamic factor model fitted to these coefficient time series would be valuable for creating functional forecasts. But for now we can apply any model from the [`fable`](https://fable.tidyverts.org/) 📦 to these replicate time series and generate future forecast realisations, which can be summarised to approximate the full uncertainty in our coefficient forecast distributions. Again here you can control the number of forecast paths that are simulated from the underlying time series models using the `times` argument
-
-``` r
-functional_fc <- forecast(
-  object = functional_coefs,
-  h = 5,
-  times = 5
-)
-functional_fc
-#> # A tsibble: 4,750 x 6 [1Y]
-#> # Key:       .basis, .realisation, .model, .rep [950]
-#>    .basis                     .realisation .model .time .rep   .sim
-#>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.81
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.79
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.77
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.75
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.74
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.81
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.80
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.77
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.76
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.78
-#> # ℹ 4,740 more rows
-```
-
-Another example showing univariate time series modelling and forecasting
+### Tourism Forecasting with fabletools Integration
 
 ``` r
 library(fable)
@@ -465,30 +212,12 @@ fc_ffc
 #> # Key:     Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  782. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  769. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  879. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  814. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  765. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  767. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  757. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  855. FFC_A…
 ```
-
-Plot the forecast distribution along with the observed data
-
-``` r
-fc_ffc %>%
-  autoplot(train) +
-  geom_line(
-    data = test,
-    aes(y = Trips),
-    color = "red"
-  ) +
-  ggtitle("FFC forecast")
-```
-
-<div class="figure">
-<img src="man/figures/README-plot-ffc-forecast-1.png" alt="FFC forecast plot showing predicted tourism visits to Melbourne with uncertainty bands. The forecast captures both level and seasonal patterns, with prediction intervals reflecting uncertainty in future tourist arrivals." width="100%" />
-<p class="caption">plot of chunk plot-ffc-forecast</p>
-</div>
 
 Leverage the fabletools ecosystem for forecast analysis
 
@@ -496,9 +225,9 @@ Leverage the fabletools ecosystem for forecast analysis
 # Calculate accuracy metrics
 accuracy(fc_ffc, test)
 #> # A tibble: 1 × 13
-#>   .model   Region State Purpose .type    ME  RMSE   MAE    MPE  MAPE  MASE RMSSE
-#>   <chr>    <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ARI… Melbo… Vict… Visiti… Test   3.37  74.1  61.0 -0.713  7.68   NaN   NaN
+#>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
+#>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   11.6  79.9  67.1 0.248  8.27   NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 
 # Generate prediction intervals  
@@ -508,11 +237,11 @@ fc_intervals
 #> # Key:       Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  782. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  769. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  879. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  814. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  765. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  767. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  757. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  855. FFC_A…
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
@@ -527,95 +256,79 @@ fc_summary
 #> # A tsibble: 5 x 5 [1Q]
 #>   Quarter mean_forecast median_forecast   q25   q75
 #>     <qtr>         <dbl>           <dbl> <dbl> <dbl>
-#> 1 2016 Q4          813.            809.  756.  862.
-#> 2 2017 Q1          757.            764.  706.  803.
-#> 3 2017 Q2          782.            788.  731.  822.
-#> 4 2017 Q3          769.            771.  716.  816.
-#> 5 2017 Q4          879.            873.  821.  945.
+#> 1 2016 Q4          814.            805.  768.  857.
+#> 2 2017 Q1          765.            762.  714.  815.
+#> 3 2017 Q2          767.            766.  729.  804.
+#> 4 2017 Q3          757.            757.  715.  797.
+#> 5 2017 Q4          855.            851.  798.  909.
 ```
 
-Compare multiple forecasting models
+Compare FFC functional forecasting to traditional time series models
 
 ``` r
-# Generate forecasts with different models
-fc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
-fc_ets <- as_fable(mod, newdata = test, model = "ETS")
+# Generate FFC forecasts with different models
+fc_ffc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
+fc_ffc_ets <- as_fable(mod, newdata = test, model = "ETS")
 
-# Compare accuracy between models
-acc_arima <- accuracy(fc_arima, test)
-acc_ets <- accuracy(fc_ets, test)
+# Generate traditional model forecasts
+fc_traditional <- train %>%
+  model(
+    ARIMA = ARIMA(Trips),
+    ETS = ETS(Trips)
+  ) %>%
+  forecast(h = 5)
 
-# Display accuracy comparison
-rbind(acc_arima, acc_ets)
-#> # A tibble: 2 × 13
-#>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
-#>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   40.3  98.2  72.1  3.76  8.46   NaN   NaN
-#> 2 FFC_ETS   Melbo… Vict… Visiti… Test   20.6  83.2  65.2  1.37  7.96   NaN   NaN
-#> # ℹ 1 more variable: ACF1 <dbl>
+# Calculate accuracy for all models
+acc_ffc_arima <- accuracy(fc_ffc_arima, test)
+acc_ffc_ets <- accuracy(fc_ffc_ets, test)
+acc_traditional <- accuracy(fc_traditional, test)
 
-# Plot both models
+# Extract MAPE values for titles
+mape_ffc_arima <- round(acc_ffc_arima$MAPE, 1)
+mape_ffc_ets <- round(acc_ffc_ets$MAPE, 1)
+mape_arima <- round(acc_traditional$MAPE[acc_traditional$.model == "ARIMA"], 1)
+mape_ets <- round(acc_traditional$MAPE[acc_traditional$.model == "ETS"], 1)
+
+# Create comparison plots
 library(patchwork)
-p1 <- autoplot(fc_arima, train) + 
-  geom_line(data = test, aes(y = Trips), color = "red") +
-  ggtitle("FFC with ARIMA")
 
-p2 <- autoplot(fc_ets, train) + 
-  geom_line(data = test, aes(y = Trips), color = "red") +
-  ggtitle("FFC with ETS")
+p1 <- autoplot(fc_ffc_arima, train) + 
+  geom_line(data = test, aes(y = Trips), color = "black") +
+  ggtitle(paste0("FFC with ARIMA (MAPE: ", mape_ffc_arima, "%)"))
 
-p1 / p2
+p2 <- autoplot(fc_ffc_ets, train) + 
+  geom_line(data = test, aes(y = Trips), color = "black") +
+  ggtitle(paste0("FFC with ETS (MAPE: ", mape_ffc_ets, "%)"))
+
+p3 <- autoplot(filter(fc_traditional, .model == "ARIMA"), train) +
+  geom_line(data = test, aes(y = Trips), color = "black") +
+  ggtitle(paste0("Traditional ARIMA (MAPE: ", mape_arima, "%)"))
+
+p4 <- autoplot(filter(fc_traditional, .model == "ETS"), train) +
+  geom_line(data = test, aes(y = Trips), color = "black") +
+  ggtitle(paste0("Traditional ETS (MAPE: ", mape_ets, "%)"))
+
+(p1 | p2) / (p3 | p4)
 ```
 
 <div class="figure">
-<img src="man/figures/README-model-comparison-1.png" alt="Model comparison showing FFC forecasts using different time series models (ARIMA vs ETS). Both capture seasonal patterns but with different uncertainty structures, demonstrating the flexibility of functional forecasting with various time series backends." width="100%" />
+<img src="man/figures/README-model-comparison-1.png" alt="Comprehensive model comparison showing FFC functional forecasting versus traditional ARIMA and ETS models for Melbourne tourism data. The plot demonstrates forecast performance with MAPE values in titles, revealing the added value of functional forecasting approaches." width="100%" />
 <p class="caption">plot of chunk model-comparison</p>
 </div>
 
-Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster
-
 ``` r
-train %>%
-  model(
-    arima = ARIMA(Trips)
-  ) %>%
-  forecast(
-    h = 5
-  ) %>%
-  autoplot(train) +
-  geom_line(
-    data = test,
-    aes(y = Trips)
-  ) +
-  ggtitle("ARIMA forecast")
+
+# Display comprehensive accuracy comparison
+rbind(acc_ffc_arima, acc_ffc_ets, acc_traditional)
+#> # A tibble: 4 × 13
+#>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
+#>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   28.1  89.0  70.3 2.28   8.42   NaN   NaN
+#> 2 FFC_ETS   Melbo… Vict… Visiti… Test   13.3  78.0  63.3 0.505  7.78   NaN   NaN
+#> 3 ARIMA     Melbo… Vict… Visiti… Test   32.4  98.6  84.3 2.62  10.2    NaN   NaN
+#> 4 ETS       Melbo… Vict… Visiti… Test   48.9 120.   99.8 4.52  11.9    NaN   NaN
+#> # ℹ 1 more variable: ACF1 <dbl>
 ```
-
-<div class="figure">
-<img src="man/figures/README-arima-comparison-1.png" alt="ARIMA forecast comparison showing simpler time series model predictions for Melbourne tourism. While faster to compute, this approach captures less complex temporal structure compared to the functional forecasting approach." width="100%" />
-<p class="caption">plot of chunk arima-comparison</p>
-</div>
-
-
-``` r
-train %>%
-  model(
-    ets = ETS(Trips)
-  ) %>%
-  forecast(
-    h = 5
-  ) %>%
-  autoplot(train) +
-  geom_line(
-    data = test,
-    aes(y = Trips)
-  ) +
-  ggtitle("ETS forecast")
-```
-
-<div class="figure">
-<img src="man/figures/README-ets-comparison-1.png" alt="ETS (Exponential Smoothing) forecast comparison for Melbourne tourism data. This traditional approach provides baseline performance for evaluating the added value of functional forecasting methods." width="100%" />
-<p class="caption">plot of chunk ets-comparison</p>
-</div>
 
 ## Getting help
 If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/nicholasjclark/ffc/issues)
