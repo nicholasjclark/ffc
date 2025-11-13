@@ -228,3 +228,188 @@ test_that("forecast handles edge cases appropriately", {
   fc_large <- SW(forecast(functional_coefs, h = 5, times = 2))
   expect_true(length(unique(fc_large$.time)) == 5)
 })
+
+# Tests for as_fable.ffc_gam function
+test_that("as_fable.ffc_gam() creates valid fable objects", {
+  skip_if_not_installed("fabletools")
+  skip_if_not_installed("distributional") 
+  skip_if_not_installed("tsibble")
+  
+  # Create test newdata
+  newdata <- data.frame(
+    y = c(10, 15, 20),
+    season = c(1, 2, 3),
+    time = c(76, 77, 78)
+  )
+  
+  # Test basic conversion
+  fc_fable <- SW(as_fable(example_mod, newdata = newdata))
+  
+  # Check fable class structure
+  expect_true(inherits(fc_fable, "fbl_ts"))
+  expect_true(inherits(fc_fable, "tbl_ts"))
+  expect_true(inherits(fc_fable, "tbl_df"))
+  
+  # Check required fable columns
+  expect_true(all(c(".dist", ".mean", ".model") %in% names(fc_fable)))
+  
+  # Check distributional column
+  expect_true(inherits(fc_fable$.dist, "distribution"))
+  expect_true(is.numeric(fc_fable$.mean))
+  
+  # Check model information
+  expect_true(all(grepl("FFC_", fc_fable$.model)))
+  
+  # Check dimensions
+  expect_equal(nrow(fc_fable), nrow(newdata))
+})
+
+test_that("as_fable.ffc_gam() works with pre-computed forecasts", {
+  skip_if_not_installed("fabletools")
+  skip_if_not_installed("distributional")
+  skip_if_not_installed("tsibble")
+  
+  newdata <- data.frame(
+    y = c(10, 15),
+    season = c(1, 2),
+    time = c(76, 77)
+  )
+  
+  # Pre-compute forecasts as matrix
+  forecasts <- SW(forecast(example_mod, newdata = newdata, summary = FALSE))
+  
+  # Convert to fable using pre-computed forecasts
+  fc_fable <- SW(as_fable(example_mod, newdata = newdata, 
+                          forecasts = forecasts))
+  
+  expect_true(inherits(fc_fable, "fbl_ts"))
+  expect_equal(nrow(fc_fable), nrow(newdata))
+  expect_true(inherits(fc_fable$.dist, "distribution"))
+})
+
+test_that("as_fable.ffc_gam() auto-detects response variable", {
+  skip_if_not_installed("fabletools")
+  skip_if_not_installed("distributional")
+  skip_if_not_installed("tsibble")
+  
+  newdata <- data.frame(
+    y = c(10),
+    season = c(1),
+    time = c(76)
+  )
+  
+  # Should auto-detect "y" as response
+  fc_fable <- SW(as_fable(example_mod, newdata = newdata))
+  
+  expect_true(inherits(fc_fable, "fbl_ts"))
+  expect_equal(attr(fc_fable, "response"), "y")
+})
+
+test_that("as_fable.ffc_gam() handles different forecast models", {
+  skip_if_not_installed("fabletools")
+  skip_if_not_installed("distributional")
+  skip_if_not_installed("tsibble")
+  
+  newdata <- data.frame(
+    y = c(10),
+    season = c(1),
+    time = c(76)
+  )
+  
+  # Test with ETS model
+  fc_ets <- SW(as_fable(example_mod, newdata = newdata, model = "ETS"))
+  expect_true("FFC_ETS" %in% fc_ets$.model)
+  
+  # Test with ARIMA model (default)
+  fc_arima <- SW(as_fable(example_mod, newdata = newdata))
+  expect_true("FFC_ARIMA" %in% fc_arima$.model)
+})
+
+test_that("as_fable.ffc_gam() validates inputs properly", {
+  newdata <- data.frame(
+    y = c(10),
+    season = c(1),
+    time = c(76)
+  )
+  
+  # Test invalid object class
+  expect_error(as_fable("not_an_ffc_gam", newdata = newdata))
+  
+  # Test missing newdata
+  expect_error(as_fable(example_mod, newdata = NULL))
+  
+  # Test empty newdata
+  expect_error(as_fable(example_mod, newdata = data.frame()))
+  
+  # Test missing response in newdata
+  bad_newdata <- data.frame(season = c(1), time = c(76))
+  expect_error(as_fable(example_mod, newdata = bad_newdata))
+  
+  # Test missing time variable in newdata
+  bad_newdata2 <- data.frame(y = c(10), season = c(1))
+  expect_error(as_fable(example_mod, newdata = bad_newdata2))
+})
+
+test_that("as_fable.ffc_gam() handles key variables correctly", {
+  skip_if_not_installed("fabletools")
+  skip_if_not_installed("distributional")
+  skip_if_not_installed("tsibble")
+  
+  # Test with grouping variables
+  newdata <- data.frame(
+    y = c(10, 15, 20, 25),
+    season = c(1, 2, 3, 4),
+    time = c(76, 77, 78, 79),
+    group = c("A", "A", "B", "B")
+  )
+  
+  fc_fable <- SW(as_fable(example_mod, newdata = newdata))
+  
+  # Should be a tsibble with proper key structure
+  expect_true(inherits(fc_fable, "tbl_ts"))
+  expect_equal(nrow(fc_fable), nrow(newdata))
+})
+
+test_that("as_fable.ffc_gam() handles custom key variables", {
+  skip_if_not_installed("fabletools")
+  skip_if_not_installed("distributional")
+  skip_if_not_installed("tsibble")
+  
+  newdata <- data.frame(
+    y = c(10, 15),
+    season = c(1, 2),
+    time = c(76, 77),
+    custom_key = c("X", "Y")
+  )
+  
+  # Specify custom key variables
+  fc_fable <- SW(as_fable(example_mod, newdata = newdata, 
+                          key_vars = "custom_key"))
+  
+  expect_true(inherits(fc_fable, "fbl_ts"))
+  expect_equal(nrow(fc_fable), nrow(newdata))
+})
+
+test_that("as_fable.ffc_gam() handles different forecast formats", {
+  skip_if_not_installed("fabletools")
+  skip_if_not_installed("distributional")
+  skip_if_not_installed("tsibble")
+  
+  newdata <- data.frame(
+    y = c(10, 15),
+    season = c(1, 2),
+    time = c(76, 77)
+  )
+  
+  # Test with matrix forecasts
+  forecasts_matrix <- matrix(c(10, 12, 14, 16), nrow = 2, ncol = 2)
+  fc_matrix <- SW(as_fable(example_mod, newdata = newdata, 
+                           forecasts = forecasts_matrix))
+  expect_true(inherits(fc_matrix, "fbl_ts"))
+  
+  # Test with numeric forecasts
+  forecasts_numeric <- c(10, 15)
+  fc_numeric <- SW(as_fable(example_mod, newdata = newdata, 
+                            forecasts = forecasts_numeric))
+  expect_true(inherits(fc_numeric, "fbl_ts"))
+})

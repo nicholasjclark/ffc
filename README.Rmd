@@ -302,13 +302,9 @@ fc <- forecast(
 
 Convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
 ```{r build-fable, warning=FALSE}
-test[["value"]] <- fc
-
-fc_ffc <- fabletools:::build_fable(
-  test,
-  response = "Trips",
-  distribution = "value"
-)
+# Using the new as_fable method for seamless conversion
+fc_ffc <- as_fable(mod, newdata = test, forecasts = fc)
+fc_ffc
 ```
 
 Plot the forecast distribution along with the observed data
@@ -317,9 +313,56 @@ fc_ffc %>%
   autoplot(train) +
   geom_line(
     data = test,
-    aes(y = Trips)
+    aes(y = Trips),
+    color = "red"
   ) +
   ggtitle("FFC forecast")
+```
+
+Leverage the fabletools ecosystem for forecast analysis
+```{r fabletools-analysis, warning=FALSE}
+# Calculate accuracy metrics
+accuracy(fc_ffc, test)
+
+# Generate prediction intervals  
+fc_intervals <- hilo(fc_ffc, level = c(80, 95))
+fc_intervals
+
+# Distribution summaries
+fc_summary <- fc_ffc %>%
+  summarise(
+    mean_forecast = mean(.dist),
+    median_forecast = median(.dist),
+    q25 = quantile(.dist, 0.25), 
+    q75 = quantile(.dist, 0.75)
+  )
+fc_summary
+```
+
+Compare multiple forecasting models
+```{r model-comparison, warning=FALSE, fig.alt="Model comparison showing FFC forecasts using different time series models (ARIMA vs ETS). Both capture seasonal patterns but with different uncertainty structures, demonstrating the flexibility of functional forecasting with various time series backends."}
+# Generate forecasts with different models
+fc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
+fc_ets <- as_fable(mod, newdata = test, model = "ETS")
+
+# Compare accuracy between models
+acc_arima <- accuracy(fc_arima, test)
+acc_ets <- accuracy(fc_ets, test)
+
+# Display accuracy comparison
+rbind(acc_arima, acc_ets)
+
+# Plot both models
+library(patchwork)
+p1 <- autoplot(fc_arima, train) + 
+  geom_line(data = test, aes(y = Trips), color = "red") +
+  ggtitle("FFC with ARIMA")
+
+p2 <- autoplot(fc_ets, train) + 
+  geom_line(data = test, aes(y = Trips), color = "red") +
+  ggtitle("FFC with ETS")
+
+p1 / p2
 ```
 
 Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster

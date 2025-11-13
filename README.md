@@ -309,15 +309,15 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.382            1  1980
-#>  2 fts_year1_mean  1981     0.378            1  1981
-#>  3 fts_year1_mean  1982     0.405            1  1982
-#>  4 fts_year1_mean  1983     0.320            1  1983
-#>  5 fts_year1_mean  1984     0.326            1  1984
-#>  6 fts_year1_mean  1985     0.336            1  1985
-#>  7 fts_year1_mean  1986     0.280            1  1986
-#>  8 fts_year1_mean  1987     0.278            1  1987
-#>  9 fts_year1_mean  1988     0.268            1  1988
+#>  1 fts_year1_mean  1980     0.387            1  1980
+#>  2 fts_year1_mean  1981     0.375            1  1981
+#>  3 fts_year1_mean  1982     0.424            1  1982
+#>  4 fts_year1_mean  1983     0.330            1  1983
+#>  5 fts_year1_mean  1984     0.319            1  1984
+#>  6 fts_year1_mean  1985     0.331            1  1985
+#>  7 fts_year1_mean  1986     0.270            1  1986
+#>  8 fts_year1_mean  1987     0.252            1  1987
+#>  9 fts_year1_mean  1988     0.234            1  1988
 #> 10 fts_year1_mean  1989     0.260            1  1989
 #> # ℹ 7,780 more rows
 ```
@@ -346,16 +346,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [950]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.82
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.81
 #>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.79
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.74
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.67
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.61
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.83
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.84
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.85
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.87
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.90
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.77
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.75
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.74
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 2      4.81
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 2      4.80
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 2      4.77
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 2      4.76
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 2      4.78
 #> # ℹ 4,740 more rows
 ```
 
@@ -458,13 +458,18 @@ fc <- forecast(
 Convert resulting forecasts to a `fable` object for automatic plotting and/or scoring of forecasts
 
 ``` r
-test[["value"]] <- fc
-
-fc_ffc <- fabletools:::build_fable(
-  test,
-  response = "Trips",
-  distribution = "value"
-)
+# Using the new as_fable method for seamless conversion
+fc_ffc <- as_fable(mod, newdata = test, forecasts = fc)
+fc_ffc
+#> # A fable: 5 x 10 [1Q]
+#> # Key:     Region, State, Purpose [1]
+#>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
+#>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  782. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  769. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  879. FFC_A…
 ```
 
 Plot the forecast distribution along with the observed data
@@ -474,7 +479,8 @@ fc_ffc %>%
   autoplot(train) +
   geom_line(
     data = test,
-    aes(y = Trips)
+    aes(y = Trips),
+    color = "red"
   ) +
   ggtitle("FFC forecast")
 ```
@@ -482,6 +488,88 @@ fc_ffc %>%
 <div class="figure">
 <img src="man/figures/README-plot-ffc-forecast-1.png" alt="FFC forecast plot showing predicted tourism visits to Melbourne with uncertainty bands. The forecast captures both level and seasonal patterns, with prediction intervals reflecting uncertainty in future tourist arrivals." width="100%" />
 <p class="caption">plot of chunk plot-ffc-forecast</p>
+</div>
+
+Leverage the fabletools ecosystem for forecast analysis
+
+``` r
+# Calculate accuracy metrics
+accuracy(fc_ffc, test)
+#> # A tibble: 1 × 13
+#>   .model   Region State Purpose .type    ME  RMSE   MAE    MPE  MAPE  MASE RMSSE
+#>   <chr>    <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl>
+#> 1 FFC_ARI… Melbo… Vict… Visiti… Test   3.37  74.1  61.0 -0.713  7.68   NaN   NaN
+#> # ℹ 1 more variable: ACF1 <dbl>
+
+# Generate prediction intervals  
+fc_intervals <- hilo(fc_ffc, level = c(80, 95))
+fc_intervals
+#> # A tsibble: 5 x 12 [1Q]
+#> # Key:       Region, State, Purpose [1]
+#>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
+#>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  782. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  769. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  879. FFC_A…
+#> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
+
+# Distribution summaries
+fc_summary <- fc_ffc %>%
+  summarise(
+    mean_forecast = mean(.dist),
+    median_forecast = median(.dist),
+    q25 = quantile(.dist, 0.25), 
+    q75 = quantile(.dist, 0.75)
+  )
+fc_summary
+#> # A tsibble: 5 x 5 [1Q]
+#>   Quarter mean_forecast median_forecast   q25   q75
+#>     <qtr>         <dbl>           <dbl> <dbl> <dbl>
+#> 1 2016 Q4          813.            809.  756.  862.
+#> 2 2017 Q1          757.            764.  706.  803.
+#> 3 2017 Q2          782.            788.  731.  822.
+#> 4 2017 Q3          769.            771.  716.  816.
+#> 5 2017 Q4          879.            873.  821.  945.
+```
+
+Compare multiple forecasting models
+
+``` r
+# Generate forecasts with different models
+fc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
+fc_ets <- as_fable(mod, newdata = test, model = "ETS")
+
+# Compare accuracy between models
+acc_arima <- accuracy(fc_arima, test)
+acc_ets <- accuracy(fc_ets, test)
+
+# Display accuracy comparison
+rbind(acc_arima, acc_ets)
+#> # A tibble: 2 × 13
+#>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
+#>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   40.3  98.2  72.1  3.76  8.46   NaN   NaN
+#> 2 FFC_ETS   Melbo… Vict… Visiti… Test   20.6  83.2  65.2  1.37  7.96   NaN   NaN
+#> # ℹ 1 more variable: ACF1 <dbl>
+
+# Plot both models
+library(patchwork)
+p1 <- autoplot(fc_arima, train) + 
+  geom_line(data = test, aes(y = Trips), color = "red") +
+  ggtitle("FFC with ARIMA")
+
+p2 <- autoplot(fc_ets, train) + 
+  geom_line(data = test, aes(y = Trips), color = "red") +
+  ggtitle("FFC with ETS")
+
+p1 / p2
+```
+
+<div class="figure">
+<img src="man/figures/README-model-comparison-1.png" alt="Model comparison showing FFC forecasts using different time series models (ARIMA vs ETS). Both capture seasonal patterns but with different uncertainty structures, demonstrating the flexibility of functional forecasting with various time series backends." width="100%" />
+<p class="caption">plot of chunk model-comparison</p>
 </div>
 
 Compare to forecasts from automatic ARIMA and ETS models, which are simpler to code and of course a bit faster
