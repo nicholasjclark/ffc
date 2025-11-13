@@ -212,11 +212,11 @@ fc_ffc
 #> # Key:     Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  814. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  765. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  767. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  757. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  855. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  818. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  759. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  755. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  858. FFC_A…
 ```
 
 Leverage the fabletools ecosystem for forecast analysis
@@ -227,7 +227,7 @@ accuracy(fc_ffc, test)
 #> # A tibble: 1 × 13
 #>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
 #>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   11.6  79.9  67.1 0.248  8.27   NaN   NaN
+#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   10.9  80.6  67.7 0.154  8.37   NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 
 # Generate prediction intervals  
@@ -237,11 +237,11 @@ fc_intervals
 #> # Key:       Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  814. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  765. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  767. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  757. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  855. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  818. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  759. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  755. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  858. FFC_A…
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
@@ -256,11 +256,11 @@ fc_summary
 #> # A tsibble: 5 x 5 [1Q]
 #>   Quarter mean_forecast median_forecast   q25   q75
 #>     <qtr>         <dbl>           <dbl> <dbl> <dbl>
-#> 1 2016 Q4          814.            805.  768.  857.
-#> 2 2017 Q1          765.            762.  714.  815.
-#> 3 2017 Q2          767.            766.  729.  804.
-#> 4 2017 Q3          757.            757.  715.  797.
-#> 5 2017 Q4          855.            851.  798.  909.
+#> 1 2016 Q4          818.            822.  770.  869.
+#> 2 2017 Q1          759.            752.  712.  803.
+#> 3 2017 Q2          773.            773.  724.  822.
+#> 4 2017 Q3          755.            758.  702.  797.
+#> 5 2017 Q4          858.            865.  799.  907.
 ```
 
 Compare FFC functional forecasting to traditional time series models
@@ -323,10 +323,10 @@ rbind(acc_ffc_arima, acc_ffc_ets, acc_traditional)
 #> # A tibble: 4 × 13
 #>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
 #>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   28.1  89.0  70.3 2.28   8.42   NaN   NaN
-#> 2 FFC_ETS   Melbo… Vict… Visiti… Test   13.3  78.0  63.3 0.505  7.78   NaN   NaN
-#> 3 ARIMA     Melbo… Vict… Visiti… Test   32.4  98.6  84.3 2.62  10.2    NaN   NaN
-#> 4 ETS       Melbo… Vict… Visiti… Test   48.9 120.   99.8 4.52  11.9    NaN   NaN
+#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   38.5  93.6  68.5  3.59  8.03   NaN   NaN
+#> 2 FFC_ETS   Melbo… Vict… Visiti… Test   20.9  83.7  67.0  1.43  8.16   NaN   NaN
+#> 3 ARIMA     Melbo… Vict… Visiti… Test   32.4  98.6  84.3  2.62 10.2    NaN   NaN
+#> 4 ETS       Melbo… Vict… Visiti… Test   48.9 120.   99.8  4.52 11.9    NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 ```
 
