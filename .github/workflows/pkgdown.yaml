@@ -37,9 +37,6 @@ jobs:
              any::pkgdown
              local::.
              any::fable
-             any::fabletools
-             any::distributional
-             any::tsibble
              any::ggborderline
              any::marginaleffects
              any::gratia

@@ -27,8 +27,7 @@ jobs:
           extra-packages:  |
              any::covr
              any::xml2
-             tsibble
-             fable
+             any::fable
 
       - name: Ensure configure file is executable
         run: |

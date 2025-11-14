@@ -54,13 +54,14 @@ jobs:
           dependencies: NA
           extra-packages:  |
              any::rcmdcheck
-             knitr
-             testthat
-             usethis
-             fable
-             tsibble
-             rmarkdown
-             marginaleffects
+             any::fable
+             any::marginaleffects
+             any::ggborderline
+             any::patchwork
+             any::testthat
+             any::knitr
+             any::rmarkdown
+             any::usethis
 
       - uses: r-lib/actions/check-r-package@v2
         with:
