@@ -137,7 +137,7 @@ formatted <code>fable</code> x that can be used with <code>fabletools</code> fun
 <span class="r-in"><span><span class="co"># Prepare tourism data</span></span></span>
 <span class="r-in"><span><span class="va">tourism_melb</span> <span class="op">&lt;-</span> <span class="va">tourism</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">Region</span> <span class="op">==</span> <span class="st">"Melbourne"</span>, <span class="va">Purpose</span> <span class="op">==</span> <span class="st">"Visiting"</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>quarter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">Quarter</span>, <span class="st">"%q"</span><span class="op">)</span><span class="op">)</span>, </span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>quarter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">Quarter</span>, <span class="st">"%q"</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>         time <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">row_number</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Split data</span></span></span>
@@ -197,25 +197,12 @@ formatted <code>fable</code> x that can be used with <code>fabletools</code> fun
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With custom parameters</span></span></span>
 <span class="r-in"><span><span class="va">fc_fable3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">mod</span>, </span></span>
-<span class="r-in"><span>  newdata <span class="op">=</span> <span class="va">test</span>, </span></span>
-<span class="r-in"><span>  model <span class="op">=</span> <span class="st">"ARIMA"</span>,</span></span>
+<span class="r-in"><span>  <span class="va">mod</span>,</span></span>
+<span class="r-in"><span>  newdata <span class="op">=</span> <span class="va">test</span>,</span></span>
+<span class="r-in"><span>  model <span class="op">=</span> <span class="st">"ETS"</span>,</span></span>
 <span class="r-in"><span>  response <span class="op">=</span> <span class="st">"Trips"</span>,</span></span>
 <span class="r-in"><span>  key_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Region"</span>, <span class="st">"State"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Model comparison workflow</span></span></span>
-<span class="r-in"><span><span class="va">fc_arima</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">test</span>, model <span class="op">=</span> <span class="st">"ARIMA"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">fc_ets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">test</span>, model <span class="op">=</span> <span class="st">"ETS"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Combine and compare</span></span></span>
-<span class="r-in"><span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">fc_arima</span>, <span class="va">fc_ets</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in retain_tsibble(new, key = key_vars(old), index = index(old)):</span> The result is not a valid tsibble.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> Do you need `as_tibble()` to work with data frame?</span>
-<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">combined</span>, <span class="va">train</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'combined' not found</span>
-<span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/accuracy.html" class="external-link">accuracy</a></span><span class="op">(</span><span class="va">combined</span>, <span class="va">test</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'combined' not found</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

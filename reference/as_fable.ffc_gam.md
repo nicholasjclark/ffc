@@ -100,7 +100,7 @@ library(dplyr)
 # Prepare tourism data
 tourism_melb <- tourism %>%
   filter(Region == "Melbourne", Purpose == "Visiting") %>%
-  mutate(quarter = as.numeric(format(Quarter, "%q")), 
+  mutate(quarter = as.numeric(format(Quarter, "%q")),
          time = row_number())
 
 # Split data
@@ -160,24 +160,11 @@ fc_fable2 <- as_fable(mod, newdata = test, forecasts = forecasts)
 
 # With custom parameters
 fc_fable3 <- as_fable(
-  mod, 
-  newdata = test, 
-  model = "ARIMA",
+  mod,
+  newdata = test,
+  model = "ETS",
   response = "Trips",
   key_vars = c("Region", "State")
 )
-
-# Model comparison workflow
-fc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
-fc_ets <- as_fable(mod, newdata = test, model = "ETS")
-
-# Combine and compare
-combined <- bind_rows(fc_arima, fc_ets)
-#> Error in retain_tsibble(new, key = key_vars(old), index = index(old)): The result is not a valid tsibble.
-#> ℹ Do you need `as_tibble()` to work with data frame?
-autoplot(combined, train)
-#> Error: object 'combined' not found
-accuracy(combined, test)
-#> Error: object 'combined' not found
 # }
 ```

@@ -156,16 +156,16 @@ head(predict(mod, type = "response"))
 #> # A tibble: 287 × 5
 #>    .basis          .time .estimate     .se  year
 #>  * <chr>           <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age__1  1980     -4.13 0.00772  1980
-#>  2 fts_bs_s_age__1  1981     -4.07 0.00644  1981
-#>  3 fts_bs_s_age__1  1982     -4.01 0.00544  1982
-#>  4 fts_bs_s_age__1  1983     -3.95 0.00480  1983
-#>  5 fts_bs_s_age__1  1984     -3.89 0.00444  1984
-#>  6 fts_bs_s_age__1  1985     -3.83 0.00421  1985
-#>  7 fts_bs_s_age__1  1986     -3.78 0.00401  1986
-#>  8 fts_bs_s_age__1  1987     -3.72 0.00384  1987
-#>  9 fts_bs_s_age__1  1988     -3.66 0.00375  1988
-#> 10 fts_bs_s_age__1  1989     -3.60 0.00376  1989
+#>  1 fts_bs_s_age__1  1980     -4.12 0.0113   1980
+#>  2 fts_bs_s_age__1  1981     -4.07 0.00896  1981
+#>  3 fts_bs_s_age__1  1982     -4.02 0.00700  1982
+#>  4 fts_bs_s_age__1  1983     -3.96 0.00569  1983
+#>  5 fts_bs_s_age__1  1984     -3.90 0.00500  1984
+#>  6 fts_bs_s_age__1  1985     -3.85 0.00458  1985
+#>  7 fts_bs_s_age__1  1986     -3.79 0.00414  1986
+#>  8 fts_bs_s_age__1  1987     -3.73 0.00372  1987
+#>  9 fts_bs_s_age__1  1988     -3.66 0.00342  1988
+#> 10 fts_bs_s_age__1  1989     -3.60 0.00331  1989
 #> # ℹ 277 more rows
 
 # Binomial model with cbind() response for trials data
