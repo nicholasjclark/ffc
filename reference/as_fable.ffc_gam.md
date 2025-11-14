@@ -155,7 +155,7 @@ fc_fable %>%
 #> 5 2017 Q4          855.  804.  909.
 
 # With pre-computed forecasts
-forecasts <- forecast(mod, newdata = test, summary = FALSE)
+forecasts <- forecast(mod, newdata = test, model = "ETS", summary = FALSE)
 fc_fable2 <- as_fable(mod, newdata = test, forecasts = forecasts)
 
 # With custom parameters

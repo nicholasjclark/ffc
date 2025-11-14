@@ -12,28 +12,6 @@ Main functions for functional forecasting
 
   Define functions with dynamic coefficients in ffc formulae
 
-- [`reexports`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`s`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`te`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`gam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`bam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`nb`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`negbin`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`betar`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`cnorm`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`ocat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`scat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`ziP`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`multinom`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`tw`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`ldTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`rTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`twlss`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`autoplot`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`forecast`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  [`generate`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
-  : Objects exported from other packages
-
 ## Model Methods
 
 Methods for working with fitted models
@@ -114,3 +92,29 @@ Example datasets included with the package
   : Berkeley growth study data
 - [`qld_mortality`](https://nicholasjclark.github.io/ffc/reference/qld_mortality.md)
   : Queensland mortality data
+
+## Re-exported Functions
+
+Functions re-exported from mgcv and other packages for convenience
+
+- [`reexports`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`s`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`te`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`gam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`bam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`nb`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`negbin`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`betar`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`cnorm`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ocat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`scat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ziP`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`multinom`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`tw`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ldTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`rTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`twlss`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`autoplot`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`forecast`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`generate`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  : Objects exported from other packages

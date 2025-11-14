@@ -83,26 +83,29 @@ mod <- ffc_gam(
   engine = "bam"
 )
 coefs <- fts_coefs(mod, summary = FALSE, times = 5)
-forecast(coefs, h = 3, model = "ARIMA")
-#> Warning: NaNs produced
-#> Warning: NaNs produced
-#> Warning: NaNs produced
-#> Warning: NaNs produced
-#> Warning: NaNs produced
-#> # A tsibble: 2,625 x 6 [1Y]
-#> # Key:       .basis, .realisation, .model, .rep [875]
-#>    .basis          .realisation .model .time .rep   .sim
-#>    <chr>                  <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age__1            1 ARIMA   2021 1     -1.88
-#>  2 fts_bs_s_age__1            1 ARIMA   2022 1     -1.82
-#>  3 fts_bs_s_age__1            1 ARIMA   2023 1     -1.75
-#>  4 fts_bs_s_age__1            1 ARIMA   2021 10    -1.88
-#>  5 fts_bs_s_age__1            1 ARIMA   2022 10    -1.83
-#>  6 fts_bs_s_age__1            1 ARIMA   2023 10    -1.78
-#>  7 fts_bs_s_age__1            1 ARIMA   2021 11    -1.88
-#>  8 fts_bs_s_age__1            1 ARIMA   2022 11    -1.82
-#>  9 fts_bs_s_age__1            1 ARIMA   2023 11    -1.77
-#> 10 fts_bs_s_age__1            1 ARIMA   2021 12    -1.88
-#> # ℹ 2,615 more rows
+
+# Generate ARDF forecasts
+fc_ardf <- forecast(coefs, h = 3, model = "ARDF", K = 2)
+#> Warning: Values from `.y` are not uniquely identified; output will contain list-cols.
+#> • Use `values_fn = list` to suppress this warning.
+#> • Use `values_fn = {summary_fun}` to summarise duplicates.
+#> • Use the following dplyr code to identify duplicates.
+#>   {data} |>
+#>   dplyr::summarise(n = dplyr::n(), .by = c(.time, .series)) |>
+#>   dplyr::filter(n > 1L)
+#> Warning: argument is not numeric or logical: returning NA
+#> Warning: argument is not numeric or logical: returning NA
+#> Warning: argument is not numeric or logical: returning NA
+#> Warning: argument is not numeric or logical: returning NA
+#> Warning: argument is not numeric or logical: returning NA
+#> Warning: argument is not numeric or logical: returning NA
+#> Warning: argument is not numeric or logical: returning NA
+#> Error in FUN(X[[i]], ...) : Stan does not support NA (in flat_ys) in data
+#> failed to preprocess the data; sampling not done
+#> Error in preds[, starts[x]:ends[x]]: incorrect number of dimensions
+
+# Plot the forecasts
+autoplot(fc_ardf)
+#> Error: object 'fc_ardf' not found
 # }
 ```
