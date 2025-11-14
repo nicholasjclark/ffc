@@ -100,6 +100,16 @@ extract_model_params <- function(...) {
   dots <- list(...)
   K <- if ("K" %in% names(dots)) dots$K else 2
   lag <- if ("lag" %in% names(dots)) dots$lag else 1
+  
+  # Validate parameters
+  if (!is.numeric(K) || length(K) != 1 || K <= 0) {
+    stop(insight::format_error("K must be positive"))
+  }
+  
+  if (!is.numeric(lag) || length(lag) != 1 || lag <= 0) {
+    stop(insight::format_error("lag must be positive"))
+  }
+  
   list(
     K = K,
     p = lag
@@ -419,8 +429,14 @@ forecast.ffc_gam <- function(
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
-    if(model %in% c('ARDF', 'GPDF', 'VARDF') &
-       any(grepl('_mean', unique(functional_coefs$.basis)))) {
+    
+    # Categorize basis functions once
+    basis_names <- unique(functional_coefs$.basis)
+    has_mean_basis <- any(grepl('_mean', basis_names))
+    has_non_mean_basis <- any(!grepl('_mean', basis_names))
+    
+    if(model %in% c('ARDF', 'GPDF', 'VARDF') & 
+       has_mean_basis & has_non_mean_basis) {
       # For factor models, it will very often make sense to forecast any
       # _mean basis (i.e. level shifts) separately as they can behave very
       # differently to remaining basis coefficient time series
@@ -471,13 +487,18 @@ forecast.ffc_gam <- function(
         dplyr::bind_rows(functional_fc_mean)
 
     } else {
+      # Use single forecasting approach for all basis functions
+      # This handles cases where:
+      # 1. Non-factor models are used (ARIMA)
+      # 2. Only _mean basis functions exist (mean_only = TRUE)
+      # 3. Only non-_mean basis functions exist
       functional_fc <- suppressWarnings(
         forecast(
           object = functional_coefs,
           h = max_horizon,
           times = 200,
-          model = model,
-          stationary = stationary,
+          model = if(has_mean_basis & !has_non_mean_basis) 'ARIMA' else model,
+          stationary = if(has_mean_basis & !has_non_mean_basis) FALSE else stationary,
           ...
         )
       )

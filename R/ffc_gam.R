@@ -95,6 +95,9 @@ ffc_gam <- function(
     )
   }
 
+  # Validate data has no missing values
+  validate_no_missing_values(data)
+
   # Update formula and data by checking for any fts() terms
   dots <- list(...)
   if ("knots" %in% names(dots)) {

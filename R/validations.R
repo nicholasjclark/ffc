@@ -34,3 +34,35 @@ validate_vars_in_data <- function(vars, data, var_type = "variable") {
   
   invisible(TRUE)
 }
+
+#' Validate that data contains no missing values
+#'
+#' Checks if any variables in a data frame contain missing values and provides
+#' helpful error messages identifying which variables have NAs
+#'
+#' @param data Data frame to check for missing values
+#' @return Invisible TRUE if no missing values found, otherwise stops with error
+#' @noRd
+validate_no_missing_values <- function(data) {
+  checkmate::assert_data_frame(data)
+  
+  if (any(is.na(data))) {
+    na_vars <- sapply(data, function(x) any(is.na(x)))
+    na_var_names <- names(na_vars)[na_vars]
+    
+    if (length(na_var_names) == 1) {
+      stop(insight::format_error(
+        paste0("Missing values detected in variable {.field ", na_var_names, "}. ",
+               "Please remove or impute missing values before fitting.")
+      ), call. = FALSE)
+    } else {
+      stop(insight::format_error(
+        paste0("Missing values detected in variables {.field {", 
+               paste(na_var_names, collapse = ", "), "}}. ",
+               "Please remove or impute missing values before fitting.")
+      ), call. = FALSE)
+    }
+  }
+  
+  invisible(TRUE)
+}
