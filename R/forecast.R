@@ -38,7 +38,12 @@
 #'   engine = "bam"
 #' )
 #' coefs <- fts_coefs(mod, summary = FALSE, times = 5)
-#' forecast(coefs, h = 3, model = "ARIMA")
+#' 
+#' # Generate ARDF forecasts
+#' fc_ardf <- forecast(coefs, h = 3, model = "ARDF", K = 2)
+#' 
+#' # Plot the forecasts
+#' autoplot(fc_ardf)
 #' }
 #' @export
 forecast.fts_ts <- function(

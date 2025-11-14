@@ -14,6 +14,7 @@ template:
   bootstrap: 5
   bootswatch: pulse
   assets: pkgdown/assets
+  math-rendering: katex
 
 home:
   title: ffc • Functional ForeCasting
@@ -37,8 +38,6 @@ reference:
   contents:
   - ffc_gam
   - fts
-  - s
-  - te
   
 - title: Model Methods
   desc: Methods for working with fitted models
@@ -74,3 +73,24 @@ reference:
   contents:
   - growth_data
   - qld_mortality
+
+- title: Re-exported Functions
+  desc: Functions re-exported from mgcv and other packages for convenience
+  contents:
+  - s
+  - te
+  - gam
+  - bam
+  - nb
+  - negbin
+  - betar
+  - cnorm
+  - ocat
+  - scat
+  - ziP
+  - multinom
+  - tw
+  - ldTweedie
+  - rTweedie
+  - twlss
+  - generate
