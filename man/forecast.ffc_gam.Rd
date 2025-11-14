@@ -54,7 +54,20 @@ Only used if \code{summary} is \code{TRUE}}
 \item{probs}{The percentiles to be computed by the \code{quantile()} function.
 Only used if \code{summary} is \code{TRUE}}
 
-\item{...}{Other arguments to pass to the Stan dynamic factor models}
+\item{...}{Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF):
+\describe{
+\item{K}{Number of latent factors (default: 2). Must be positive.}
+\item{lag}{Number of time lags for autoregressive terms (default: 1). Must be positive.}
+\item{chains}{Number of MCMC chains (default: 4)}
+\item{iter}{Total iterations per chain (default: 500)}
+\item{warmup}{Warmup iterations per chain (default: iter/2)}
+\item{cores}{Number of CPU cores to use (default: min(chains, available cores))}
+\item{adapt_delta}{Target acceptance rate (default: 0.75)}
+\item{max_treedepth}{Maximum tree depth (default: 9)}
+\item{times}{Number of posterior samples to draw for coefficient forecasting.
+For Stan models, this is automatically set to (iter - warmup) * chains
+to ensure dimension consistency. Minimum 100 total posterior samples required.}
+}}
 }
 \value{
 Predicted values on the appropriate scale.

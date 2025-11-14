@@ -5,7 +5,7 @@
 \title{Convert ffc_gam forecasts to fable object}
 \usage{
 \method{as_fable}{ffc_gam}(
-  object,
+  x,
   newdata,
   forecasts = NULL,
   response = NULL,
@@ -15,7 +15,7 @@
 )
 }
 \arguments{
-\item{object}{An \code{ffc_gam} object that has been used to generate forecasts}
+\item{x}{An \code{ffc_gam} object used to generate forecasts}
 
 \item{newdata}{A \code{data.frame} containing the forecast data with the
 response variable}
@@ -36,15 +36,15 @@ If NULL, automatically detected from categorical variables in newdata}
 generating forecasts}
 }
 \value{
-A \code{fable} object containing forecast distributions and point
+A \code{fable} x containing forecast distributions and point
 estimates
 }
 \description{
 Convert ffc_gam forecasts to fable object
 }
 \details{
-Converts forecasting output from \code{ffc_gam} objects into a properly
-formatted \code{fable} object that can be used with \code{fabletools} functions like
+Converts forecasting output from \code{ffc_gam} xs into a properly
+formatted \code{fable} x that can be used with \code{fabletools} functions like
 \code{autoplot()}, \code{accuracy()}, and forecast combination methods
 }
 \examples{

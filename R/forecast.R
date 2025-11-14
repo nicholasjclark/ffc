@@ -98,21 +98,67 @@ forecast.fts_ts <- function(
 #' @noRd
 extract_model_params <- function(...) {
   dots <- list(...)
+  
+  # Model parameters
   K <- if ("K" %in% names(dots)) dots$K else 2
   lag <- if ("lag" %in% names(dots)) dots$lag else 1
   
-  # Validate parameters
-  if (!is.numeric(K) || length(K) != 1 || K <= 0) {
-    stop(insight::format_error("K must be positive"))
+  # Stan sampling parameters with sensible defaults
+  chains <- if ("chains" %in% names(dots)) dots$chains else 4
+  iter <- if ("iter" %in% names(dots)) dots$iter else 500
+  warmup <- if ("warmup" %in% names(dots)) dots$warmup else floor(iter / 2)
+  cores <- if ("cores" %in% names(dots)) dots$cores else min(chains, parallel::detectCores() - 1)
+  adapt_delta <- if ("adapt_delta" %in% names(dots)) dots$adapt_delta else 0.75
+  max_treedepth <- if ("max_treedepth" %in% names(dots)) dots$max_treedepth else 9
+  times <- if ("times" %in% names(dots)) dots$times else 200
+  
+  # Validate parameters using checkmate
+  checkmate::assert_count(K, positive = TRUE)
+  checkmate::assert_count(lag, positive = TRUE)
+  checkmate::assert_count(chains, positive = TRUE)
+  checkmate::assert_count(iter, positive = TRUE)
+  checkmate::assert_count(warmup)
+  checkmate::assert_count(cores, positive = TRUE)
+  checkmate::assert_number(adapt_delta, lower = 0, upper = 1)
+  checkmate::assert_count(max_treedepth, positive = TRUE)
+  checkmate::assert_count(times, positive = TRUE)
+  
+  # Additional logic checks
+  if (warmup >= iter) {
+    stop(insight::format_error("warmup must be less than iter"))
   }
   
-  if (!is.numeric(lag) || length(lag) != 1 || lag <= 0) {
-    stop(insight::format_error("lag must be positive"))
+  # Calculate posterior samples and ensure adequate minimum
+  post_samples <- (iter - warmup) * chains
+  min_samples <- 100
+  if (post_samples < min_samples) {
+    stop(insight::format_error(
+      paste0("Configuration produces only ", post_samples, " posterior samples. ",
+             "Increase iter, chains, or reduce warmup to get at least ", min_samples, " samples.")
+    ))
+  }
+  
+  # Adjust cores if needed
+  max_cores <- parallel::detectCores()
+  if (cores > max_cores) {
+    if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+      rlang::warn(paste0("Requested ", cores, " cores but only ", max_cores, 
+                        " available. Using ", min(cores, max_cores), " cores."), 
+                  .frequency = "once", .frequency_id = "cores_limit")
+    }
+    cores <- min(cores, max_cores)
   }
   
   list(
     K = K,
-    p = lag
+    p = lag,
+    chains = chains,
+    iter = iter,
+    warmup = warmup,
+    cores = cores,
+    adapt_delta = adapt_delta,
+    max_treedepth = max_treedepth,
+    times = times
   )
 }
 
@@ -125,28 +171,28 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
   if (model == "ARDF") {
     train_ardf(
       .data = object_tsbl,
-      specials = params,
+      specials = list(K = params$K, p = params$p),
       h = h,
       family = gaussian(),
-      chains = 4,
-      cores = 4,
-      iter = 500,
-      warmup = 450,
-      adapt_delta = 0.75,
-      max_treedepth = 9
+      chains = params$chains,
+      cores = params$cores,
+      iter = params$iter,
+      warmup = params$warmup,
+      adapt_delta = params$adapt_delta,
+      max_treedepth = params$max_treedepth
     )
   } else if (model == "VARDF") {
     train_vardf(
       .data = object_tsbl,
-      specials = params,
+      specials = list(K = params$K, p = params$p),
       h = h,
       family = gaussian(),
-      chains = 4,
-      cores = 4,
-      iter = 500,
-      warmup = 450,
-      adapt_delta = 0.75,
-      max_treedepth = 9
+      chains = params$chains,
+      cores = params$cores,
+      iter = params$iter,
+      warmup = params$warmup,
+      adapt_delta = params$adapt_delta,
+      max_treedepth = params$max_treedepth
     )
   } else if (model == "GPDF") {
     train_gpdf(
@@ -154,12 +200,12 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
       specials = list(K = params$K),
       h = h,
       family = gaussian(),
-      chains = 4,
-      cores = 4,
-      iter = 500,
-      warmup = 450,
-      adapt_delta = 0.75,
-      max_treedepth = 9
+      chains = params$chains,
+      cores = params$cores,
+      iter = params$iter,
+      warmup = params$warmup,
+      adapt_delta = params$adapt_delta,
+      max_treedepth = params$max_treedepth
     )
   }
 }
@@ -280,7 +326,20 @@ fable_forecast <- function(
 #' Only used if `summary` is `TRUE`
 #' @param probs The percentiles to be computed by the `quantile()` function.
 #' Only used if `summary` is `TRUE`
-#' @param ... Other arguments to pass to the Stan dynamic factor models
+#' @param ... Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF):
+#'   \describe{
+#'     \item{K}{Number of latent factors (default: 2). Must be positive.}
+#'     \item{lag}{Number of time lags for autoregressive terms (default: 1). Must be positive.}
+#'     \item{chains}{Number of MCMC chains (default: 4)}
+#'     \item{iter}{Total iterations per chain (default: 500)}
+#'     \item{warmup}{Warmup iterations per chain (default: iter/2)}
+#'     \item{cores}{Number of CPU cores to use (default: min(chains, available cores))}
+#'     \item{adapt_delta}{Target acceptance rate (default: 0.75)}
+#'     \item{max_treedepth}{Maximum tree depth (default: 9)}
+#'     \item{times}{Number of posterior samples to draw for coefficient forecasting.
+#'       For Stan models, this is automatically set to (iter - warmup) * chains
+#'       to ensure dimension consistency. Minimum 100 total posterior samples required.}
+#'   }
 #' @details Computes forecast distributions from fitted `ffc_gam` objects
 #' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
 #' @return Predicted values on the appropriate scale.
@@ -308,8 +367,24 @@ forecast.ffc_gam <- function(
   )
 
   # Take full draws of beta coefficients
+  # Get times parameter for beta draws - need to check for Stan models first
+  temp_params <- extract_model_params(...)
+  
+  # For Stan models, ensure times matches posterior samples to avoid dimension mismatches
+  if (model %in% c('ARDF', 'GPDF', 'VARDF')) {
+    stan_post_samples <- (temp_params$iter - temp_params$warmup) * temp_params$chains
+    if (temp_params$times != stan_post_samples) {
+      if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+        rlang::warn(paste0("For Stan models, setting times = ", stan_post_samples, " to match posterior samples. ",
+                          "Requested times = ", temp_params$times, " would cause dimension mismatch."), 
+                    .frequency = "once", .frequency_id = "stan_times_mismatch")
+      }
+      temp_params$times <- stan_post_samples
+    }
+  }
+  
   orig_betas <- mgcv::rmvn(
-    n = 200,
+    n = temp_params$times,
     mu = coef(object),
     V = vcov(object)
   )
@@ -371,10 +446,11 @@ forecast.ffc_gam <- function(
     max_horizon <- max(fc_horizons)
 
     # Extract functional basis coefficient time series
+    # Use the same temp_params that was already adjusted for Stan models
     intermed_coefs <- fts_coefs(
       object,
       summary = FALSE,
-      times = 200
+      times = temp_params$times
     )
 
     # Calculate mean and shift so that last time point
@@ -448,7 +524,7 @@ forecast.ffc_gam <- function(
           object = functional_coefs %>%
             dplyr::filter(!grepl('_mean', .basis)),
           h = max_horizon,
-          times = 200,
+          times = temp_params$times,
           model = model,
           stationary = stationary,
           ...
@@ -466,7 +542,7 @@ forecast.ffc_gam <- function(
           object = functional_coefs %>%
             dplyr::filter(grepl('_mean', .basis)),
           h = max_horizon,
-          times = 200,
+          times = temp_params$times,
           model = 'ARIMA',
           stationary = FALSE,
           ...
@@ -496,7 +572,7 @@ forecast.ffc_gam <- function(
         forecast(
           object = functional_coefs,
           h = max_horizon,
-          times = 200,
+          times = temp_params$times,
           model = if(has_mean_basis & !has_non_mean_basis) 'ARIMA' else model,
           stationary = if(has_mean_basis & !has_non_mean_basis) FALSE else stationary,
           ...
@@ -609,7 +685,8 @@ forecast.ffc_gam <- function(
     # Add the draw-specific row predictions to the
     # intermediate prediction matrix
     unique_draws <- unique(fts_fc$.draw)
-    full_linpreds <- do.call(
+    
+    fc_matrix <- do.call(
       rbind,
       lapply(
         unique_draws,
@@ -617,8 +694,9 @@ forecast.ffc_gam <- function(
           fc_linpreds[which(fts_fc$.draw == x)]
         }
       )
-    ) +
-      intermed_linpreds
+    )
+    
+    full_linpreds <- fc_matrix + intermed_linpreds
   }
 
   # Now can proceed to send full_linpreds to the relevant

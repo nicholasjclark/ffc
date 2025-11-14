@@ -1,6 +1,6 @@
 #' Convert ffc_gam forecasts to fable object
 #'
-#' @param object An `ffc_gam` object that has been used to generate forecasts
+#' @param x An `ffc_gam` object used to generate forecasts
 #' @param newdata A `data.frame` containing the forecast data with the 
 #' response variable
 #' @param forecasts Optional pre-computed forecasts from `forecast.ffc_gam()`. 
@@ -19,10 +19,10 @@
 #' @importFrom tsibble as_tsibble
 #' @importFrom rlang sym syms
 #' @importFrom fabletools as_fable
-#' @details Converts forecasting output from `ffc_gam` objects into a properly
-#' formatted `fable` object that can be used with `fabletools` functions like
+#' @details Converts forecasting output from `ffc_gam` xs into a properly
+#' formatted `fable` x that can be used with `fabletools` functions like
 #' `autoplot()`, `accuracy()`, and forecast combination methods
-#' @return A `fable` object containing forecast distributions and point 
+#' @return A `fable` x containing forecast distributions and point 
 #' estimates
 #' @seealso [forecast.ffc_gam()]
 #' @author Nicholas J Clark
@@ -89,12 +89,12 @@
 #' accuracy(combined, test)
 #' }
 #' @export
-as_fable.ffc_gam <- function(object, newdata, forecasts = NULL, 
+as_fable.ffc_gam <- function(x, newdata, forecasts = NULL, 
                              response = NULL, model = "ARIMA", 
                              key_vars = NULL, ...) {
   
   # Input validation
-  checkmate::assert_class(object, "ffc_gam")
+  checkmate::assert_class(x, "ffc_gam")
   checkmate::assert_data_frame(newdata, min.rows = 1)
   checkmate::assert_string(response, null.ok = TRUE)
   checkmate::assert_string(model)
@@ -117,23 +117,23 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
   
   # Auto-detect response variable if not provided
   if (is.null(response)) {
-    if (is.null(object$formula)) {
+    if (is.null(x$formula)) {
       stop(insight::format_error(
         "Cannot auto-detect response variable. Please specify {.field response}"
       ))
     }
     
     # Use utility function to extract response variables robustly
-    response <- extract_response_vars(object$formula, return_all = FALSE)
+    response <- extract_response_vars(x$formula, return_all = FALSE)
   }
   
   # Validate response variables exist in newdata
   # For cbind() responses, extract individual variable names for validation
-  response_vars_to_check <- extract_response_vars(object$formula, return_all = TRUE)
+  response_vars_to_check <- extract_response_vars(x$formula, return_all = TRUE)
   validate_vars_in_data(response_vars_to_check, newdata, "response variable")
   
   # Detect time variable from original model
-  time_var <- object$time_var
+  time_var <- x$time_var
   if (is.null(time_var)) {
     stop(insight::format_error(
       "Time variable not found in model object. Ensure model was fitted with time argument"
@@ -144,7 +144,7 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
   
   # Generate forecasts if not provided
   if (is.null(forecasts)) {
-    forecasts <- forecast(object, newdata = newdata, 
+    forecasts <- forecast(x, newdata = newdata, 
                          model = model, summary = FALSE, ...)
   }
   
@@ -227,7 +227,7 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
         fable_data <- tsibble::as_tsibble(
           fable_data,
           index = !!rlang::sym(index_col),
-          key = tidyselect::all_of(key_vars)
+          key = tidyr::all_of(key_vars)
         )
       } else {
         fable_data <- tsibble::as_tsibble(
@@ -241,7 +241,7 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
         fable_data <- tsibble::as_tsibble(
           fable_data,
           index = !!rlang::sym(time_var),
-          key = tidyselect::all_of(key_vars)
+          key = tidyr::all_of(key_vars)
         )
       } else {
         fable_data <- tsibble::as_tsibble(
@@ -252,7 +252,7 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
     }
   }
   
-  # Build fable object using public tsibble API
+  # Build fable x using public tsibble API
   fc_fable <- tsibble::new_tsibble(
     fable_data,
     response = response,

@@ -34,6 +34,8 @@ test_that("ARDF model works with basic functionality", {
     model = "ARDF",
     K = 1,
     lag = 1,
+    chains = 1,
+    iter = 220,
     summary = TRUE
   ))
 
@@ -158,12 +160,12 @@ test_that("Stan models validate parameters correctly", {
   # Test invalid K parameter
   expect_error(
     forecast(mod, newdata = newdata, model = "ARDF", K = 0),
-    "K must be positive"
+    "Assertion on 'K' failed: Must be >= 1"
   )
 
   # Test invalid lag parameter
   expect_error(
     forecast(mod, newdata = newdata, model = "ARDF", K = 1, lag = 0),
-    "lag must be positive"
+    "Assertion on 'lag' failed: Must be >= 1"
   )
 })
