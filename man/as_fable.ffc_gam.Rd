@@ -57,7 +57,8 @@ library(dplyr)
 # Prepare tourism data
 tourism_melb <- tourism \%>\%
   filter(Region == "Melbourne", Purpose == "Visiting") \%>\%
-  mutate(quarter = lubridate::quarter(Quarter), time = row_number())
+  mutate(quarter = as.numeric(substr(as.character(Quarter), 6, 6)), 
+         time = row_number())
 
 # Split data
 train <- tourism_melb \%>\% slice_head(n = 75)

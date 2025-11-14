@@ -23,11 +23,11 @@ validate_vars_in_data <- function(vars, data, var_type = "variable") {
     
     if (length(missing_vars) == 1) {
       stop(insight::format_error(
-        "{var_type_cap} {.field {missing_vars}} not found in data"
+        paste0(var_type_cap, " {.field ", missing_vars, "} not found in data")
       ), call. = FALSE)
     } else {
       stop(insight::format_error(
-        "{var_type_cap}s {.field {missing_vars}} not found in data"
+        paste0(var_type_cap, "s {.field {", paste(missing_vars, collapse = ", "), "}} not found in data")
       ), call. = FALSE)
     }
   }

@@ -85,11 +85,11 @@ head(predict(mod, type = "response"))
 data("qld_mortality")
 # Create binomial version of the data for demonstration
 qld_binomial <- qld_mortality
-qld_binomial$trials <- qld_binomial$population
 qld_binomial$successes <- qld_binomial$deaths
+qld_binomial$failures <- qld_binomial$population - qld_binomial$deaths
 
 mod_binomial <- ffc_gam(
-  cbind(successes, trials - successes) ~
+  cbind(successes, failures) ~
     sex +
     fts(age,
       k = 6, bs = "cr",

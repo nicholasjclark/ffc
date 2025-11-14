@@ -114,21 +114,22 @@ mod <- ffc_gam(
       year,
       mean_only = TRUE,
       bs = "tp",
-      time_k = 35,  # Temporal resolution
-      time_m = 1    # Smoothness constraint
+      time_k = 35,
+      time_m = 1
     ) +
     # Time-varying age effects: sex-specific deviations
     fts(
       age,
       by = sex,
       bs = "tp", 
-      time_k = 15,  # Lower temporal resolution for age effects
+      time_k = 15,
       time_m = 1
     ),
   time = "year",
   data = qld_mortality,
   family = poisson(),
-  engine = "bam"  # Efficient for large datasets
+  # Efficient for large datasets
+  engine = "bam"
 )
 ```
 
@@ -141,8 +142,8 @@ summary(mod)
 Key components:
 
 1. Fixed effects: `sex` captures baseline male-female differences
-2. Time-varying level: `fts(year, mean_only=TRUE)` models shared temporal trends  
-3. Time-varying functions: `fts(age, by=sex)` captures how age patterns evolve differently by sex
+2. Time-varying level: `fts(year, mean_only = TRUE)` models shared temporal trends  
+3. Time-varying functions: `fts(age, by = sex)` captures how age patterns evolve differently by sex
 
 The model automatically creates a hierarchical structure where basis functions become `by` variables in smooths of time, sharing smoothing parameters for computational efficiency.
 
@@ -184,7 +185,7 @@ The model successfully captures the smooth evolution of J-shaped mortality curve
 
 ### Focused analysis: teenage mortality trends
 
-Let's examine how mortality patterns changed for a specific age group:
+Let's examine how mortality patterns changed for a specific age group by leveraging the power of `marginaleffects`:
 
 ```{r mortality-trends, fig.cap="Predicted mortality trends for 17-year-olds in Queensland, 1980-2020. Shows approximately 70% decline in mortality rates with consistent male-female differences."}
 plot_predictions(
@@ -208,7 +209,7 @@ plot_predictions(
 
 ### Rate of change analysis
 
-Understanding *how fast* mortality is improving:
+We can look deeper at these predictions to understand *how fast* mortality is improving, again using `marginaleffects` support:
 
 ```{r mortality-derivatives, fig.cap="First derivatives showing the rate of mortality improvement for 17-year-olds. Fluctuations reveal periods of faster and slower mortality decline."}
 plot_slopes(
@@ -235,43 +236,6 @@ plot_slopes(
   )
 ```
 
-## Model diagnostics
-
-### Residual analysis
-
-```{r residuals, fig.cap="Model residuals showing good fit with no systematic patterns. Random scatter around zero indicates appropriate model specification."}
-# Extract residuals
-resids <- residuals(mod)
-fitted_vals <- fitted(mod)
-
-# Create data frame for ggplot
-resid_data <- data.frame(
-  fitted = fitted_vals,
-  residuals = resids
-)
-
-# ggplot version
-ggplot(resid_data, aes(x = fitted, y = residuals)) +
-  geom_point(alpha = 0.3, size = 0.5) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(
-    x = "Fitted values", 
-    y = "Residuals",
-    title = "Residual analysis"
-  ) +
-  theme_bw()
-```
-
-### Model diagnostics
-
-For functional time series models, traditional GAM diagnostics need to be adapted. The ffc package will develop specialized diagnostic methods for:
-
-- **Basis adequacy**: Ensuring sufficient flexibility for time-varying coefficients
-- **Temporal autocorrelation**: Checking coefficient time series for proper structure  
-- **Functional residuals**: Examining residuals at both observation and functional levels
-- **Forecast validation**: Cross-validation approaches for functional forecasting
-
-Development of comprehensive diagnostic tools for ffc models is ongoing.
 
 ## Extracting time-varying coefficients
 
@@ -281,7 +245,7 @@ The power of functional forecasting lies in treating the evolving coefficients a
 functional_coefs <- fts_coefs(
   mod,
   summary = FALSE,
-  times = 10  # Number of coefficient draws
+  times = 10
 )
 functional_coefs
 ```
@@ -346,17 +310,17 @@ ggplot(mortality_forecasts %>%
            y = .estimate,
            group = year,
            colour = year)) +
-  # geom_ribbon(aes(
-  #   ymin = .q10.0,
-  #   ymax = .q90.0,
-  #   fill = year
-  # ),
-  # alpha = 0.2,
-  # colour = NA) +
+  geom_ribbon(aes(
+    ymin = .q10,
+    ymax = .q90,
+    fill = year
+  ),
+  alpha = 0.2,
+  colour = NA) +
   geom_line() +
   facet_wrap(~sex) +
   scale_colour_viridis_c(name = "Year") +
-  # scale_fill_viridis_c(name = "Year") +
+  scale_fill_viridis_c(name = "Year") +
   labs(
     x = "Age", 
     y = "Mortality rate",
@@ -365,7 +329,7 @@ ggplot(mortality_forecasts %>%
   scale_y_log10()
 ```
 
-This forecasting approach enables prediction of entire functional relationships by combining time series forecasts of the functional coefficients with the underlying model structure.
+This forecasting approach enables prediction of entire functional relationships by combining time series forecasts of the functional coefficients with the underlying model structure. We could easily then convert this to a `fable` object (using `as_fable()`) and compare with holdout data to compute any of the forecast scores supported by `fable`.
 
 ## Key insights and methodology
 
@@ -392,29 +356,20 @@ This forecasting approach enables prediction of entire functional relationships 
 
 ## Extensions and further analysis
 
-### Additional applications
-
-This methodology extends to many functional forecasting problems:
-- **Environmental data**: Temperature/precipitation profiles over time
-- **Economic indicators**: Yield curves in finance  
-- **Biological processes**: Growth curves, dose-response relationships
-- **Spatial processes**: Evolving spatial fields
-
 ### Advanced features
 
-The `ffc` package supports additional complexity:
-- **Multiple functional predictors**: `fts(age) + fts(time_since_event)`  
-- **Interaction effects**: Functional relationships that depend on other variables
-- **Different time scales**: Multiple temporal resolutions in the same model
-- **Alternative distributions**: Beyond Poisson to handle different data types
+The `ffc` package supports additional complexity:  
+- Multiple functional predictors: `fts(age) + fts(time_since_event)`  
+- Interaction effects: Functional relationships that depend on other variables  
+- Alternative distributions: Beyond Poisson to handle different data types  
 
 ## Conclusion
 
 Functional forecasting with `ffc` provides a principled approach to modeling and predicting evolving functional relationships. By treating time-varying coefficients as forecastable time series, we can:
 
-1. **Capture complexity** that traditional methods miss
-2. **Generate realistic forecasts** of entire functional relationships  
-3. **Quantify uncertainty** appropriately across all sources
-4. **Provide actionable insights** for policy and planning
+1. Capture complexity that traditional methods miss
+2. Generate realistic forecasts of entire functional relationships  
+3. Quantify uncertainty appropriately across all sources
+4. Provide actionable insights for policy and planning
 
 The Queensland mortality analysis demonstrates these capabilities in a real-world context, revealing patterns and trends that inform our understanding of demographic change and enable sophisticated projection methods for public health planning.
