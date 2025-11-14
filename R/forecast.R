@@ -340,7 +340,60 @@ fable_forecast <- function(
 #'       For Stan models, this is automatically set to (iter - warmup) * chains
 #'       to ensure dimension consistency. Minimum 100 total posterior samples required.}
 #'   }
-#' @details Computes forecast distributions from fitted `ffc_gam` objects
+#' @details 
+#' \strong{Forecasting Methodology:}
+#' 
+#' This function implements a two-stage forecasting approach for functional regression 
+#' models with time-varying coefficients of the form:
+#' \deqn{y_t = \sum_{j=1}^{J} \beta_j(t) B_j(x) + \epsilon_t}
+#' where \eqn{\beta_j(t)} are time-varying coefficients and \eqn{B_j(x)} are basis functions.
+#' 
+#' \enumerate{
+#'   \item \strong{Extract basis coefficients:} Time-varying functional coefficients 
+#'     \eqn{\beta_j(t)} are extracted from the fitted GAM as time series
+#'   \item \strong{Forecast coefficients:} These coefficient time series are forecast 
+#'     using either Stan dynamic factor models (ARDF/VARDF/GPDF) or ARIMA models
+#'   \item \strong{Reconstruct forecasts:} Forecasted coefficients are combined:
+#'     \deqn{\hat{y}_{t+h} = \sum_{j=1}^{J} \hat{\beta}_j(t+h) B_j(x)}
+#'   \item \strong{Combine uncertainties:} Multiple uncertainty sources are integrated 
+#'     hierarchically (see Uncertainty Quantification section)
+#' }
+#' 
+#' \strong{Uncertainty Quantification:}
+#' 
+#' Forecast uncertainty is captured through a hierarchical structure:
+#' 
+#' \emph{Within Stan dynamic factor models:}
+#' \itemize{
+#'   \item \strong{Process uncertainty:} Factor dynamics, autoregressive terms, factor loadings
+#'   \item \strong{Observation uncertainty:} Series-specific error terms (\eqn{\sigma_{obs}})
+#' }
+#' 
+#' \emph{Final combination in linear predictor space:}
+#' \itemize{
+#'   \item \strong{Stan forecast samples:} Already incorporate process + observation uncertainty
+#'   \item \strong{GAM parameter uncertainty:} Random draws from \eqn{N(\hat{\boldsymbol{\theta}}, \mathbf{V})} 
+#'     where \eqn{\mathbf{V}} is the coefficient covariance matrix
+#' }
+#' 
+#' These components are combined additively: \eqn{\text{Stan forecasts} + \text{GAM uncertainty}}
+#' 
+#' \strong{Model Selection:}
+#' 
+#' \itemize{
+#'   \item \strong{Stan factor models (ARDF/VARDF/GPDF):} Used for multivariate 
+#'     forecasting of non-mean basis coefficients. Capture dependencies between 
+#'     coefficient series and assume zero-centered time series for efficiency.
+#'   \item \strong{ARIMA models:} Used for mean basis coefficients (which operate 
+#'     at non-zero levels) and when `model = "ARIMA"` is specified.
+#' }
+#' 
+#' \strong{Important Note on `times` Parameter:}
+#' 
+#' For Stan dynamic factor models, the `times` parameter is automatically set to 
+#' `(iter - warmup) * chains` to ensure dimensional consistency. Any user-specified 
+#' `times` value will be ignored with a warning. For ARIMA models, `times` can be 
+#' specified freely and controls the number of posterior draws.
 #' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
 #' @return Predicted values on the appropriate scale.
 #' If `summary == FALSE`, the output is a matrix. If `summary == TRUE`, the output

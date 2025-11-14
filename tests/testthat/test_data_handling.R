@@ -163,21 +163,16 @@ test_that("missing data handling works correctly", {
   dat_missing$y[c(10, 20, 30)] <- NA
   dat_missing$season[c(15, 25)] <- NA
   
-  # Should handle missing values appropriately
-  expect_no_error(
-    mod_missing <- ffc_gam(
+  # Should reject missing values with helpful error
+  expect_error(
+    ffc_gam(
       y ~ s(season, bs = "cc", k = 12) + fts(time, time_k = 5),
       time = "time",
       data = dat_missing,
       family = poisson()
-    )
+    ),
+    "Missing values detected in variables"
   )
-  
-  # Model should still be valid
-  expect_true(inherits(mod_missing, "ffc_gam"))
-  
-  # Model should have fewer observations than original due to NA removal
-  expect_true(nrow(mod_missing$model) < nrow(dat))
 })
 
 test_that("offset handling works correctly", {

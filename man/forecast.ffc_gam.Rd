@@ -78,7 +78,59 @@ is a tidy \code{tbl_df / data.frame}
 Forecasting \code{ffc_gam} models
 }
 \details{
-Computes forecast distributions from fitted \code{ffc_gam} objects
+\strong{Forecasting Methodology:}
+
+This function implements a two-stage forecasting approach for functional regression
+models with time-varying coefficients of the form:
+\deqn{y_t = \sum_{j=1}^{J} \beta_j(t) B_j(x) + \epsilon_t}
+where \eqn{\beta_j(t)} are time-varying coefficients and \eqn{B_j(x)} are basis functions.
+
+\enumerate{
+\item \strong{Extract basis coefficients:} Time-varying functional coefficients
+\eqn{\beta_j(t)} are extracted from the fitted GAM as time series
+\item \strong{Forecast coefficients:} These coefficient time series are forecast
+using either Stan dynamic factor models (ARDF/VARDF/GPDF) or ARIMA models
+\item \strong{Reconstruct forecasts:} Forecasted coefficients are combined:
+\deqn{\hat{y}_{t+h} = \sum_{j=1}^{J} \hat{\beta}_j(t+h) B_j(x)}
+\item \strong{Combine uncertainties:} Multiple uncertainty sources are integrated
+hierarchically (see Uncertainty Quantification section)
+}
+
+\strong{Uncertainty Quantification:}
+
+Forecast uncertainty is captured through a hierarchical structure:
+
+\emph{Within Stan dynamic factor models:}
+\itemize{
+\item \strong{Process uncertainty:} Factor dynamics, autoregressive terms, factor loadings
+\item \strong{Observation uncertainty:} Series-specific error terms (\eqn{\sigma_{obs}})
+}
+
+\emph{Final combination in linear predictor space:}
+\itemize{
+\item \strong{Stan forecast samples:} Already incorporate process + observation uncertainty
+\item \strong{GAM parameter uncertainty:} Random draws from \eqn{N(\hat{\boldsymbol{\theta}}, \mathbf{V})}
+where \eqn{\mathbf{V}} is the coefficient covariance matrix
+}
+
+These components are combined additively: \eqn{\text{Stan forecasts} + \text{GAM uncertainty}}
+
+\strong{Model Selection:}
+
+\itemize{
+\item \strong{Stan factor models (ARDF/VARDF/GPDF):} Used for multivariate
+forecasting of non-mean basis coefficients. Capture dependencies between
+coefficient series and assume zero-centered time series for efficiency.
+\item \strong{ARIMA models:} Used for mean basis coefficients (which operate
+at non-zero levels) and when \code{model = "ARIMA"} is specified.
+}
+
+\strong{Important Note on \code{times} Parameter:}
+
+For Stan dynamic factor models, the \code{times} parameter is automatically set to
+\code{(iter - warmup) * chains} to ensure dimensional consistency. Any user-specified
+\code{times} value will be ignored with a warning. For ARIMA models, \code{times} can be
+specified freely and controls the number of posterior draws.
 }
 \seealso{
 \code{\link[=ffc_gam]{ffc_gam()}}, \code{\link[=fts]{fts()}}, \code{\link[=forecast.fts_ts]{forecast.fts_ts()}}

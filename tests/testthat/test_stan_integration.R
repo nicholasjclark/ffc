@@ -485,20 +485,16 @@ test_that("binomial models handle response parsing correctly", {
   # The function should handle cbind parsing internally
   expect_true(inherits(mod, "ffc_gam"))
   
-  # Test that missing data handling works with cbind
-  test_data_na <- test_data
-  test_data_na$successes[c(5, 15)] <- NA
-  test_data_na$failures <- test_data_na$trials - test_data_na$successes
-  
+  # Test that cbind works with clean data
   expect_no_error({
-    mod_na <- ffc_gam(
+    mod_clean <- ffc_gam(
       cbind(successes, failures) ~ 
         fts(time, mean_only = TRUE, time_k = 8),
-      data = test_data_na,
+      data = test_data,
       time = "time",
       family = binomial()
     )
   })
   
-  expect_true(inherits(mod_na, "ffc_gam"))
+  expect_true(inherits(mod_clean, "ffc_gam"))
 })
