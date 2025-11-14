@@ -334,27 +334,37 @@ newdata_forecast <- expand.grid(
 mortality_forecasts <- forecast(
   object = mod,
   newdata = newdata_forecast,
-  h = 5,  # 5 years ahead
-  model = "ARIMA"
+  model = "ARIMA",
+  type = "expected"
 )
 
-# Extract forecasted rates for visualization
-newdata_forecast$forecasted_rate <- as.numeric(mortality_forecasts)
-
-# Visualization
-ggplot(newdata_forecast, aes(x = age, y = forecasted_rate, group = year, color = year)) +
-  geom_line(size = 1) +
+# Plot forecasted mortality rates, together with uncertainties
+ggplot(mortality_forecasts %>%
+         dplyr::bind_cols(newdata_forecast),
+       aes(x = age,
+           y = .estimate,
+           group = year,
+           colour = year)) +
+  geom_ribbon(aes(
+    ymin = .q10.0,
+    ymax = .q90.0,
+    fill = year
+  ),
+  alpha = 0.2,
+  colour = NA) +
+  geom_line() +
   facet_wrap(~sex) +
-  scale_color_viridis_c(name = "Year") +
+  scale_colour_viridis_c(name = "Year") +
+  scale_fill_viridis_c(name = "Year") +
   labs(
-    x = "Age",
-    y = "Forecasted mortality rate", 
-    title = "5-year mortality forecasts for Queensland"
+    x = "Age", 
+    y = "Mortality rate",
+    title = "Expected mortality"
   ) +
   scale_y_log10()
 ```
 
-This comprehensive forecasting approach enables prediction of entire functional relationships by combining time series forecasts of the functional coefficients with the underlying model structure.
+This forecasting approach enables prediction of entire functional relationships by combining time series forecasts of the functional coefficients with the underlying model structure.
 
 ## Key insights and methodology
 

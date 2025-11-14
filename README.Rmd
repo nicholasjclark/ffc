@@ -50,7 +50,7 @@ pak::pak("nicholasjclark/ffc")
 ## Quick Start
 
 ```{r include = FALSE}
-devtools::load_all()
+library(ffc)
 ```
 
 
