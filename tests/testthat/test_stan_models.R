@@ -39,6 +39,9 @@ test_that("ARDF model works with basic functionality", {
     summary = TRUE
   ))
 
+  fc_ardf$.estimate
+  fc_ardf$.error
+
   expect_true(inherits(fc_ardf, "tbl_df"))
   expect_true(all(c(".estimate", ".error") %in% names(fc_ardf)))
   expect_equal(nrow(fc_ardf), nrow(newdata))
