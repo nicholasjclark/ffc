@@ -337,6 +337,7 @@ mortality_forecasts <- forecast(
   model = "ARIMA",
   type = "expected"
 )
+head(mortality_forecasts)
 
 # Plot forecasted mortality rates, together with uncertainties
 ggplot(mortality_forecasts %>%
@@ -345,17 +346,17 @@ ggplot(mortality_forecasts %>%
            y = .estimate,
            group = year,
            colour = year)) +
-  geom_ribbon(aes(
-    ymin = .q10.0,
-    ymax = .q90.0,
-    fill = year
-  ),
-  alpha = 0.2,
-  colour = NA) +
+  # geom_ribbon(aes(
+  #   ymin = .q10.0,
+  #   ymax = .q90.0,
+  #   fill = year
+  # ),
+  # alpha = 0.2,
+  # colour = NA) +
   geom_line() +
   facet_wrap(~sex) +
   scale_colour_viridis_c(name = "Year") +
-  scale_fill_viridis_c(name = "Year") +
+  # scale_fill_viridis_c(name = "Year") +
   labs(
     x = "Age", 
     y = "Mortality rate",
