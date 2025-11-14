@@ -32,6 +32,8 @@ jobs:
             patchwork
             remotes
             devtools
+            marginaleffects
+            tidyverse
 
       - name: Install local package
         run: Rscript -e 'devtools::install(dependencies = FALSE)'

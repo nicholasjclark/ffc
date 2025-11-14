@@ -54,6 +54,7 @@ jobs:
              fable
              tsibble
              rmarkdown
+             marginaleffects
 
       - uses: r-lib/actions/check-r-package@v2
         with:
