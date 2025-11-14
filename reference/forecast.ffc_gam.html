@@ -155,7 +155,38 @@ is a tidy <code>tbl_df / data.frame</code></p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Computes forecast distributions from fitted <code>ffc_gam</code> objects</p>
+    <p><strong>Forecasting Methodology:</strong></p>
+<p>This function implements a two-stage forecasting approach for functional regression
+models with time-varying coefficients of the form:
+$$y_t = \sum_{j=1}^{J} \beta_j(t) B_j(x) + \epsilon_t$$
+where \(\beta_j(t)\) are time-varying coefficients and \(B_j(x)\) are basis functions.</p>
+<ol><li><p><strong>Extract basis coefficients:</strong> Time-varying functional coefficients
+\(\beta_j(t)\) are extracted from the fitted GAM as time series</p></li>
+<li><p><strong>Forecast coefficients:</strong> These coefficient time series are forecast
+using either Stan dynamic factor models (ARDF/VARDF/GPDF) or ARIMA models</p></li>
+<li><p><strong>Reconstruct forecasts:</strong> Forecasted coefficients are combined:
+$$\hat{y}_{t+h} = \sum_{j=1}^{J} \hat{\beta}_j(t+h) B_j(x)$$</p></li>
+<li><p><strong>Combine uncertainties:</strong> Multiple uncertainty sources are integrated
+hierarchically (see Uncertainty Quantification section)</p></li>
+</ol><p><strong>Uncertainty Quantification:</strong></p>
+<p>Forecast uncertainty is captured through a hierarchical structure:</p>
+<p><em>Within Stan dynamic factor models:</em></p><ul><li><p><strong>Process uncertainty:</strong> Factor dynamics, autoregressive terms, factor loadings</p></li>
+<li><p><strong>Observation uncertainty:</strong> Series-specific error terms (\(\sigma_{obs}\))</p></li>
+</ul><p><em>Final combination in linear predictor space:</em></p><ul><li><p><strong>Stan forecast samples:</strong> Already incorporate process + observation uncertainty</p></li>
+<li><p><strong>GAM parameter uncertainty:</strong> Random draws from \(N(\hat{\boldsymbol{\theta}}, \mathbf{V})\)
+where \(\mathbf{V}\) is the coefficient covariance matrix</p></li>
+</ul><p>These components are combined additively: \(\text{Stan forecasts} + \text{GAM uncertainty}\)</p>
+<p><strong>Model Selection:</strong></p>
+<ul><li><p><strong>Stan factor models (ARDF/VARDF/GPDF):</strong> Used for multivariate
+forecasting of non-mean basis coefficients. Capture dependencies between
+coefficient series and assume zero-centered time series for efficiency.</p></li>
+<li><p><strong>ARIMA models:</strong> Used for mean basis coefficients (which operate
+at non-zero levels) and when <code>model = "ARIMA"</code> is specified.</p></li>
+</ul><p><strong>Important Note on <code>times</code> Parameter:</strong></p>
+<p>For Stan dynamic factor models, the <code>times</code> parameter is automatically set to
+<code>(iter - warmup) * chains</code> to ensure dimensional consistency. Any user-specified
+<code>times</code> value will be ignored with a warning. For ARIMA models, <code>times</code> can be
+specified freely and controls the number of posterior draws.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

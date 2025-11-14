@@ -132,7 +132,67 @@ output is a matrix. If `summary == TRUE`, the output is a tidy
 
 ## Details
 
-Computes forecast distributions from fitted `ffc_gam` objects
+**Forecasting Methodology:**
+
+This function implements a two-stage forecasting approach for functional
+regression models with time-varying coefficients of the form: \$\$y_t =
+\sum\_{j=1}^{J} \beta_j(t) B_j(x) + \epsilon_t\$\$ where \\\beta_j(t)\\
+are time-varying coefficients and \\B_j(x)\\ are basis functions.
+
+1.  **Extract basis coefficients:** Time-varying functional coefficients
+    \\\beta_j(t)\\ are extracted from the fitted GAM as time series
+
+2.  **Forecast coefficients:** These coefficient time series are
+    forecast using either Stan dynamic factor models (ARDF/VARDF/GPDF)
+    or ARIMA models
+
+3.  **Reconstruct forecasts:** Forecasted coefficients are combined:
+    \$\$\hat{y}\_{t+h} = \sum\_{j=1}^{J} \hat{\beta}\_j(t+h) B_j(x)\$\$
+
+4.  **Combine uncertainties:** Multiple uncertainty sources are
+    integrated hierarchically (see Uncertainty Quantification section)
+
+**Uncertainty Quantification:**
+
+Forecast uncertainty is captured through a hierarchical structure:
+
+*Within Stan dynamic factor models:*
+
+- **Process uncertainty:** Factor dynamics, autoregressive terms, factor
+  loadings
+
+- **Observation uncertainty:** Series-specific error terms
+  (\\\sigma\_{obs}\\)
+
+*Final combination in linear predictor space:*
+
+- **Stan forecast samples:** Already incorporate process + observation
+  uncertainty
+
+- **GAM parameter uncertainty:** Random draws from
+  \\N(\hat{\boldsymbol{\theta}}, \mathbf{V})\\ where \\\mathbf{V}\\ is
+  the coefficient covariance matrix
+
+These components are combined additively: \\\text{Stan forecasts} +
+\text{GAM uncertainty}\\
+
+**Model Selection:**
+
+- **Stan factor models (ARDF/VARDF/GPDF):** Used for multivariate
+  forecasting of non-mean basis coefficients. Capture dependencies
+  between coefficient series and assume zero-centered time series for
+  efficiency.
+
+- **ARIMA models:** Used for mean basis coefficients (which operate at
+  non-zero levels) and when `model = "ARIMA"` is specified.
+
+**Important Note on `times` Parameter:**
+
+For Stan dynamic factor models, the `times` parameter is automatically
+set to `(iter - warmup) * chains` to ensure dimensional consistency. Any
+user-specified `times` value will be ignored with a warning. For ARIMA
+models, `times` can be specified freely and controls the number of
+posterior draws.
 
 ## See also
 

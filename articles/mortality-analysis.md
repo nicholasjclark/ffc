@@ -193,37 +193,37 @@ summary(mod)
 #> 
 #> Parametric coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.648061   0.004039 -1398.2   <2e-16 ***
+#> (Intercept) -5.648082   0.004039 -1398.2   <2e-16 ***
 #> sexmale      0.574335   0.004986   115.2   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
-#>                                      edf Ref.df Chi.sq p-value    
-#> s(year):fts_year1_mean             32.05     34  10342  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_1 14.50     15  16349  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_2 12.85     15  10267  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_3 14.49     15   9610  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_4 13.48     15   8470  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_5 14.41     15   8433  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_6 13.35     15   8667  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_7 14.35     15   7764  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_8 10.12     15  11476  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_9 13.05     15   6036  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_1   14.44     15  19549  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_2   12.95     15  11146  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_3   14.64     15  12750  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_4   13.75     15  11841  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_5   14.56     15  14649  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_6   13.74     15  12002  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_7   14.52     15  11843  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_8   10.19     15  13491  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_9   12.44     15   6716  <2e-16 ***
+#>                                       edf Ref.df   Chi.sq p-value    
+#> s(year):fts_year1_mean             32.047     34 10327.70  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_1 14.490     15 11927.82  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_2 12.657     15  9710.20  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_3 14.499     15    68.77  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_4 13.341     15  7608.17  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_5 14.526     15   497.34  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_6 13.188     15  7786.44  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_7 14.293     15   713.88  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_8  9.668     15 11099.21  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_9 12.388     15  6040.51  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_1   14.367     15  7376.91  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_2   12.789     15  9625.81  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_3   14.622     15   107.41  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_4   13.645     15  9830.07  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_5   14.617     15  1737.59  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_6   13.631     15  9939.09  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_7   14.458     15   307.97  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_8    9.796     15 12228.48  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_9   11.805     15  6728.91  <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> R-sq.(adj) =  0.986   Deviance explained = 97.6%
-#> fREML =  22189  Scale est. = 1         n = 8282
+#> fREML =  22154  Scale est. = 1         n = 8282
 ```
 
 Key components:
@@ -378,16 +378,16 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.387            1  1980
-#>  2 fts_year1_mean  1981     0.377            1  1981
-#>  3 fts_year1_mean  1982     0.415            1  1982
-#>  4 fts_year1_mean  1983     0.319            1  1983
-#>  5 fts_year1_mean  1984     0.309            1  1984
+#>  1 fts_year1_mean  1980     0.406            1  1980
+#>  2 fts_year1_mean  1981     0.389            1  1981
+#>  3 fts_year1_mean  1982     0.420            1  1982
+#>  4 fts_year1_mean  1983     0.320            1  1983
+#>  5 fts_year1_mean  1984     0.308            1  1984
 #>  6 fts_year1_mean  1985     0.330            1  1985
-#>  7 fts_year1_mean  1986     0.280            1  1986
-#>  8 fts_year1_mean  1987     0.253            1  1987
-#>  9 fts_year1_mean  1988     0.240            1  1988
-#> 10 fts_year1_mean  1989     0.272            1  1989
+#>  7 fts_year1_mean  1986     0.279            1  1986
+#>  8 fts_year1_mean  1987     0.249            1  1987
+#>  9 fts_year1_mean  1988     0.232            1  1988
+#> 10 fts_year1_mean  1989     0.260            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -432,16 +432,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [1,900]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.68
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.70
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.75
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.84
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.97
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 10     4.69
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     4.75
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     4.85
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     4.97
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     5.05
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      1.96
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      1.95
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      1.95
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      2.00
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      2.09
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 10     1.96
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     1.98
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     2.01
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     2.08
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     2.15
 #> # ℹ 9,490 more rows
 ```
 
@@ -476,12 +476,12 @@ head(mortality_forecasts)
 #> # A tibble: 6 × 6
 #>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
 #>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-#> 1  0.00178  0.00166 0.00152  0.00162  0.00193  0.00203 
-#> 2  0.00113  0.00111 0.000987 0.00104  0.00122  0.00127 
-#> 3  0.000726 0.00131 0.000624 0.000668 0.000775 0.000807
-#> 4  0.000468 0.00149 0.000409 0.000431 0.000498 0.000524
-#> 5  0.000306 0.00165 0.000266 0.000284 0.000327 0.000346
-#> 6  0.000206 0.00186 0.000178 0.000190 0.000223 0.000231
+#> 1  0.00178  0.00171 0.00153  0.00162  0.00197  0.00206 
+#> 2  0.00114  0.00118 0.000987 0.00103  0.00124  0.00129 
+#> 3  0.000723 0.00135 0.000637 0.000660 0.000796 0.000817
+#> 4  0.000469 0.00144 0.000411 0.000426 0.000514 0.000529
+#> 5  0.000308 0.00163 0.000269 0.000279 0.000336 0.000348
+#> 6  0.000207 0.00187 0.000180 0.000187 0.000228 0.000235
 
 # Plot forecasted mortality rates, together with uncertainties
 ggplot(mortality_forecasts %>%
