@@ -16,10 +16,9 @@
 #' @importFrom checkmate assert_class assert_data_frame assert_string 
 #' assert_character assert_choice
 #' @importFrom insight check_if_installed format_error format_warning
-#' @importFrom fabletools as_fable
-#' @importFrom distributional dist_sample
 #' @importFrom tsibble as_tsibble
 #' @importFrom rlang sym syms
+#' @importFrom fabletools as_fable
 #' @details Converts forecasting output from `ffc_gam` objects into a properly
 #' formatted `fable` object that can be used with `fabletools` functions like
 #' `autoplot()`, `accuracy()`, and forecast combination methods
@@ -111,11 +110,6 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
   
   # Check required packages with helpful messages
   insight::check_if_installed(
-    "fabletools",
-    reason = "to convert forecasts to fable objects for the fabletools ecosystem"
-  )
-  
-  insight::check_if_installed(
     "distributional", 
     reason = "to handle forecast distributions in fable objects"
   )
@@ -127,15 +121,15 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
         "Cannot auto-detect response variable. Please specify {.field response}"
       ))
     }
-    response <- as.character(object$formula[[2]])
+    
+    # Use utility function to extract response variables robustly
+    response <- extract_response_vars(object$formula, return_all = FALSE)
   }
   
-  # Validate that response exists in newdata
-  if (!response %in% colnames(newdata)) {
-    stop(insight::format_error(
-      "Response variable {.field {response}} not found in {.field newdata}"
-    ))
-  }
+  # Validate response variables exist in newdata
+  # For cbind() responses, extract individual variable names for validation
+  response_vars_to_check <- extract_response_vars(object$formula, return_all = TRUE)
+  validate_vars_in_data(response_vars_to_check, newdata, "response variable")
   
   # Detect time variable from original model
   time_var <- object$time_var
@@ -145,11 +139,7 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
     ))
   }
   
-  if (!time_var %in% colnames(newdata)) {
-    stop(insight::format_error(
-      "Time variable {.field {time_var}} not found in {.field newdata}"
-    ))
-  }
+  validate_vars_in_data(time_var, newdata, "time variable")
   
   # Generate forecasts if not provided
   if (is.null(forecasts)) {
@@ -261,14 +251,22 @@ as_fable.ffc_gam <- function(object, newdata, forecasts = NULL,
     }
   }
   
-  # Build fable object
-  # Reason: build_fable is internal but needed for proper fable construction
-  # Using ::: is acceptable here as it's the documented pattern in fabletools
-  fc_fable <- fabletools:::build_fable(
+  # Build fable object using public tsibble API
+  fc_fable <- tsibble::new_tsibble(
     fable_data,
     response = response,
-    distribution = ".dist"
+    dist = ".dist",
+    model_cn = ".model",
+    class = "fbl_ts"
   )
+  
+  # Set dimnames for distribution if missing
+  if (is.null(dimnames(fc_fable[[".dist"]]))) {
+    dimnames(fc_fable[[".dist"]]) <- list(response)
+  }
+  if (!identical(response, dimnames(fc_fable[[".dist"]]))) {
+    dimnames(fc_fable[[".dist"]]) <- list(response)
+  }
   
   # Add model information
   fc_fable[[".model"]] <- paste0("FFC_", model)

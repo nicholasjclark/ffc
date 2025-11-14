@@ -143,36 +143,12 @@ update_mod_data <- function(
     fts_smooths,
     data) {
   # Response variable(s) for omitting NAs in data
-  # Check that response terms are in the data; account for possible
-  # 'cbind' in there if this is a binomial model
-  resp_terms <- as.character(terms(formula(gam_object$formula))[[2]])
-  if (length(resp_terms) == 1) {
-    out_name <- as.character(terms(formula(gam_object$formula))[[2]])
-    if (!as.character(terms(formula(gam_object$formula))[[2]]) %in% names(data)) {
-      stop(
-        paste0("variable ", terms(formula(gam_object$formula))[[2]], " not found in data"),
-        call. = FALSE
-      )
-    }
-  } else {
-    if (any(grepl("cbind", resp_terms))) {
-      resp_terms <- resp_terms[-grepl("cbind", resp_terms)]
-      out_name <- resp_terms[1]
-      for (i in 1:length(resp_terms)) {
-        if (!resp_terms[i] %in% names(data)) {
-          stop(
-            paste0("variable ", resp_terms[i], " not found in data"),
-            call. = FALSE
-          )
-        }
-      }
-    } else {
-      stop(
-        "Not sure how to deal with this response variable specification",
-        call. = FALSE
-      )
-    }
-  }
+  # Use helper function to extract response variables robustly
+  resp_terms <- extract_response_vars(gam_object$formula, return_all = TRUE)
+  out_name <- resp_terms[1]
+  
+  # Check that response terms are in the data
+  validate_vars_in_data(resp_terms, data, "response variable")
 
   # Indices of missing responses in data
   resp_finites <- vector(mode = "list")

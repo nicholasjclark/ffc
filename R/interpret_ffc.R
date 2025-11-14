@@ -20,7 +20,6 @@ interpret_ffc <- function(
   keep_intercept <- attr(terms(formula), "intercept") == 1
 
   # Extract term labels
-  response <- terms.formula(formula)[[2]]
   termlabs <- attr(terms.formula(formula, keep.order = TRUE), "term.labels")
 
   # Check for offsets as well

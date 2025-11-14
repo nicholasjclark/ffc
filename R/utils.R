@@ -87,3 +87,37 @@ all_tsbl_checks <- function(.data) {
     abort("There is no data to model. Please provide a dataset with at least one observation.")
   }
 }
+
+#' Extract response variable names from formula
+#'
+#' Handles both simple responses (y ~ ...) and cbind responses 
+#' (cbind(successes, failures) ~ ...) robustly
+#'
+#' @param formula A formula object
+#' @param return_all Logical, if TRUE returns all response variable names for 
+#'   cbind, if FALSE reconstructs cbind() call (default FALSE)
+#' @return Character vector of response variable name(s)
+#' @noRd
+extract_response_vars <- function(formula, return_all = FALSE) {
+  # Identify response variable using robust approach
+  resp_terms <- as.character(rlang::f_lhs(formula))
+  
+  if (length(resp_terms) == 1L) {
+    response <- resp_terms
+  } else {
+    if (any(grepl('cbind', resp_terms))) {
+      resp_terms <- resp_terms[-grepl('cbind', resp_terms)]
+      
+      if (return_all) {
+        response <- resp_terms
+      } else {
+        # Reconstruct cbind() call as string
+        response <- paste0('cbind(', paste(resp_terms, collapse = ','), ')')
+      }
+    } else {
+      response <- resp_terms[1]
+    }
+  }
+  
+  return(response)
+}
