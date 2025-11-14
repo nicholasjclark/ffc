@@ -36,7 +36,7 @@
 #' # Prepare tourism data
 #' tourism_melb <- tourism %>%
 #'   filter(Region == "Melbourne", Purpose == "Visiting") %>%
-#'   mutate(quarter = as.numeric(substr(as.character(Quarter), 6, 6)), 
+#'   mutate(quarter = as.numeric(format(Quarter, "%q")), 
 #'          time = row_number())
 #' 
 #' # Split data
