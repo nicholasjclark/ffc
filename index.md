@@ -1,28 +1,39 @@
 # ffc
 
-# ffc
-
 > **F**unctional **F**ore**C**asting
 
-The goal of the `ffc` 📦 is to **forecast complex, time-changing
-functional relationships** using Generalized Additive Models (GAMs).
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/ffc)](https://CRAN.R-project.org/package=ffc)
+[![R-CMD-check](https://github.com/nicholasjclark/ffc/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/nicholasjclark/ffc/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/nicholasjclark/ffc/graph/badge.svg)](https://app.codecov.io/gh/nicholasjclark/ffc)
 
-**Key benefits:** - Model functional responses that change shape over
-time (not just magnitude) - Forecast entire curves into the future, not
-just single values  
-- Handle complex multivariate time series with functional structure -
-Seamless integration with the powerful
-[`mgcv`](https://cran.r-project.org/package=mgcv) and
-[`fable`](https://fable.tidyverts.org/) ecosystems
+The goal of the `ffc` 📦 is to forecast complex, time-changing
+functional relationships by integrating Dynamic Factor Generalized
+Additive Models.
 
-The package introduces **dynamic functional predictors** using the new
+**Key benefits:**
+
+- Model functional responses that change shape over time (not just
+  magnitude)  
+- Forecast entire curves into the future, not just single values  
+- Handle complex multivariate time series with functional structure  
+- Seamless integration with the powerful
+  [`mgcv`](https://cran.r-project.org/package=mgcv) and
+  [`fable`](https://fable.tidyverts.org/) ecosystems
+
+The package introduces dynamic functional predictors using the new
 [`fts()`](https://nicholasjclark.github.io/ffc/reference/fts.md) term,
-which creates time-varying coefficients that can be forecasted using
-efficient Stan-based algorithms.
+which decomposes functional time series into time-varying basis
+coefficients that can be forecasted using independent time series models
+from the `fable` package or with efficient dynamic factor models using
+precompiled Stan models.
 
 ## Installation
 
-You can install the development version of ffc from
+You can install the development version of `ffc` from
 [GitHub](https://github.com/) with:
 
 ``` r
@@ -33,6 +44,8 @@ pak::pak("nicholasjclark/ffc")
 ## Quick Start
 
 ``` r
+library(ffc)
+
 # Fit a model with time-varying coefficients
 mod <- ffc_gam(
   response ~ fts(predictor, time_k = 10),  
@@ -47,67 +60,13 @@ fc <- forecast(mod, newdata = future_data, model = "ARDF")
 
 ## Examples
 
-### Queensland Mortality Analysis
-
-The `ffc` package excels at modeling functional relationships that
-evolve over time. A detailed case study using Queensland mortality data
-demonstrates key concepts:
-
-``` r
-library(ffc)
-library(ggplot2)
-theme_set(theme_bw())
-data("qld_mortality")
-head(qld_mortality, 10)
-#>    year age    sex deaths population
-#> 1  1980   0 female    190   17699.81
-#> 2  1980   1 female     20   17505.27
-#> 3  1980   2 female      6   17715.56
-#> 4  1980   3 female      6   18080.06
-#> 5  1980   4 female     10   18390.10
-#> 6  1980   5 female      6   18870.54
-#> 7  1980   6 female      1   19641.01
-#> 8  1980   7 female      2   20475.01
-#> 9  1980   8 female      2   21599.01
-#> 10 1980   9 female      7   22170.09
-```
-
-``` r
-# Preview the functional patterns
-ggplot(
-  data = qld_mortality,
-  aes(x = age, y = deaths / population, group = year, colour = year)
-) +
-  geom_line(alpha = 0.7) +
-  facet_wrap(~sex) +
-  scale_colour_viridis_c() +
-  labs(y = "Mortality rate", title = "Evolving mortality patterns over time") +
-  scale_y_log10()
-```
-
-![Preview of Queensland mortality data showing characteristic J-shaped
-curves that shift systematically over time, demonstrating functional
-evolution suitable for ffc
-modeling.](reference/figures/README-mortality-preview-1.png)
-
-plot of chunk mortality-preview
-
-**Key features that make this ideal for functional forecasting:** -
-**J-shaped mortality curves** that evolve smoothly over 40 years -
-**Hierarchical structure** with sex-specific deviations from shared
-trends  
-- **Systematic temporal patterns** suitable for time series forecasting
-
-> **📖 For a comprehensive tutorial** covering model fitting,
-> diagnostics, interpretation, and forecasting, see
-> [`vignette("mortality-analysis", package = "ffc")`](https://nicholasjclark.github.io/ffc/articles/mortality-analysis.md)
-
-### Tourism Forecasting with fabletools Integration
+### Tourism Forecasting with `fabletools` Integration
 
 ``` r
 library(fable)
 library(tsibble)
-library(dplyr)
+library(tidyverse)
+library(ggplot2); theme_set(theme_bw(base_size = 12))
 ```
 
 Our aim here is to forecast the number of domestic visitors to
@@ -185,7 +144,8 @@ mod <- ffc_gam(
 )
 ```
 
-Draw the time-varying basis coefficients, this time using `gratia`
+Draw the time-varying basis coefficients using support for the
+[`gratia`](https://gavinsimpson.github.io/gratia/) package
 
 ``` r
 gratia::draw(mod)
@@ -197,12 +157,15 @@ panel displays seasonal coefficients that change over time,
 demonstrating how seasonality patterns
 evolve.](reference/figures/README-tourism-coefficients-1.png)
 
-plot of chunk tourism-coefficients
-
-Compute forecast distribution by fitting the basis coefficient time
-series models in parallel (which is automatically supported within the
-`fable` package). Here we fit independent exponential smoothing models
-to each coefficient time series
+These plots show the time-varying *coefficients* for a set of basis
+functions. We have one function representing the mean of the series
+(essentially a constant) as well as three basis functions representing
+the quarterly seasonality. Each of these has a coefficient that can
+change through time, allowing the entire functional series to change
+shape over time. We can compute forecast distribution by fitting the
+basis coefficient forecast models in parallel (which is automatically
+supported within the `fable` package). Here we fit independent
+exponential smoothing models to each coefficient time series
 
 ``` r
 fc <- forecast(
@@ -213,8 +176,8 @@ fc <- forecast(
 )
 ```
 
-Convert resulting forecasts to a `fable` object for automatic plotting
-and/or scoring of forecasts
+We can also convert resulting forecasts to a `fable` object for
+automatic plotting and/or scoring of forecasts
 
 ``` r
 # Using the new as_fable method for seamless conversion
@@ -224,11 +187,11 @@ fc_ffc
 #> # Key:     Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  818. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  759. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  755. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  858. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  740. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  753. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  737. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_A…
 ```
 
 Leverage the fabletools ecosystem for forecast analysis
@@ -239,7 +202,7 @@ accuracy(fc_ffc, test)
 #> # A tibble: 1 × 13
 #>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
 #>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   10.9  80.6  67.7 0.154  8.37   NaN   NaN
+#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   26.5  84.4  66.1  2.14  7.95   NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 
 # Generate prediction intervals  
@@ -249,11 +212,11 @@ fc_intervals
 #> # Key:       Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  818. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  759. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  755. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  858. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  740. FFC_A…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  753. FFC_A…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  737. FFC_A…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_A…
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
@@ -268,14 +231,16 @@ fc_summary
 #> # A tsibble: 5 x 5 [1Q]
 #>   Quarter mean_forecast median_forecast   q25   q75
 #>     <qtr>         <dbl>           <dbl> <dbl> <dbl>
-#> 1 2016 Q4          818.            822.  770.  869.
-#> 2 2017 Q1          759.            752.  712.  803.
-#> 3 2017 Q2          773.            773.  724.  822.
-#> 4 2017 Q3          755.            758.  702.  797.
-#> 5 2017 Q4          858.            865.  799.  907.
+#> 1 2016 Q4          813.            810.  765.  862.
+#> 2 2017 Q1          740.            739.  698.  779.
+#> 3 2017 Q2          753.            753.  715.  797.
+#> 4 2017 Q3          737.            736.  693.  772.
+#> 5 2017 Q4          840.            831.  783.  899.
 ```
 
-Compare FFC functional forecasting to traditional time series models
+Next we can explore how to compare forecasts from `ffc` models to
+traditional time series models by again leveraging the simplicity and
+power of the `fable` ecosystem
 
 ``` r
 # Generate FFC forecasts with different models
@@ -329,21 +294,9 @@ plot demonstrates forecast performance with MAPE values in titles,
 revealing the added value of functional forecasting
 approaches.](reference/figures/README-model-comparison-1.png)
 
-plot of chunk model-comparison
-
-``` r
-
-# Display comprehensive accuracy comparison
-rbind(acc_ffc_arima, acc_ffc_ets, acc_traditional)
-#> # A tibble: 4 × 13
-#>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
-#>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   38.5  93.6  68.5  3.59  8.03   NaN   NaN
-#> 2 FFC_ETS   Melbo… Vict… Visiti… Test   20.9  83.7  67.0  1.43  8.16   NaN   NaN
-#> 3 ARIMA     Melbo… Vict… Visiti… Test   32.4  98.6  84.3  2.62 10.2    NaN   NaN
-#> 4 ETS       Melbo… Vict… Visiti… Test   48.9 120.   99.8  4.52 11.9    NaN   NaN
-#> # ℹ 1 more variable: ACF1 <dbl>
-```
+These plots illustrate how the `ffc` models outperform traditional
+forecasting models for this forecasting experiment by thinking about
+this as a functional time series problem.
 
 ## Getting help
 

@@ -503,7 +503,7 @@ Let’s demonstrate how to generate complete mortality curve forecasts by
 combining the forecasted coefficients with the model structure:
 
 ``` r
-# Create prediction data for future years
+# Create forecast data for future years
 future_years <- 2021:2025
 newdata_forecast <- expand.grid(
   age = unique(qld_mortality$age),
@@ -512,80 +512,61 @@ newdata_forecast <- expand.grid(
   population = 1
 )
 
-# Generate forecasted mortality curves
-# Note: This combines the forecasted coefficients with model structure
-forecast_curves <- predict(
-  mod,
+# Generate forecasted mortality curves using forecast()
+# This integrates the time series forecasts of coefficients
+mortality_forecasts <- forecast(
+  object = mod,
   newdata = newdata_forecast,
-  type = "response",
-  # This would integrate the forecasted coefficients
-  # Implementation details would depend on final ffc API
-  se.fit = TRUE
+  model = "ARIMA",
+  type = "expected"
 )
+head(mortality_forecasts)
+#> # A tibble: 6 × 6
+#>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
+#>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
+#> 1  0.00178  0.00171 0.00153  0.00162  0.00197  0.00206 
+#> 2  0.00114  0.00118 0.000987 0.00103  0.00124  0.00129 
+#> 3  0.000723 0.00135 0.000637 0.000660 0.000796 0.000817
+#> 4  0.000469 0.00144 0.000411 0.000426 0.000514 0.000529
+#> 5  0.000308 0.00163 0.000269 0.000279 0.000336 0.000348
+#> 6  0.000207 0.00187 0.000180 0.000187 0.000228 0.000235
 
-# Add predictions to forecast data
-newdata_forecast$predicted_rate <- forecast_curves$fit
-newdata_forecast$se <- forecast_curves$se.fit
-newdata_forecast$lower <- forecast_curves$fit - 1.96 * forecast_curves$se.fit
-newdata_forecast$upper <- forecast_curves$fit + 1.96 * forecast_curves$se.fit
-
-# Visualization
-ggplot(newdata_forecast, aes(x = age, y = predicted_rate, group = year, color = year)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = year), alpha = 0.2, color = NA) +
-  geom_line(size = 1) +
+# Plot forecasted mortality rates, together with uncertainties
+ggplot(mortality_forecasts %>%
+         dplyr::bind_cols(newdata_forecast),
+       aes(x = age,
+           y = .estimate,
+           group = year,
+           colour = year)) +
+  # geom_ribbon(aes(
+  #   ymin = .q10.0,
+  #   ymax = .q90.0,
+  #   fill = year
+  # ),
+  # alpha = 0.2,
+  # colour = NA) +
+  geom_line() +
   facet_wrap(~sex) +
-  scale_color_viridis_c(name = "Year") +
-  scale_fill_viridis_c(name = "Year") +
+  scale_colour_viridis_c(name = "Year") +
+  # scale_fill_viridis_c(name = "Year") +
   labs(
-    x = "Age",
-    y = "Forecasted mortality rate", 
-    title = "5-year mortality forecasts for Queensland"
-  ) +
-  scale_y_log10()
-```
-
-![Forecasted mortality curves for Queensland, 2021-2025. Gray ribbons
-show prediction intervals reflecting uncertainty in both time series
-models and coefficient
-estimation.](mortality-analysis_files/figure-html/forecast-curves-1.png)
-
-Forecasted mortality curves for Queensland, 2021-2025. Gray ribbons show
-prediction intervals reflecting uncertainty in both time series models
-and coefficient estimation.
-
-### Forecast evaluation
-
-``` r
-# For validation, we could compare forecasts made from earlier years
-# with observed data (pseudo-out-of-sample validation)
-
-# This example shows conceptual validation approach
-validation_data <- qld_mortality[qld_mortality$year == 2020, ]
-validation_data$predicted_rate <- predict(mod, newdata = validation_data, type = "response")
-
-ggplot(validation_data, aes(x = age)) +
-  geom_line(aes(y = deaths / population, color = "Observed"), size = 1) +
-  geom_line(aes(y = predicted_rate, color = "Predicted"), size = 1, linetype = "dashed") +
-  facet_wrap(~sex) +
-  scale_color_manual(values = c("Observed" = "black", "Predicted" = "red")) +
-  labs(
-    x = "Age",
+    x = "Age", 
     y = "Mortality rate",
-    title = "Model validation: 2020 predictions vs. observations",
-    color = "Type"
+    title = "Expected mortality"
   ) +
   scale_y_log10()
 ```
 
-![Comparison of actual 2020 mortality with retrospective forecasts from
-2015. Close alignment validates the forecasting
-approach.](mortality-analysis_files/figure-html/forecast-comparison-1.png)
+![Forecasted mortality curves for Queensland, 2021-2025. Shows how the
+functional forecasting approach predicts future age-mortality
+patterns.](mortality-analysis_files/figure-html/forecast-curves-1.png)
 
-Comparison of actual 2020 mortality with retrospective forecasts from
-2015. Close alignment validates the forecasting approach.
+Forecasted mortality curves for Queensland, 2021-2025. Shows how the
+functional forecasting approach predicts future age-mortality patterns.
 
-This comprehensive forecasting approach enables prediction of entire
-functional relationships with proper uncertainty quantification.
+This forecasting approach enables prediction of entire functional
+relationships by combining time series forecasts of the functional
+coefficients with the underlying model structure.
 
 ## Key insights and methodology
 
