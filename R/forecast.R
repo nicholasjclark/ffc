@@ -331,6 +331,11 @@ fable_forecast <- function(
 #' Only used if `summary` is `TRUE`
 #' @param probs The percentiles to be computed by the `quantile()` function.
 #' Only used if `summary` is `TRUE`
+#' @param mean_model A character string specifying the forecasting model to use
+#' for mean basis coefficients when using Stan factor models (ARDF, VARDF, GPDF).
+#' Default is "ETS". Options include "ETS", "ARIMA", "RW", "NAIVE".
+#' This is only used when forecasting mixed mean/non-mean basis functions with
+#' Stan factor models.
 #' @param ... Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF):
 #'   \describe{
 #'     \item{K}{Number of latent factors (default: 2). Must be positive.}
@@ -389,8 +394,8 @@ fable_forecast <- function(
 #'   \item \strong{Stan factor models (ARDF/VARDF/GPDF):} Used for multivariate 
 #'     forecasting of non-mean basis coefficients. Capture dependencies between 
 #'     coefficient series and assume zero-centered time series for efficiency.
-#'   \item \strong{ARIMA models:} Used for mean basis coefficients (which operate 
-#'     at non-zero levels) and when `model = "ARIMA"` is specified.
+#'   \item \strong{Mean basis models:} Used for mean basis coefficients (which operate 
+#'     at non-zero levels). Default is ETS, controlled by `mean_model` parameter.
 #' }
 #' 
 #' \strong{Important Note on `times` Parameter:}
@@ -399,6 +404,31 @@ fable_forecast <- function(
 #' `(iter - warmup) * chains` to ensure dimensional consistency. Any user-specified 
 #' `times` value will be ignored with a warning. For ARIMA models, `times` can be 
 #' specified freely and controls the number of posterior draws.
+#' @examples
+#' \donttest{
+#' # Basic forecasting example
+#' data("growth_data")
+#' mod <- ffc_gam(
+#'   Reaction ~ fts(Subject, k = 3, time_k = 8) + 
+#'              fts(Days, k = 3, time_k = 8),
+#'   time = "Days", data = growth_data
+#' )
+#' 
+#' # Forecast with ETS (default for mixed basis)
+#' newdata <- data.frame(Subject = rep("308", 3), Days = 10:12)
+#' fc <- forecast(mod, newdata = newdata, model = "ETS")
+#' 
+#' # Use ARDF with custom mean_model for mean basis
+#' fc_ardf <- forecast(mod, newdata = newdata, 
+#'                     model = "ARDF", 
+#'                     mean_model = "RW",  # Use random walk for mean basis
+#'                     K = 2)
+#' 
+#' # Get raw forecast matrix without summary
+#' fc_raw <- forecast(mod, newdata = newdata, 
+#'                   model = "ETS", 
+#'                   summary = FALSE)
+#' }
 #' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
 #' @return Predicted values on the appropriate scale.
 #' If `summary == FALSE`, the output is a matrix. If `summary == TRUE`, the output
@@ -409,11 +439,12 @@ forecast.ffc_gam <- function(
     object,
     newdata,
     type = "response",
-    model = "ARIMA",
+    model = "ETS",
     stationary = FALSE,
     summary = TRUE,
     robust = TRUE,
     probs = c(0.025, 0.1, 0.9, 0.975),
+    mean_model = "ETS",
     ...) {
   type <- match.arg(
     arg = type,
@@ -594,14 +625,14 @@ forecast.ffc_gam <- function(
           dplyr::select(-.time)
       }
 
-      # Now forecast the _mean basis with an ARIMA() model
+      # Now forecast the _mean basis with the specified model
       functional_fc_mean <- suppressWarnings(
         forecast(
           object = functional_coefs %>%
             dplyr::filter(grepl('_mean', .basis)),
           h = max_horizon,
           times = temp_params$times,
-          model = 'ARIMA',
+          model = mean_model,
           stationary = FALSE,
           ...
         )
@@ -631,7 +662,7 @@ forecast.ffc_gam <- function(
           object = functional_coefs,
           h = max_horizon,
           times = temp_params$times,
-          model = if(has_mean_basis & !has_non_mean_basis) 'ARIMA' else model,
+          model = if(has_mean_basis & !has_non_mean_basis) mean_model else model,
           stationary = if(has_mean_basis & !has_non_mean_basis) FALSE else stationary,
           ...
         )

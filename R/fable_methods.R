@@ -8,7 +8,7 @@
 #' @param response Character string specifying the response variable name.
 #' If NULL, automatically detected from the model formula
 #' @param model A character string representing the forecasting model to use
-#' if generating forecasts. Default is "ARIMA"
+#' if generating forecasts. Default is "ETS"
 #' @param key_vars Optional character vector specifying grouping variables.
 #' If NULL, automatically detected from categorical variables in newdata
 #' @param ... Additional arguments passed to `forecast.ffc_gam()` if
@@ -74,14 +74,14 @@
 #' fc_fable3 <- as_fable(
 #'   mod,
 #'   newdata = test,
-#'   model = "ARIMA",
+#'   model = "ETS",
 #'   response = "Trips",
 #'   key_vars = c("Region", "State")
 #' )
 #' }
 #' @export
 as_fable.ffc_gam <- function(x, newdata, forecasts = NULL,
-                             response = NULL, model = "ARIMA",
+                             response = NULL, model = "ETS",
                              key_vars = NULL, ...) {
 
   # Input validation

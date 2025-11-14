@@ -88,10 +88,10 @@ test_that("forecast.ffc_gam() works with basic newdata", {
     time = c(76, 77, 78)
   )
 
-  # Test basic forecasting with ARIMA model
+  # Test basic forecasting with ETS model
   fc <- SW(forecast(example_mod,
                     newdata = newdata,
-                    model = "ARIMA",
+                    model = "ETS",
                     summary = TRUE))
 
   # Check structure when summary = TRUE
@@ -116,13 +116,16 @@ test_that("forecast.ffc_gam() works with different prediction types", {
   # Test different types
   fc_link <- SW(forecast(example_mod,
                          newdata = newdata,
-                         type = "link"))
+                         type = "link",
+                         model = "ETS"))
   fc_expected <- SW(forecast(example_mod,
                              newdata = newdata,
-                             type = "expected"))
+                             type = "expected",
+                             model = "ETS"))
   fc_response <- SW(forecast(example_mod,
                              newdata = newdata,
-                             type = "response"))
+                             type = "response",
+                             model = "ETS"))
 
   # All should have same structure
   expect_true(inherits(fc_link, "tbl_df"))
@@ -276,7 +279,7 @@ test_that("as_fable.ffc_gam() works with pre-computed forecasts", {
   )
 
   # Pre-compute forecasts as matrix
-  forecasts <- SW(forecast(example_mod, newdata = newdata, summary = FALSE))
+  forecasts <- SW(forecast(example_mod, newdata = newdata, model = "ETS", summary = FALSE))
 
   # Convert to fable using pre-computed forecasts
   fc_fable <- SW(as_fable(example_mod, newdata = newdata,
