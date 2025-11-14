@@ -114,7 +114,37 @@ Only used if <code>summary</code> is <code>TRUE</code></p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Other arguments to pass to the Stan dynamic factor models</p></dd>
+<dd><p>Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF):</p><dl><dt>K</dt>
+<dd><p>Number of latent factors (default: 2). Must be positive.</p></dd>
+
+<dt>lag</dt>
+<dd><p>Number of time lags for autoregressive terms (default: 1). Must be positive.</p></dd>
+
+<dt>chains</dt>
+<dd><p>Number of MCMC chains (default: 4)</p></dd>
+
+<dt>iter</dt>
+<dd><p>Total iterations per chain (default: 500)</p></dd>
+
+<dt>warmup</dt>
+<dd><p>Warmup iterations per chain (default: iter/2)</p></dd>
+
+<dt>cores</dt>
+<dd><p>Number of CPU cores to use (default: min(chains, available cores))</p></dd>
+
+<dt>adapt_delta</dt>
+<dd><p>Target acceptance rate (default: 0.75)</p></dd>
+
+<dt>max_treedepth</dt>
+<dd><p>Maximum tree depth (default: 9)</p></dd>
+
+<dt>times</dt>
+<dd><p>Number of posterior samples to draw for coefficient forecasting.
+For Stan models, this is automatically set to (iter - warmup) * chains
+to ensure dimension consistency. Minimum 100 total posterior samples required.</p></dd>
+
+
+</dl></dd>
 
 </dl></div>
     <div class="section level2">
