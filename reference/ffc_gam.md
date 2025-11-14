@@ -156,16 +156,16 @@ head(predict(mod, type = "response"))
 #> # A tibble: 287 × 5
 #>    .basis          .time .estimate     .se  year
 #>  * <chr>           <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age__1  1980     -4.12 0.00693  1980
-#>  2 fts_bs_s_age__1  1981     -4.07 0.00585  1981
-#>  3 fts_bs_s_age__1  1982     -4.01 0.00511  1982
-#>  4 fts_bs_s_age__1  1983     -3.96 0.00477  1983
-#>  5 fts_bs_s_age__1  1984     -3.90 0.00471  1984
-#>  6 fts_bs_s_age__1  1985     -3.85 0.00479  1985
-#>  7 fts_bs_s_age__1  1986     -3.79 0.00496  1986
-#>  8 fts_bs_s_age__1  1987     -3.73 0.00521  1987
-#>  9 fts_bs_s_age__1  1988     -3.66 0.00543  1988
-#> 10 fts_bs_s_age__1  1989     -3.60 0.00548  1989
+#>  1 fts_bs_s_age__1  1980     -4.12 0.00827  1980
+#>  2 fts_bs_s_age__1  1981     -4.07 0.00655  1981
+#>  3 fts_bs_s_age__1  1982     -4.01 0.00538  1982
+#>  4 fts_bs_s_age__1  1983     -3.96 0.00490  1983
+#>  5 fts_bs_s_age__1  1984     -3.90 0.00489  1984
+#>  6 fts_bs_s_age__1  1985     -3.84 0.00497  1985
+#>  7 fts_bs_s_age__1  1986     -3.79 0.00498  1986
+#>  8 fts_bs_s_age__1  1987     -3.73 0.00501  1987
+#>  9 fts_bs_s_age__1  1988     -3.66 0.00511  1988
+#> 10 fts_bs_s_age__1  1989     -3.60 0.00519  1989
 #> # ℹ 277 more rows
 
 # Binomial model with cbind() response for trials data
@@ -188,7 +188,7 @@ mod_binomial <- ffc_gam(
   engine = "bam"
 )
 #> Warning: non-integer counts in a binomial glm!
-#> Error: variable trials - successes not found in data
+#> Error: {var_type_cap} {.field {missing_vars}} not found in data
 summary(mod_binomial)
 #> Error: object 'mod_binomial' not found
 ```

@@ -3,7 +3,7 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   mortality-analysis: mortality-analysis.html
-last_built: 2025-11-14T00:49Z
+last_built: 2025-11-14T01:45Z
 urls:
   reference: https://nicholasjclark.github.io/ffc/reference
   article: https://nicholasjclark.github.io/ffc/articles
