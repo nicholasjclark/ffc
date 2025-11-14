@@ -50,7 +50,7 @@ forecast(
   from the fable package or one of the built-in Bayesian dynamic factor
   models. Note that if a fable model is used, the chosen method must
   have an associated
-  [`generate()`](https://nicholasjclark.github.io/ffc/reference/generate.md)
+  [`generate()`](https://generics.r-lib.org/reference/generate.html)
   method in order to simulate forecast realisations. Valid models
   currently include: `'ARDF'`, `'GPDF'`, '`VARDF`, `'ETS'`, `'ARIMA'`,
   `'AR'`, `'RW'`, `'NAIVE'`, and `'NNETAR'`

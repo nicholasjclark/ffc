@@ -14,7 +14,7 @@ predict(object, newdata, type = "link", se.fit = FALSE, ...)
 - object:
 
   a fitted `gam` object as produced by
-  [`gam()`](https://nicholasjclark.github.io/ffc/reference/gam.md).
+  [`gam()`](https://rdrr.io/pkg/mgcv/man/gam.html).
 
 - newdata:
 

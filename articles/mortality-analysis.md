@@ -553,8 +553,8 @@ supported by `fable`.
   and `time_m`
 - Basis choice: Thin plate splines work well for age and time
 - Computational efficiency:
-  [`bam()`](https://nicholasjclark.github.io/ffc/reference/bam.md)
-  engine handles large datasets effectively
+  [`bam()`](https://rdrr.io/pkg/mgcv/man/bam.html) engine handles large
+  datasets effectively
 
 ## Extensions and further analysis
 

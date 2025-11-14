@@ -460,7 +460,7 @@ coefficients as time series that can be forecasted:</p>
 <h3 id="visualizing-coefficient-evolution">Visualizing coefficient evolution<a class="anchor" aria-label="anchor" href="#visualizing-coefficient-evolution"></a>
 </h3>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">functional_coefs</span><span class="op">)</span> <span class="op">+</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">functional_coefs</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Evolution of functional basis coefficients"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="mortality-analysis_files/figure-html/plot-coefficients-1.png" class="r-plt" alt="Time series of functional basis coefficients. Each panel shows how different aspects of the age-mortality relationship evolved over time, revealing complex temporal dependencies." width="672"><p class="caption">
@@ -487,7 +487,7 @@ functional evolution</li>
 <h3 id="coefficient-forecasting">Coefficient forecasting<a class="anchor" aria-label="anchor" href="#coefficient-forecasting"></a>
 </h3>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">functional_fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/forecast.html">forecast</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">functional_fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">functional_coefs</span>,</span>
 <span>  h <span class="op">=</span> <span class="fl">5</span>,      <span class="co"># 5-year horizon</span></span>
 <span>  times <span class="op">=</span> <span class="fl">10</span>, <span class="co"># Forecast replicates</span></span>
@@ -530,7 +530,7 @@ by combining the forecasted coefficients with the model structure:</p>
 <span></span>
 <span><span class="co"># Generate forecasted mortality curves using forecast()</span></span>
 <span><span class="co"># This integrates the time series forecasts of coefficients</span></span>
-<span><span class="va">mortality_forecasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/forecast.html">forecast</a></span><span class="op">(</span></span>
+<span><span class="va">mortality_forecasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">mod</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="va">newdata_forecast</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"ARIMA"</span>,</span>
@@ -625,7 +625,7 @@ deviations</li>
 <code>time_k</code> and <code>time_m</code>
 </li>
 <li>Basis choice: Thin plate splines work well for age and time</li>
-<li>Computational efficiency: <code><a href="../reference/bam.html">bam()</a></code> engine handles large
+<li>Computational efficiency: <code><a href="https://rdrr.io/pkg/mgcv/man/bam.html" class="external-link">bam()</a></code> engine handles large
 datasets effectively</li>
 </ul>
 </div>

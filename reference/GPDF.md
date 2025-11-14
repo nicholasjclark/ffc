@@ -29,8 +29,8 @@ GPDF(
 
   A family object specifying the outcome distribution to use in fitting.
   Currently only [`gaussian()`](https://rdrr.io/r/stats/family.html) and
-  [`scat()`](https://nicholasjclark.github.io/ffc/reference/scat.md)
-  (i.e. Student-T) are supported
+  [`scat()`](https://rdrr.io/pkg/mgcv/man/scat.html) (i.e. Student-T)
+  are supported
 
 - h:
 

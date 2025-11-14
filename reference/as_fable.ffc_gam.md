@@ -63,7 +63,7 @@ A `fable` object containing forecast distributions and point estimates
 Converts forecasting output from `ffc_gam` objects into a properly
 formatted `fable` object that can be used with `fabletools` functions
 like
-[`autoplot()`](https://nicholasjclark.github.io/ffc/reference/autoplot.md),
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
 [`accuracy()`](https://generics.r-lib.org/reference/accuracy.html), and
 forecast combination methods
 
@@ -101,12 +101,8 @@ library(dplyr)
 # Prepare tourism data
 tourism_melb <- tourism %>%
   filter(Region == "Melbourne", Purpose == "Visiting") %>%
-  mutate(quarter = as.numeric(substr(as.character(Quarter), 6, 6)), 
+  mutate(quarter = as.numeric(format(Quarter, "%q")), 
          time = row_number())
-#> Warning: There was 1 warning in `mutate()`.
-#> ℹ In argument: `quarter = as.numeric(substr(as.character(Quarter), 6, 6))`.
-#> Caused by warning:
-#> ! NAs introduced by coercion
 
 # Split data
 train <- tourism_melb %>% slice_head(n = 75)
@@ -118,19 +114,30 @@ mod <- ffc_gam(
           fts(quarter, k = 4, time_k = 15, time_m = 1),
   time = "time", data = train, family = tw(), engine = "gam"
 )
-#> Error in init_gam(formula(formula), data = dat, family = family): Not enough (non-NA) data to do anything meaningful
 
 # Convert to fable with auto-detection
 fc_fable <- as_fable(mod, newdata = test, model = "ETS")
-#> Error: object 'mod' not found
 
 # Use fabletools ecosystem
 autoplot(fc_fable, train)  # Forecast plot
-#> Error: object 'fc_fable' not found
+
 accuracy(fc_fable, test)   # Accuracy metrics
-#> Error: object 'fc_fable' not found
+#> # A tibble: 1 × 13
+#>   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
+#>   <chr>   <chr>    <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 FFC_ETS Melbour… Vict… Visiti… Test   15.7  78.9  62.1 0.792  7.61   NaN   NaN
+#> # ℹ 1 more variable: ACF1 <dbl>
 hilo(fc_fable, level = c(80, 95))  # Prediction intervals
-#> Error: object 'fc_fable' not found
+#> # A tsibble: 5 x 12 [1Q]
+#> # Key:       Region, State, Purpose [1]
+#>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
+#>     <qtr> <chr>     <chr>   <chr>   <dbl>   <dbl> <int>      <dist> <dbl> <chr> 
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  808. FFC_E…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  747. FFC_E…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  769. FFC_E…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  759. FFC_E…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  855. FFC_E…
+#> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
 fc_fable %>%
@@ -139,13 +146,18 @@ fc_fable %>%
     q25 = quantile(.dist, 0.25),
     q75 = quantile(.dist, 0.75)
   )
-#> Error: object 'fc_fable' not found
+#> # A tsibble: 5 x 4 [1Q]
+#>   Quarter mean_forecast   q25   q75
+#>     <qtr>         <dbl> <dbl> <dbl>
+#> 1 2016 Q4          808.  757.  853.
+#> 2 2017 Q1          747.  696.  789.
+#> 3 2017 Q2          769.  722.  811.
+#> 4 2017 Q3          759.  711.  809.
+#> 5 2017 Q4          855.  804.  909.
 
 # With pre-computed forecasts
 forecasts <- forecast(mod, newdata = test, summary = FALSE)
-#> Error: object 'mod' not found
 fc_fable2 <- as_fable(mod, newdata = test, forecasts = forecasts)
-#> Error: object 'mod' not found
 
 # With custom parameters
 fc_fable3 <- as_fable(
@@ -155,17 +167,15 @@ fc_fable3 <- as_fable(
   response = "Trips",
   key_vars = c("Region", "State")
 )
-#> Error: object 'mod' not found
 
 # Model comparison workflow
 fc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
-#> Error: object 'mod' not found
 fc_ets <- as_fable(mod, newdata = test, model = "ETS")
-#> Error: object 'mod' not found
 
 # Combine and compare
 combined <- bind_rows(fc_arima, fc_ets)
-#> Error: object 'fc_arima' not found
+#> Error in retain_tsibble(new, key = key_vars(old), index = index(old)): The result is not a valid tsibble.
+#> ℹ Do you need `as_tibble()` to work with data frame?
 autoplot(combined, train)
 #> Error: object 'combined' not found
 accuracy(combined, test)

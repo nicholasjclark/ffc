@@ -12,11 +12,27 @@ Main functions for functional forecasting
 
   Define functions with dynamic coefficients in ffc formulae
 
-- [`s()`](https://nicholasjclark.github.io/ffc/reference/s.md) : Smooth
-  terms for use in GAMs
-
-- [`te()`](https://nicholasjclark.github.io/ffc/reference/te.md) :
-  Tensor product smooth terms
+- [`reexports`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`s`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`te`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`gam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`bam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`nb`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`negbin`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`betar`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`cnorm`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ocat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`scat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ziP`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`multinom`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`tw`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ldTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`rTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`twlss`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`autoplot`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`forecast`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`generate`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  : Objects exported from other packages
 
 ## Model Methods
 
@@ -68,10 +84,27 @@ Convert ffc objects to work with the fabletools ecosystem
 
 - [`as_fable(`*`<ffc_gam>`*`)`](https://nicholasjclark.github.io/ffc/reference/as_fable.ffc_gam.md)
   : Convert ffc_gam forecasts to fable object
-- [`autoplot()`](https://nicholasjclark.github.io/ffc/reference/autoplot.md)
-  : Automatic plotting
-- [`forecast()`](https://nicholasjclark.github.io/ffc/reference/forecast.md)
-  : Forecasting methods
+- [`reexports`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`s`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`te`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`gam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`bam`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`nb`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`negbin`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`betar`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`cnorm`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ocat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`scat`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ziP`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`multinom`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`tw`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`ldTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`rTweedie`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`twlss`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`autoplot`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`forecast`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  [`generate`](https://nicholasjclark.github.io/ffc/reference/reexports.md)
+  : Objects exported from other packages
 
 ## Data
 

@@ -22,7 +22,7 @@ forecast(object, model = "ARIMA", h = 1, times = 25, stationary = FALSE, ...)
   from the fable package or one of the built-in Bayesian dynamic factor
   models. Note that if a fable model is used, the chosen method must
   have an associated
-  [`generate()`](https://nicholasjclark.github.io/ffc/reference/generate.md)
+  [`generate()`](https://generics.r-lib.org/reference/generate.html)
   method in order to simulate forecast realisations. Valid models
   currently include: `'ARDF'`, `'GPDF'`, '`VARDF`, `'ETS'`, `'ARIMA'`,
   `'AR'`, `'RW'`, `'NAIVE'`, and `'NNETAR'`
@@ -89,23 +89,20 @@ forecast(coefs, h = 3, model = "ARIMA")
 #> Warning: NaNs produced
 #> Warning: NaNs produced
 #> Warning: NaNs produced
-#> Warning: NaNs produced
-#> Warning: NaNs produced
-#> Warning: NaNs produced
 #> # A tsibble: 2,625 x 6 [1Y]
 #> # Key:       .basis, .realisation, .model, .rep [875]
 #>    .basis          .realisation .model .time .rep   .sim
 #>    <chr>                  <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age__1            1 ARIMA   2021 1     -1.99
-#>  2 fts_bs_s_age__1            1 ARIMA   2022 1     -1.97
-#>  3 fts_bs_s_age__1            1 ARIMA   2023 1     -1.94
-#>  4 fts_bs_s_age__1            1 ARIMA   2021 10    -1.99
-#>  5 fts_bs_s_age__1            1 ARIMA   2022 10    -1.96
-#>  6 fts_bs_s_age__1            1 ARIMA   2023 10    -1.93
-#>  7 fts_bs_s_age__1            1 ARIMA   2021 11    -1.99
-#>  8 fts_bs_s_age__1            1 ARIMA   2022 11    -1.96
-#>  9 fts_bs_s_age__1            1 ARIMA   2023 11    -1.93
-#> 10 fts_bs_s_age__1            1 ARIMA   2021 12    -1.99
+#>  1 fts_bs_s_age__1            1 ARIMA   2021 1     -1.88
+#>  2 fts_bs_s_age__1            1 ARIMA   2022 1     -1.82
+#>  3 fts_bs_s_age__1            1 ARIMA   2023 1     -1.75
+#>  4 fts_bs_s_age__1            1 ARIMA   2021 10    -1.88
+#>  5 fts_bs_s_age__1            1 ARIMA   2022 10    -1.83
+#>  6 fts_bs_s_age__1            1 ARIMA   2023 10    -1.78
+#>  7 fts_bs_s_age__1            1 ARIMA   2021 11    -1.88
+#>  8 fts_bs_s_age__1            1 ARIMA   2022 11    -1.82
+#>  9 fts_bs_s_age__1            1 ARIMA   2023 11    -1.77
+#> 10 fts_bs_s_age__1            1 ARIMA   2021 12    -1.88
 #> # ℹ 2,615 more rows
 # }
 ```
