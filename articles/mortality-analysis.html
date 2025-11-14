@@ -213,21 +213,22 @@ relationship changes:</p>
 <span>      <span class="va">year</span>,</span>
 <span>      mean_only <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>      bs <span class="op">=</span> <span class="st">"tp"</span>,</span>
-<span>      time_k <span class="op">=</span> <span class="fl">35</span>,  <span class="co"># Temporal resolution</span></span>
-<span>      time_m <span class="op">=</span> <span class="fl">1</span>    <span class="co"># Smoothness constraint</span></span>
+<span>      time_k <span class="op">=</span> <span class="fl">35</span>,</span>
+<span>      time_m <span class="op">=</span> <span class="fl">1</span></span>
 <span>    <span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="co"># Time-varying age effects: sex-specific deviations</span></span>
 <span>    <span class="fu"><a href="../reference/fts.html">fts</a></span><span class="op">(</span></span>
 <span>      <span class="va">age</span>,</span>
 <span>      by <span class="op">=</span> <span class="va">sex</span>,</span>
 <span>      bs <span class="op">=</span> <span class="st">"tp"</span>, </span>
-<span>      time_k <span class="op">=</span> <span class="fl">15</span>,  <span class="co"># Lower temporal resolution for age effects</span></span>
+<span>      time_k <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>      time_m <span class="op">=</span> <span class="fl">1</span></span>
 <span>    <span class="op">)</span>,</span>
 <span>  time <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">qld_mortality</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  engine <span class="op">=</span> <span class="st">"bam"</span>  <span class="co"># Efficient for large datasets</span></span>
+<span>  <span class="co"># Efficient for large datasets</span></span>
+<span>  engine <span class="op">=</span> <span class="st">"bam"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -263,45 +264,45 @@ relationship changes:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric coefficients:</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span><span class="co">#&gt; (Intercept) -5.648061   0.004039 -1398.2   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept) -5.648082   0.004039 -1398.2   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; sexmale      0.574335   0.004986   115.2   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Approximate significance of smooth terms:</span></span>
-<span><span class="co">#&gt;                                      edf Ref.df Chi.sq p-value    </span></span>
-<span><span class="co">#&gt; s(year):fts_year1_mean             32.05     34  10342  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1 14.50     15  16349  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2 12.85     15  10267  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3 14.49     15   9610  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4 13.48     15   8470  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5 14.41     15   8433  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6 13.35     15   8667  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7 14.35     15   7764  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8 10.12     15  11476  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9 13.05     15   6036  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1   14.44     15  19549  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2   12.95     15  11146  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3   14.64     15  12750  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4   13.75     15  11841  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5   14.56     15  14649  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6   13.74     15  12002  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   14.52     15  11843  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8   10.19     15  13491  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9   12.44     15   6716  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt;                                       edf Ref.df   Chi.sq p-value    </span></span>
+<span><span class="co">#&gt; s(year):fts_year1_mean             32.047     34 10327.70  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1 14.490     15 11927.82  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2 12.657     15  9710.20  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3 14.499     15    68.77  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4 13.341     15  7608.17  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5 14.526     15   497.34  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6 13.188     15  7786.44  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7 14.293     15   713.88  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8  9.668     15 11099.21  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9 12.388     15  6040.51  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1   14.367     15  7376.91  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2   12.789     15  9625.81  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3   14.622     15   107.41  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4   13.645     15  9830.07  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5   14.617     15  1737.59  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6   13.631     15  9939.09  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   14.458     15   307.97  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8    9.796     15 12228.48  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9   11.805     15  6728.91  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; R-sq.(adj) =  0.986   Deviance explained = 97.6%</span></span>
-<span><span class="co">#&gt; fREML =  22189  Scale est. = 1         n = 8282</span></span></code></pre></div>
+<span><span class="co">#&gt; fREML =  22154  Scale est. = 1         n = 8282</span></span></code></pre></div>
 <p>Key components:</p>
 <ol style="list-style-type: decimal">
 <li>Fixed effects: <code>sex</code> captures baseline male-female
 differences</li>
-<li>Time-varying level: <code>fts(year, mean_only=TRUE)</code> models
+<li>Time-varying level: <code>fts(year, mean_only = TRUE)</code> models
 shared temporal trends<br>
 </li>
-<li>Time-varying functions: <code>fts(age, by=sex)</code> captures how
+<li>Time-varying functions: <code>fts(age, by = sex)</code> captures how
 age patterns evolve differently by sex</li>
 </ol>
 <p>The model automatically creates a hierarchical structure where basis
@@ -363,8 +364,8 @@ more rapid mortality decline than others.</p>
 <div class="section level3">
 <h3 id="focused-analysis-teenage-mortality-trends">Focused analysis: teenage mortality trends<a class="anchor" aria-label="anchor" href="#focused-analysis-teenage-mortality-trends"></a>
 </h3>
-<p>Let’s examine how mortality patterns changed for a specific age
-group:</p>
+<p>Let’s examine how mortality patterns changed for a specific age group
+by leveraging the power of <code>marginaleffects</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://marginaleffects.com/man/r/plot_predictions.html" class="external-link">plot_predictions</a></span><span class="op">(</span></span>
 <span>  <span class="va">mod</span>,</span>
@@ -394,7 +395,9 @@ male-female differences.
 <div class="section level3">
 <h3 id="rate-of-change-analysis">Rate of change analysis<a class="anchor" aria-label="anchor" href="#rate-of-change-analysis"></a>
 </h3>
-<p>Understanding <em>how fast</em> mortality is improving:</p>
+<p>We can look deeper at these predictions to understand <em>how
+fast</em> mortality is improving, again using
+<code>marginaleffects</code> support:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://marginaleffects.com/man/r/plot_slopes.html" class="external-link">plot_slopes</a></span><span class="op">(</span></span>
 <span>  <span class="va">mod</span>,</span>
@@ -428,94 +431,35 @@ decline.
 </div>
 </div>
 <div class="section level2">
-<h2 id="model-diagnostics">Model diagnostics<a class="anchor" aria-label="anchor" href="#model-diagnostics"></a>
-</h2>
-<div class="section level3">
-<h3 id="residual-analysis">Residual analysis<a class="anchor" aria-label="anchor" href="#residual-analysis"></a>
-</h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Extract residuals</span></span>
-<span><span class="va">resids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span>
-<span><span class="va">fitted_vals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Create data frame for ggplot</span></span>
-<span><span class="va">resid_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  fitted <span class="op">=</span> <span class="va">fitted_vals</span>,</span>
-<span>  residuals <span class="op">=</span> <span class="va">resids</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># ggplot version</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">resid_data</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">fitted</span>, y <span class="op">=</span> <span class="va">residuals</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span>, size <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    x <span class="op">=</span> <span class="st">"Fitted values"</span>, </span>
-<span>    y <span class="op">=</span> <span class="st">"Residuals"</span>,</span>
-<span>    title <span class="op">=</span> <span class="st">"Residual analysis"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="mortality-analysis_files/figure-html/residuals-1.png" class="r-plt" alt="Model residuals showing good fit with no systematic patterns. Random scatter around zero indicates appropriate model specification." width="672"><p class="caption">
-Model residuals showing good fit with no systematic patterns. Random
-scatter around zero indicates appropriate model specification.
-</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="model-diagnostics-1">Model diagnostics<a class="anchor" aria-label="anchor" href="#model-diagnostics-1"></a>
-</h3>
-<p>For functional time series models, traditional GAM diagnostics need
-to be adapted. The ffc package will develop specialized diagnostic
-methods for:</p>
-<ul>
-<li>
-<strong>Basis adequacy</strong>: Ensuring sufficient flexibility for
-time-varying coefficients</li>
-<li>
-<strong>Temporal autocorrelation</strong>: Checking coefficient time
-series for proper structure<br>
-</li>
-<li>
-<strong>Functional residuals</strong>: Examining residuals at both
-observation and functional levels</li>
-<li>
-<strong>Forecast validation</strong>: Cross-validation approaches
-for functional forecasting</li>
-</ul>
-<p>Development of comprehensive diagnostic tools for ffc models is
-ongoing.</p>
-</div>
-</div>
-<div class="section level2">
 <h2 id="extracting-time-varying-coefficients">Extracting time-varying coefficients<a class="anchor" aria-label="anchor" href="#extracting-time-varying-coefficients"></a>
 </h2>
 <p>The power of functional forecasting lies in treating the evolving
 coefficients as time series that can be forecasted:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">functional_coefs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fts_coefs.ffc_gam.html">fts_coefs</a></span><span class="op">(</span></span>
 <span>  <span class="va">mod</span>,</span>
 <span>  summary <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  times <span class="op">=</span> <span class="fl">10</span>  <span class="co"># Number of coefficient draws</span></span>
+<span>  times <span class="op">=</span> <span class="fl">10</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">functional_coefs</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7,790 × 5</span></span></span>
 <span><span class="co">#&gt;    .basis         .time .estimate .realisation  year</span></span>
 <span><span class="co">#&gt;  <span style="color: #BCBCBC;">*</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>980     0.387            1  <span style="text-decoration: underline;">1</span>980</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>981     0.377            1  <span style="text-decoration: underline;">1</span>981</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>982     0.415            1  <span style="text-decoration: underline;">1</span>982</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>983     0.319            1  <span style="text-decoration: underline;">1</span>983</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>984     0.309            1  <span style="text-decoration: underline;">1</span>984</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>980     0.406            1  <span style="text-decoration: underline;">1</span>980</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>981     0.389            1  <span style="text-decoration: underline;">1</span>981</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>982     0.420            1  <span style="text-decoration: underline;">1</span>982</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>983     0.320            1  <span style="text-decoration: underline;">1</span>983</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>984     0.308            1  <span style="text-decoration: underline;">1</span>984</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>985     0.330            1  <span style="text-decoration: underline;">1</span>985</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>986     0.280            1  <span style="text-decoration: underline;">1</span>986</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>987     0.253            1  <span style="text-decoration: underline;">1</span>987</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>988     0.240            1  <span style="text-decoration: underline;">1</span>988</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>989     0.272            1  <span style="text-decoration: underline;">1</span>989</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>986     0.279            1  <span style="text-decoration: underline;">1</span>986</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>987     0.249            1  <span style="text-decoration: underline;">1</span>987</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>988     0.232            1  <span style="text-decoration: underline;">1</span>988</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>989     0.260            1  <span style="text-decoration: underline;">1</span>989</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 7,780 more rows</span></span></span></code></pre></div>
 <div class="section level3">
 <h3 id="visualizing-coefficient-evolution">Visualizing coefficient evolution<a class="anchor" aria-label="anchor" href="#visualizing-coefficient-evolution"></a>
 </h3>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">functional_coefs</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Evolution of functional basis coefficients"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -542,7 +486,7 @@ functional evolution</li>
 <div class="section level3">
 <h3 id="coefficient-forecasting">Coefficient forecasting<a class="anchor" aria-label="anchor" href="#coefficient-forecasting"></a>
 </h3>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">functional_fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/forecast.html">forecast</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">functional_coefs</span>,</span>
 <span>  h <span class="op">=</span> <span class="fl">5</span>,      <span class="co"># 5-year horizon</span></span>
@@ -554,16 +498,16 @@ functional evolution</li>
 <span><span class="co">#&gt; <span style="color: #949494;"># Key:       .basis, .realisation, .model, .rep [1,900]</span></span></span>
 <span><span class="co">#&gt;    .basis                     .realisation .model .time .rep   .sim</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 1      4.68</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 1      4.70</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 1      4.75</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 1      4.84</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 1      4.97</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 10     4.69</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 10     4.75</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 10     4.85</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 10     4.97</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 10     5.05</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 1      1.96</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 1      1.95</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 1      1.95</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 1      2.00</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 1      2.09</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 10     1.96</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 10     1.98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 10     2.01</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 10     2.08</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 10     2.15</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 9,490 more rows</span></span></span></code></pre></div>
 <p>The forecast includes uncertainty in both the time series models and
 the original coefficient estimation, providing realistic prediction
@@ -574,7 +518,7 @@ intervals.</p>
 </h3>
 <p>Let’s demonstrate how to generate complete mortality curve forecasts
 by combining the forecasted coefficients with the model structure:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create forecast data for future years</span></span>
 <span><span class="va">future_years</span> <span class="op">&lt;-</span> <span class="fl">2021</span><span class="op">:</span><span class="fl">2025</span></span>
 <span><span class="va">newdata_forecast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
@@ -596,12 +540,12 @@ by combining the forecasted coefficients with the model structure:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">#&gt;   .estimate  .error    .q2.5     .q10     .q90   .q97.5</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  0.001<span style="text-decoration: underline;">78</span>  0.001<span style="text-decoration: underline;">66</span> 0.001<span style="text-decoration: underline;">52</span>  0.001<span style="text-decoration: underline;">62</span>  0.001<span style="text-decoration: underline;">93</span>  0.002<span style="text-decoration: underline;">03</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>  0.001<span style="text-decoration: underline;">13</span>  0.001<span style="text-decoration: underline;">11</span> 0.000<span style="text-decoration: underline;">987</span> 0.001<span style="text-decoration: underline;">04</span>  0.001<span style="text-decoration: underline;">22</span>  0.001<span style="text-decoration: underline;">27</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>  0.000<span style="text-decoration: underline;">726</span> 0.001<span style="text-decoration: underline;">31</span> 0.000<span style="text-decoration: underline;">624</span> 0.000<span style="text-decoration: underline;">668</span> 0.000<span style="text-decoration: underline;">775</span> 0.000<span style="text-decoration: underline;">807</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>  0.000<span style="text-decoration: underline;">468</span> 0.001<span style="text-decoration: underline;">49</span> 0.000<span style="text-decoration: underline;">409</span> 0.000<span style="text-decoration: underline;">431</span> 0.000<span style="text-decoration: underline;">498</span> 0.000<span style="text-decoration: underline;">524</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">306</span> 0.001<span style="text-decoration: underline;">65</span> 0.000<span style="text-decoration: underline;">266</span> 0.000<span style="text-decoration: underline;">284</span> 0.000<span style="text-decoration: underline;">327</span> 0.000<span style="text-decoration: underline;">346</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>  0.000<span style="text-decoration: underline;">206</span> 0.001<span style="text-decoration: underline;">86</span> 0.000<span style="text-decoration: underline;">178</span> 0.000<span style="text-decoration: underline;">190</span> 0.000<span style="text-decoration: underline;">223</span> 0.000<span style="text-decoration: underline;">231</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  0.001<span style="text-decoration: underline;">78</span>  0.001<span style="text-decoration: underline;">71</span> 0.001<span style="text-decoration: underline;">53</span>  0.001<span style="text-decoration: underline;">62</span>  0.001<span style="text-decoration: underline;">97</span>  0.002<span style="text-decoration: underline;">06</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>  0.001<span style="text-decoration: underline;">14</span>  0.001<span style="text-decoration: underline;">18</span> 0.000<span style="text-decoration: underline;">987</span> 0.001<span style="text-decoration: underline;">03</span>  0.001<span style="text-decoration: underline;">24</span>  0.001<span style="text-decoration: underline;">29</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>  0.000<span style="text-decoration: underline;">723</span> 0.001<span style="text-decoration: underline;">35</span> 0.000<span style="text-decoration: underline;">637</span> 0.000<span style="text-decoration: underline;">660</span> 0.000<span style="text-decoration: underline;">796</span> 0.000<span style="text-decoration: underline;">817</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>  0.000<span style="text-decoration: underline;">469</span> 0.001<span style="text-decoration: underline;">44</span> 0.000<span style="text-decoration: underline;">411</span> 0.000<span style="text-decoration: underline;">426</span> 0.000<span style="text-decoration: underline;">514</span> 0.000<span style="text-decoration: underline;">529</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">308</span> 0.001<span style="text-decoration: underline;">63</span> 0.000<span style="text-decoration: underline;">269</span> 0.000<span style="text-decoration: underline;">279</span> 0.000<span style="text-decoration: underline;">336</span> 0.000<span style="text-decoration: underline;">348</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>  0.000<span style="text-decoration: underline;">207</span> 0.001<span style="text-decoration: underline;">87</span> 0.000<span style="text-decoration: underline;">180</span> 0.000<span style="text-decoration: underline;">187</span> 0.000<span style="text-decoration: underline;">228</span> 0.000<span style="text-decoration: underline;">235</span></span></span>
 <span></span>
 <span><span class="co"># Plot forecasted mortality rates, together with uncertainties</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mortality_forecasts</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -610,17 +554,17 @@ by combining the forecasted coefficients with the model structure:</p>
 <span>           y <span class="op">=</span> <span class="va">.estimate</span>,</span>
 <span>           group <span class="op">=</span> <span class="va">year</span>,</span>
 <span>           colour <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="co"># geom_ribbon(aes(</span></span>
-<span>  <span class="co">#   ymin = .q10.0,</span></span>
-<span>  <span class="co">#   ymax = .q90.0,</span></span>
-<span>  <span class="co">#   fill = year</span></span>
-<span>  <span class="co"># ),</span></span>
-<span>  <span class="co"># alpha = 0.2,</span></span>
-<span>  <span class="co"># colour = NA) +</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
+<span>    ymin <span class="op">=</span> <span class="va">.q10</span>,</span>
+<span>    ymax <span class="op">=</span> <span class="va">.q90</span>,</span>
+<span>    fill <span class="op">=</span> <span class="va">year</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">sex</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_colour_viridis_c</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Year"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="co"># scale_fill_viridis_c(name = "Year") +</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Year"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="st">"Age"</span>, </span>
 <span>    y <span class="op">=</span> <span class="st">"Mortality rate"</span>,</span>
@@ -635,7 +579,10 @@ functional forecasting approach predicts future age-mortality patterns.
 </div>
 <p>This forecasting approach enables prediction of entire functional
 relationships by combining time series forecasts of the functional
-coefficients with the underlying model structure.</p>
+coefficients with the underlying model structure. We could easily then
+convert this to a <code>fable</code> object (using
+<code><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable()</a></code>) and compare with holdout data to compute any of
+the forecast scores supported by <code>fable</code>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -687,26 +634,14 @@ datasets effectively</li>
 <h2 id="extensions-and-further-analysis">Extensions and further analysis<a class="anchor" aria-label="anchor" href="#extensions-and-further-analysis"></a>
 </h2>
 <div class="section level3">
-<h3 id="additional-applications">Additional applications<a class="anchor" aria-label="anchor" href="#additional-applications"></a>
-</h3>
-<p>This methodology extends to many functional forecasting problems: -
-<strong>Environmental data</strong>: Temperature/precipitation profiles
-over time - <strong>Economic indicators</strong>: Yield curves in
-finance<br>
-- <strong>Biological processes</strong>: Growth curves, dose-response
-relationships - <strong>Spatial processes</strong>: Evolving spatial
-fields</p>
-</div>
-<div class="section level3">
 <h3 id="advanced-features">Advanced features<a class="anchor" aria-label="anchor" href="#advanced-features"></a>
 </h3>
-<p>The <code>ffc</code> package supports additional complexity: -
-<strong>Multiple functional predictors</strong>:
+<p>The <code>ffc</code> package supports additional complexity:<br>
+- Multiple functional predictors:
 <code>fts(age) + fts(time_since_event)</code><br>
-- <strong>Interaction effects</strong>: Functional relationships that
-depend on other variables - <strong>Different time scales</strong>:
-Multiple temporal resolutions in the same model - <strong>Alternative
-distributions</strong>: Beyond Poisson to handle different data
+- Interaction effects: Functional relationships that depend on other
+variables<br>
+- Alternative distributions: Beyond Poisson to handle different data
 types</p>
 </div>
 </div>
@@ -718,19 +653,12 @@ approach to modeling and predicting evolving functional relationships.
 By treating time-varying coefficients as forecastable time series, we
 can:</p>
 <ol style="list-style-type: decimal">
-<li>
-<strong>Capture complexity</strong> that traditional methods
-miss</li>
-<li>
-<strong>Generate realistic forecasts</strong> of entire functional
+<li>Capture complexity that traditional methods miss</li>
+<li>Generate realistic forecasts of entire functional
 relationships<br>
 </li>
-<li>
-<strong>Quantify uncertainty</strong> appropriately across all
-sources</li>
-<li>
-<strong>Provide actionable insights</strong> for policy and
-planning</li>
+<li>Quantify uncertainty appropriately across all sources</li>
+<li>Provide actionable insights for policy and planning</li>
 </ol>
 <p>The Queensland mortality analysis demonstrates these capabilities in
 a real-world context, revealing patterns and trends that inform our

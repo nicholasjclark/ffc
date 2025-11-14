@@ -156,27 +156,27 @@ head(predict(mod, type = "response"))
 #> # A tibble: 287 × 5
 #>    .basis          .time .estimate     .se  year
 #>  * <chr>           <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age__1  1980     -4.12 0.00827  1980
-#>  2 fts_bs_s_age__1  1981     -4.07 0.00655  1981
-#>  3 fts_bs_s_age__1  1982     -4.01 0.00538  1982
-#>  4 fts_bs_s_age__1  1983     -3.96 0.00490  1983
-#>  5 fts_bs_s_age__1  1984     -3.90 0.00489  1984
-#>  6 fts_bs_s_age__1  1985     -3.84 0.00497  1985
-#>  7 fts_bs_s_age__1  1986     -3.79 0.00498  1986
-#>  8 fts_bs_s_age__1  1987     -3.73 0.00501  1987
-#>  9 fts_bs_s_age__1  1988     -3.66 0.00511  1988
-#> 10 fts_bs_s_age__1  1989     -3.60 0.00519  1989
+#>  1 fts_bs_s_age__1  1980     -4.11 0.00631  1980
+#>  2 fts_bs_s_age__1  1981     -4.06 0.00529  1981
+#>  3 fts_bs_s_age__1  1982     -4.00 0.00460  1982
+#>  4 fts_bs_s_age__1  1983     -3.95 0.00422  1983
+#>  5 fts_bs_s_age__1  1984     -3.89 0.00399  1984
+#>  6 fts_bs_s_age__1  1985     -3.84 0.00375  1985
+#>  7 fts_bs_s_age__1  1986     -3.78 0.00352  1986
+#>  8 fts_bs_s_age__1  1987     -3.72 0.00353  1987
+#>  9 fts_bs_s_age__1  1988     -3.66 0.00381  1988
+#> 10 fts_bs_s_age__1  1989     -3.59 0.00418  1989
 #> # ℹ 277 more rows
 
 # Binomial model with cbind() response for trials data
 data("qld_mortality")
 # Create binomial version of the data for demonstration
 qld_binomial <- qld_mortality
-qld_binomial$trials <- qld_binomial$population
 qld_binomial$successes <- qld_binomial$deaths
+qld_binomial$failures <- qld_binomial$population - qld_binomial$deaths
 
 mod_binomial <- ffc_gam(
-  cbind(successes, trials - successes) ~
+  cbind(successes, failures) ~
     sex +
     fts(age,
       k = 6, bs = "cr",
@@ -188,7 +188,36 @@ mod_binomial <- ffc_gam(
   engine = "bam"
 )
 #> Warning: non-integer counts in a binomial glm!
-#> Error: {var_type_cap} {.field {missing_vars}} not found in data
 summary(mod_binomial)
-#> Error: object 'mod_binomial' not found
+#> 
+#> Family: binomial 
+#> Link function: logit 
+#> 
+#> Formula:
+#> cbind(successes, failures) ~ sex + s(year, by = fts_bs_s_age__1, 
+#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__2, 
+#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__3, 
+#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__4, 
+#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__5, 
+#>     bs = "cr", k = 8, m = 2, id = 1)
+#> 
+#> Parametric coefficients:
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> (Intercept) -5.483768   0.002294 -2390.4   <2e-16 ***
+#> sexmale      0.508230   0.002166   234.6   <2e-16 ***
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#> 
+#> Approximate significance of smooth terms:
+#>                           edf Ref.df Chi.sq p-value    
+#> s(year):fts_bs_s_age__1 6.631  7.333  54584  <2e-16 ***
+#> s(year):fts_bs_s_age__2 7.167  7.717  26231  <2e-16 ***
+#> s(year):fts_bs_s_age__3 7.499  7.836  32978  <2e-16 ***
+#> s(year):fts_bs_s_age__4 7.552  7.825 411279  <2e-16 ***
+#> s(year):fts_bs_s_age__5 6.938  7.597 871121  <2e-16 ***
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#> 
+#> R-sq.(adj) =  0.982   Deviance explained = 97.7%
+#> fREML =  56736  Scale est. = 1         n = 8282
 ```

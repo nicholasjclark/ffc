@@ -142,21 +142,22 @@ mod <- ffc_gam(
       year,
       mean_only = TRUE,
       bs = "tp",
-      time_k = 35,  # Temporal resolution
-      time_m = 1    # Smoothness constraint
+      time_k = 35,
+      time_m = 1
     ) +
     # Time-varying age effects: sex-specific deviations
     fts(
       age,
       by = sex,
       bs = "tp", 
-      time_k = 15,  # Lower temporal resolution for age effects
+      time_k = 15,
       time_m = 1
     ),
   time = "year",
   data = qld_mortality,
   family = poisson(),
-  engine = "bam"  # Efficient for large datasets
+  # Efficient for large datasets
+  engine = "bam"
 )
 ```
 
@@ -192,46 +193,46 @@ summary(mod)
 #> 
 #> Parametric coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.648061   0.004039 -1398.2   <2e-16 ***
+#> (Intercept) -5.648082   0.004039 -1398.2   <2e-16 ***
 #> sexmale      0.574335   0.004986   115.2   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
-#>                                      edf Ref.df Chi.sq p-value    
-#> s(year):fts_year1_mean             32.05     34  10342  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_1 14.50     15  16349  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_2 12.85     15  10267  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_3 14.49     15   9610  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_4 13.48     15   8470  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_5 14.41     15   8433  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_6 13.35     15   8667  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_7 14.35     15   7764  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_8 10.12     15  11476  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_9 13.05     15   6036  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_1   14.44     15  19549  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_2   12.95     15  11146  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_3   14.64     15  12750  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_4   13.75     15  11841  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_5   14.56     15  14649  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_6   13.74     15  12002  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_7   14.52     15  11843  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_8   10.19     15  13491  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_9   12.44     15   6716  <2e-16 ***
+#>                                       edf Ref.df   Chi.sq p-value    
+#> s(year):fts_year1_mean             32.047     34 10327.70  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_1 14.490     15 11927.82  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_2 12.657     15  9710.20  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_3 14.499     15    68.77  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_4 13.341     15  7608.17  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_5 14.526     15   497.34  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_6 13.188     15  7786.44  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_7 14.293     15   713.88  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_8  9.668     15 11099.21  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_9 12.388     15  6040.51  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_1   14.367     15  7376.91  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_2   12.789     15  9625.81  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_3   14.622     15   107.41  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_4   13.645     15  9830.07  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_5   14.617     15  1737.59  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_6   13.631     15  9939.09  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_7   14.458     15   307.97  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_8    9.796     15 12228.48  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_9   11.805     15  6728.91  <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> R-sq.(adj) =  0.986   Deviance explained = 97.6%
-#> fREML =  22189  Scale est. = 1         n = 8282
+#> fREML =  22154  Scale est. = 1         n = 8282
 ```
 
 Key components:
 
 1.  Fixed effects: `sex` captures baseline male-female differences
-2.  Time-varying level: `fts(year, mean_only=TRUE)` models shared
+2.  Time-varying level: `fts(year, mean_only = TRUE)` models shared
     temporal trends  
-3.  Time-varying functions: `fts(age, by=sex)` captures how age patterns
-    evolve differently by sex
+3.  Time-varying functions: `fts(age, by = sex)` captures how age
+    patterns evolve differently by sex
 
 The model automatically creates a hierarchical structure where basis
 functions become `by` variables in smooths of time, sharing smoothing
@@ -292,7 +293,8 @@ more rapid mortality decline than others.
 
 ### Focused analysis: teenage mortality trends
 
-Let’s examine how mortality patterns changed for a specific age group:
+Let’s examine how mortality patterns changed for a specific age group by
+leveraging the power of `marginaleffects`:
 
 ``` r
 plot_predictions(
@@ -325,7 +327,8 @@ male-female differences.
 
 ### Rate of change analysis
 
-Understanding *how fast* mortality is improving:
+We can look deeper at these predictions to understand *how fast*
+mortality is improving, again using `marginaleffects` support:
 
 ``` r
 plot_slopes(
@@ -360,57 +363,6 @@ First derivatives showing the rate of mortality improvement for
 17-year-olds. Fluctuations reveal periods of faster and slower mortality
 decline.
 
-## Model diagnostics
-
-### Residual analysis
-
-``` r
-# Extract residuals
-resids <- residuals(mod)
-fitted_vals <- fitted(mod)
-
-# Create data frame for ggplot
-resid_data <- data.frame(
-  fitted = fitted_vals,
-  residuals = resids
-)
-
-# ggplot version
-ggplot(resid_data, aes(x = fitted, y = residuals)) +
-  geom_point(alpha = 0.3, size = 0.5) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(
-    x = "Fitted values", 
-    y = "Residuals",
-    title = "Residual analysis"
-  ) +
-  theme_bw()
-```
-
-![Model residuals showing good fit with no systematic patterns. Random
-scatter around zero indicates appropriate model
-specification.](mortality-analysis_files/figure-html/residuals-1.png)
-
-Model residuals showing good fit with no systematic patterns. Random
-scatter around zero indicates appropriate model specification.
-
-### Model diagnostics
-
-For functional time series models, traditional GAM diagnostics need to
-be adapted. The ffc package will develop specialized diagnostic methods
-for:
-
-- **Basis adequacy**: Ensuring sufficient flexibility for time-varying
-  coefficients
-- **Temporal autocorrelation**: Checking coefficient time series for
-  proper structure  
-- **Functional residuals**: Examining residuals at both observation and
-  functional levels
-- **Forecast validation**: Cross-validation approaches for functional
-  forecasting
-
-Development of comprehensive diagnostic tools for ffc models is ongoing.
-
 ## Extracting time-varying coefficients
 
 The power of functional forecasting lies in treating the evolving
@@ -420,22 +372,22 @@ coefficients as time series that can be forecasted:
 functional_coefs <- fts_coefs(
   mod,
   summary = FALSE,
-  times = 10  # Number of coefficient draws
+  times = 10
 )
 functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.387            1  1980
-#>  2 fts_year1_mean  1981     0.377            1  1981
-#>  3 fts_year1_mean  1982     0.415            1  1982
-#>  4 fts_year1_mean  1983     0.319            1  1983
-#>  5 fts_year1_mean  1984     0.309            1  1984
+#>  1 fts_year1_mean  1980     0.406            1  1980
+#>  2 fts_year1_mean  1981     0.389            1  1981
+#>  3 fts_year1_mean  1982     0.420            1  1982
+#>  4 fts_year1_mean  1983     0.320            1  1983
+#>  5 fts_year1_mean  1984     0.308            1  1984
 #>  6 fts_year1_mean  1985     0.330            1  1985
-#>  7 fts_year1_mean  1986     0.280            1  1986
-#>  8 fts_year1_mean  1987     0.253            1  1987
-#>  9 fts_year1_mean  1988     0.240            1  1988
-#> 10 fts_year1_mean  1989     0.272            1  1989
+#>  7 fts_year1_mean  1986     0.279            1  1986
+#>  8 fts_year1_mean  1987     0.249            1  1987
+#>  9 fts_year1_mean  1988     0.232            1  1988
+#> 10 fts_year1_mean  1989     0.260            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -480,16 +432,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [1,900]
 #>    .basis                     .realisation .model .time .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      4.68
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      4.70
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      4.75
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      4.84
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      4.97
-#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 10     4.69
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     4.75
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     4.85
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     4.97
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     5.05
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      1.96
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      1.95
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      1.95
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      2.00
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      2.09
+#>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 10     1.96
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     1.98
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     2.01
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     2.08
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     2.15
 #> # ℹ 9,490 more rows
 ```
 
@@ -524,12 +476,12 @@ head(mortality_forecasts)
 #> # A tibble: 6 × 6
 #>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
 #>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-#> 1  0.00178  0.00166 0.00152  0.00162  0.00193  0.00203 
-#> 2  0.00113  0.00111 0.000987 0.00104  0.00122  0.00127 
-#> 3  0.000726 0.00131 0.000624 0.000668 0.000775 0.000807
-#> 4  0.000468 0.00149 0.000409 0.000431 0.000498 0.000524
-#> 5  0.000306 0.00165 0.000266 0.000284 0.000327 0.000346
-#> 6  0.000206 0.00186 0.000178 0.000190 0.000223 0.000231
+#> 1  0.00178  0.00171 0.00153  0.00162  0.00197  0.00206 
+#> 2  0.00114  0.00118 0.000987 0.00103  0.00124  0.00129 
+#> 3  0.000723 0.00135 0.000637 0.000660 0.000796 0.000817
+#> 4  0.000469 0.00144 0.000411 0.000426 0.000514 0.000529
+#> 5  0.000308 0.00163 0.000269 0.000279 0.000336 0.000348
+#> 6  0.000207 0.00187 0.000180 0.000187 0.000228 0.000235
 
 # Plot forecasted mortality rates, together with uncertainties
 ggplot(mortality_forecasts %>%
@@ -538,17 +490,17 @@ ggplot(mortality_forecasts %>%
            y = .estimate,
            group = year,
            colour = year)) +
-  # geom_ribbon(aes(
-  #   ymin = .q10.0,
-  #   ymax = .q90.0,
-  #   fill = year
-  # ),
-  # alpha = 0.2,
-  # colour = NA) +
+  geom_ribbon(aes(
+    ymin = .q10,
+    ymax = .q90,
+    fill = year
+  ),
+  alpha = 0.2,
+  colour = NA) +
   geom_line() +
   facet_wrap(~sex) +
   scale_colour_viridis_c(name = "Year") +
-  # scale_fill_viridis_c(name = "Year") +
+  scale_fill_viridis_c(name = "Year") +
   labs(
     x = "Age", 
     y = "Mortality rate",
@@ -566,7 +518,11 @@ functional forecasting approach predicts future age-mortality patterns.
 
 This forecasting approach enables prediction of entire functional
 relationships by combining time series forecasts of the functional
-coefficients with the underlying model structure.
+coefficients with the underlying model structure. We could easily then
+convert this to a `fable` object (using
+[`as_fable()`](https://fabletools.tidyverts.org/reference/as-fable.html))
+and compare with holdout data to compute any of the forecast scores
+supported by `fable`.
 
 ## Key insights and methodology
 
@@ -602,22 +558,14 @@ coefficients with the underlying model structure.
 
 ## Extensions and further analysis
 
-### Additional applications
-
-This methodology extends to many functional forecasting problems: -
-**Environmental data**: Temperature/precipitation profiles over time -
-**Economic indicators**: Yield curves in finance  
-- **Biological processes**: Growth curves, dose-response relationships -
-**Spatial processes**: Evolving spatial fields
-
 ### Advanced features
 
-The `ffc` package supports additional complexity: - **Multiple
-functional predictors**: `fts(age) + fts(time_since_event)`  
-- **Interaction effects**: Functional relationships that depend on other
-variables - **Different time scales**: Multiple temporal resolutions in
-the same model - **Alternative distributions**: Beyond Poisson to handle
-different data types
+The `ffc` package supports additional complexity:  
+- Multiple functional predictors: `fts(age) + fts(time_since_event)`  
+- Interaction effects: Functional relationships that depend on other
+variables  
+- Alternative distributions: Beyond Poisson to handle different data
+types
 
 ## Conclusion
 
@@ -625,11 +573,10 @@ Functional forecasting with `ffc` provides a principled approach to
 modeling and predicting evolving functional relationships. By treating
 time-varying coefficients as forecastable time series, we can:
 
-1.  **Capture complexity** that traditional methods miss
-2.  **Generate realistic forecasts** of entire functional
-    relationships  
-3.  **Quantify uncertainty** appropriately across all sources
-4.  **Provide actionable insights** for policy and planning
+1.  Capture complexity that traditional methods miss
+2.  Generate realistic forecasts of entire functional relationships  
+3.  Quantify uncertainty appropriately across all sources
+4.  Provide actionable insights for policy and planning
 
 The Queensland mortality analysis demonstrates these capabilities in a
 real-world context, revealing patterns and trends that inform our
