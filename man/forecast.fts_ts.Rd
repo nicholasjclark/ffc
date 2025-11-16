@@ -48,20 +48,17 @@ will be returned for each basis coefficient
 \donttest{
 # Extract coefficients and generate forecasts
 mod <- ffc_gam(
-  deaths ~ offset(log(population)) + sex + 
+  deaths ~ offset(log(population)) + sex +
     fts(age, k = 8, bs = "cr", time_k = 10),
-  time = "year", 
+  time = "year",
   data = qld_mortality,
   family = poisson(),
   engine = "bam"
 )
 coefs <- fts_coefs(mod, summary = FALSE, times = 5)
 
-# Generate ARDF forecasts
-fc_ardf <- forecast(coefs, h = 3, model = "ARDF", K = 2)
-
-# Plot the forecasts
-autoplot(fc_ardf)
+# Generate ETS forecasts
+forecast(coefs, model = "ETS", h = 3)
 }
 }
 \seealso{

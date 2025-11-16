@@ -324,7 +324,7 @@ test_that("as_fable.ffc_gam() handles different forecast models", {
   expect_true("FFC_ETS" %in% fc_ets$.model)
 
   # Test with ARIMA model (default)
-  fc_arima <- SW(as_fable(example_mod, newdata = newdata))
+  fc_arima <- SW(as_fable(example_mod, newdata = newdata, model = "ARIMA"))
   expect_true("FFC_ARIMA" %in% fc_arima$.model)
 })
 

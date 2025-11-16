@@ -9,7 +9,7 @@
   newdata,
   forecasts = NULL,
   response = NULL,
-  model = "ARIMA",
+  model = "ETS",
   key_vars = NULL,
   ...
 )
@@ -27,7 +27,7 @@ If NULL, forecasts will be generated using the remaining arguments}
 If NULL, automatically detected from the model formula}
 
 \item{model}{A character string representing the forecasting model to use
-if generating forecasts. Default is "ARIMA"}
+if generating forecasts. Default is "ETS"}
 
 \item{key_vars}{Optional character vector specifying grouping variables.
 If NULL, automatically detected from categorical variables in newdata}

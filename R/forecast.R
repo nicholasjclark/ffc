@@ -30,20 +30,17 @@
 #' \donttest{
 #' # Extract coefficients and generate forecasts
 #' mod <- ffc_gam(
-#'   deaths ~ offset(log(population)) + sex + 
+#'   deaths ~ offset(log(population)) + sex +
 #'     fts(age, k = 8, bs = "cr", time_k = 10),
-#'   time = "year", 
+#'   time = "year",
 #'   data = qld_mortality,
 #'   family = poisson(),
 #'   engine = "bam"
 #' )
 #' coefs <- fts_coefs(mod, summary = FALSE, times = 5)
-#' 
-#' # Generate ARDF forecasts
-#' fc_ardf <- forecast(coefs, h = 3, model = "ARDF", K = 2)
-#' 
-#' # Plot the forecasts
-#' autoplot(fc_ardf)
+#'
+#' # Generate ETS forecasts
+#' forecast(coefs, model = "ETS", h = 3)
 #' }
 #' @export
 forecast.fts_ts <- function(
@@ -103,11 +100,11 @@ forecast.fts_ts <- function(
 #' @noRd
 extract_model_params <- function(...) {
   dots <- list(...)
-  
+
   # Model parameters
   K <- if ("K" %in% names(dots)) dots$K else 2
   lag <- if ("lag" %in% names(dots)) dots$lag else 1
-  
+
   # Stan sampling parameters with sensible defaults
   chains <- if ("chains" %in% names(dots)) dots$chains else 4
   iter <- if ("iter" %in% names(dots)) dots$iter else 500
@@ -116,7 +113,7 @@ extract_model_params <- function(...) {
   adapt_delta <- if ("adapt_delta" %in% names(dots)) dots$adapt_delta else 0.75
   max_treedepth <- if ("max_treedepth" %in% names(dots)) dots$max_treedepth else 9
   times <- if ("times" %in% names(dots)) dots$times else 200
-  
+
   # Validate parameters using checkmate
   checkmate::assert_count(K, positive = TRUE)
   checkmate::assert_count(lag, positive = TRUE)
@@ -127,12 +124,12 @@ extract_model_params <- function(...) {
   checkmate::assert_number(adapt_delta, lower = 0, upper = 1)
   checkmate::assert_count(max_treedepth, positive = TRUE)
   checkmate::assert_count(times, positive = TRUE)
-  
+
   # Additional logic checks
   if (warmup >= iter) {
     stop(insight::format_error("warmup must be less than iter"))
   }
-  
+
   # Calculate posterior samples and ensure adequate minimum
   post_samples <- (iter - warmup) * chains
   min_samples <- 100
@@ -142,18 +139,18 @@ extract_model_params <- function(...) {
              "Increase iter, chains, or reduce warmup to get at least ", min_samples, " samples.")
     ))
   }
-  
+
   # Adjust cores if needed
   max_cores <- parallel::detectCores()
   if (cores > max_cores) {
     if (!identical(Sys.getenv("TESTTHAT"), "true")) {
-      rlang::warn(paste0("Requested ", cores, " cores but only ", max_cores, 
-                        " available. Using ", min(cores, max_cores), " cores."), 
+      rlang::warn(paste0("Requested ", cores, " cores but only ", max_cores,
+                        " available. Using ", min(cores, max_cores), " cores."),
                   .frequency = "once", .frequency_id = "cores_limit")
     }
     cores <- min(cores, max_cores)
   }
-  
+
   list(
     K = K,
     p = lag,
@@ -350,83 +347,83 @@ fable_forecast <- function(
 #'       For Stan models, this is automatically set to (iter - warmup) * chains
 #'       to ensure dimension consistency. Minimum 100 total posterior samples required.}
 #'   }
-#' @details 
+#' @details
 #' \strong{Forecasting Methodology:}
-#' 
-#' This function implements a two-stage forecasting approach for functional regression 
+#'
+#' This function implements a two-stage forecasting approach for functional regression
 #' models with time-varying coefficients of the form:
 #' \deqn{y_t = \sum_{j=1}^{J} \beta_j(t) B_j(x) + \epsilon_t}
 #' where \eqn{\beta_j(t)} are time-varying coefficients and \eqn{B_j(x)} are basis functions.
-#' 
+#'
 #' \enumerate{
-#'   \item \strong{Extract basis coefficients:} Time-varying functional coefficients 
+#'   \item \strong{Extract basis coefficients:} Time-varying functional coefficients
 #'     \eqn{\beta_j(t)} are extracted from the fitted GAM as time series
-#'   \item \strong{Forecast coefficients:} These coefficient time series are forecast 
+#'   \item \strong{Forecast coefficients:} These coefficient time series are forecast
 #'     using either Stan dynamic factor models (ARDF/VARDF/GPDF) or ARIMA models
 #'   \item \strong{Reconstruct forecasts:} Forecasted coefficients are combined:
 #'     \deqn{\hat{y}_{t+h} = \sum_{j=1}^{J} \hat{\beta}_j(t+h) B_j(x)}
-#'   \item \strong{Combine uncertainties:} Multiple uncertainty sources are integrated 
+#'   \item \strong{Combine uncertainties:} Multiple uncertainty sources are integrated
 #'     hierarchically (see Uncertainty Quantification section)
 #' }
-#' 
+#'
 #' \strong{Uncertainty Quantification:}
-#' 
+#'
 #' Forecast uncertainty is captured through a hierarchical structure:
-#' 
+#'
 #' \emph{Within Stan dynamic factor models:}
 #' \itemize{
 #'   \item \strong{Process uncertainty:} Factor dynamics, autoregressive terms, factor loadings
 #'   \item \strong{Observation uncertainty:} Series-specific error terms (\eqn{\sigma_{obs}})
 #' }
-#' 
+#'
 #' \emph{Final combination in linear predictor space:}
 #' \itemize{
 #'   \item \strong{Stan forecast samples:} Already incorporate process + observation uncertainty
-#'   \item \strong{GAM parameter uncertainty:} Random draws from \eqn{N(\hat{\boldsymbol{\theta}}, \mathbf{V})} 
+#'   \item \strong{GAM parameter uncertainty:} Random draws from \eqn{N(\hat{\boldsymbol{\theta}}, \mathbf{V})}
 #'     where \eqn{\mathbf{V}} is the coefficient covariance matrix
 #' }
-#' 
+#'
 #' These components are combined additively: \eqn{\text{Stan forecasts} + \text{GAM uncertainty}}
-#' 
+#'
 #' \strong{Model Selection:}
-#' 
+#'
 #' \itemize{
-#'   \item \strong{Stan factor models (ARDF/VARDF/GPDF):} Used for multivariate 
-#'     forecasting of non-mean basis coefficients. Capture dependencies between 
+#'   \item \strong{Stan factor models (ARDF/VARDF/GPDF):} Used for multivariate
+#'     forecasting of non-mean basis coefficients. Capture dependencies between
 #'     coefficient series and assume zero-centered time series for efficiency.
-#'   \item \strong{Mean basis models:} Used for mean basis coefficients (which operate 
+#'   \item \strong{Mean basis models:} Used for mean basis coefficients (which operate
 #'     at non-zero levels). Default is ETS, controlled by `mean_model` parameter.
 #' }
-#' 
+#'
 #' \strong{Important Note on `times` Parameter:}
-#' 
-#' For Stan dynamic factor models, the `times` parameter is automatically set to 
-#' `(iter - warmup) * chains` to ensure dimensional consistency. Any user-specified 
-#' `times` value will be ignored with a warning. For ARIMA models, `times` can be 
+#'
+#' For Stan dynamic factor models, the `times` parameter is automatically set to
+#' `(iter - warmup) * chains` to ensure dimensional consistency. Any user-specified
+#' `times` value will be ignored with a warning. For ARIMA models, `times` can be
 #' specified freely and controls the number of posterior draws.
 #' @examples
 #' \donttest{
 #' # Basic forecasting example
 #' data("growth_data")
 #' mod <- ffc_gam(
-#'   Reaction ~ fts(Subject, k = 3, time_k = 8) + 
+#'   Reaction ~ fts(Subject, k = 3, time_k = 8) +
 #'              fts(Days, k = 3, time_k = 8),
 #'   time = "Days", data = growth_data
 #' )
-#' 
+#'
 #' # Forecast with ETS (default for mixed basis)
 #' newdata <- data.frame(Subject = rep("308", 3), Days = 10:12)
 #' fc <- forecast(mod, newdata = newdata, model = "ETS")
-#' 
+#'
 #' # Use ARDF with custom mean_model for mean basis
-#' fc_ardf <- forecast(mod, newdata = newdata, 
-#'                     model = "ARDF", 
+#' fc_ardf <- forecast(mod, newdata = newdata,
+#'                     model = "ARDF",
 #'                     mean_model = "RW",  # Use random walk for mean basis
 #'                     K = 2)
-#' 
+#'
 #' # Get raw forecast matrix without summary
-#' fc_raw <- forecast(mod, newdata = newdata, 
-#'                   model = "ETS", 
+#' fc_raw <- forecast(mod, newdata = newdata,
+#'                   model = "ETS",
 #'                   summary = FALSE)
 #' }
 #' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
@@ -458,20 +455,20 @@ forecast.ffc_gam <- function(
   # Take full draws of beta coefficients
   # Get times parameter for beta draws - need to check for Stan models first
   temp_params <- extract_model_params(...)
-  
+
   # For Stan models, ensure times matches posterior samples to avoid dimension mismatches
   if (model %in% c('ARDF', 'GPDF', 'VARDF')) {
     stan_post_samples <- (temp_params$iter - temp_params$warmup) * temp_params$chains
     if (temp_params$times != stan_post_samples) {
       if (!identical(Sys.getenv("TESTTHAT"), "true")) {
         rlang::warn(paste0("For Stan models, setting times = ", stan_post_samples, " to match posterior samples. ",
-                          "Requested times = ", temp_params$times, " would cause dimension mismatch."), 
+                          "Requested times = ", temp_params$times, " would cause dimension mismatch."),
                     .frequency = "once", .frequency_id = "stan_times_mismatch")
       }
       temp_params$times <- stan_post_samples
     }
   }
-  
+
   orig_betas <- mgcv::rmvn(
     n = temp_params$times,
     mu = coef(object),
@@ -594,13 +591,13 @@ forecast.ffc_gam <- function(
 
     # Fit the time series model to the basis coefficients
     # and generate basis coefficient forecasts
-    
+
     # Categorize basis functions once
     basis_names <- unique(functional_coefs$.basis)
     has_mean_basis <- any(grepl('_mean', basis_names))
     has_non_mean_basis <- any(!grepl('_mean', basis_names))
-    
-    if(model %in% c('ARDF', 'GPDF', 'VARDF') & 
+
+    if(model %in% c('ARDF', 'GPDF', 'VARDF') &
        has_mean_basis & has_non_mean_basis) {
       # For factor models, it will very often make sense to forecast any
       # _mean basis (i.e. level shifts) separately as they can behave very
@@ -774,7 +771,7 @@ forecast.ffc_gam <- function(
     # Add the draw-specific row predictions to the
     # intermediate prediction matrix
     unique_draws <- unique(fts_fc$.draw)
-    
+
     fc_matrix <- do.call(
       rbind,
       lapply(
@@ -784,7 +781,7 @@ forecast.ffc_gam <- function(
         }
       )
     )
-    
+
     full_linpreds <- fc_matrix + intermed_linpreds
   }
 
