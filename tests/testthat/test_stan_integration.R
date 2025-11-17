@@ -18,7 +18,7 @@ test_that("ARDF function can be called", {
     family = gaussian(),
     h = 3,
     chains = 1,
-    iter = 100
+    iter = 300
   ))
 })
 
@@ -29,7 +29,7 @@ test_that("VARDF function can be called", {
     family = gaussian(),
     h = 3,
     chains = 1,
-    iter = 100
+    iter = 300
   ))
 })
 
@@ -40,7 +40,7 @@ test_that("GPDF function can be called", {
     family = gaussian(),
     h = 3,
     chains = 1,
-    iter = 100
+    iter = 300
   ))
 })
 
@@ -74,14 +74,14 @@ test_that("Stan models handle different horizon specifications", {
     formula = .estimate ~ K(K = 2) + p(p = 1),
     h = 1,
     chains = 1,
-    iter = 100
+    iter = 300
   ))
   
   expect_no_error(ARDF(
     formula = .estimate ~ K(K = 2) + p(p = 1),
     h = 10,
     chains = 1,
-    iter = 100
+    iter = 300
   ))
 })
 
@@ -91,7 +91,7 @@ test_that("Stan models can accept different family specifications", {
     formula = .estimate ~ K(K = 2) + p(p = 1),
     family = gaussian(),
     chains = 1,
-    iter = 100
+    iter = 300
   ))
 })
 
@@ -103,7 +103,7 @@ test_that("Stan models handle adaptation parameters", {
     adapt_delta = 0.95,
     max_treedepth = 12,
     chains = 1,
-    iter = 100
+    iter = 300
   ))
 })
 

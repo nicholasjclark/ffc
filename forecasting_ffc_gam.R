@@ -86,7 +86,7 @@ mod <- ffc_gam(
     fts(
       time,
       mean_only = TRUE,
-      time_k = 60
+      time_k = 30
     ) +
     fts(
       season,
@@ -249,38 +249,6 @@ fc_ets %>%
     measures = distribution_accuracy_measures
   )
 
-
-# A spatiotemporal species distribution example
-# Download the pcod data from the sdmTMB package
-temp <- tempfile()
-download.file('https://github.com/cran/sdmTMB/raw/refs/heads/master/data/pcod.rda',
-              temp)
-load(temp)
-unlink(temp)
-
-unique(pcod$year)
-data_train <- pcod %>%
-  dplyr::filter(year < 2015)
-data_test <- pcod %>%
-  dplyr::filter(year >= 2015)
-
-# Model pcod presence / absence over space and time
-mod <- ffc_gam(
-  present ~
-    s(depth_scaled, k = 3) +
-    fts(lon, lat, mean_only = TRUE,
-        time_k = 7) +
-    fts(lon, lat, k = 6,
-        time_k = 7),
-  data = data_train,
-  time = 'year',
-  family = binomial(),
-  engine = 'gam',
-  method = 'REML'
-)
-summary(mod)
-gratia::draw(mod)
-
 # Forecast and calculate probability of occurrence (expectation)
 fc <- forecast(
   object = mod,
@@ -307,55 +275,6 @@ ggplot(fc %>%
        aes(x = lat,
            y = lon,
            colour = .estimate)) +
-  facet_wrap(~year) +
-  geom_point() +
-  scale_colour_viridis_c() +
-  theme_bw()
-
-
-# Now try modelling density over space and time
-mod <- ffc_gam(
-  density ~
-    s(depth_scaled, k = 3) +
-    fts(lon, lat,
-        mean_only = TRUE,
-        time_k = 7) +
-    fts(lon, lat,
-        k = 6,
-        time_k = 7),
-  data = data_train,
-  time = 'year',
-  family = tw(),
-  engine = 'gam',
-  method = 'REML'
-)
-summary(mod)
-gratia::draw(mod)
-
-# Forecast
-fc <- forecast(
-  object = mod,
-  newdata = data_test,
-  model = 'GPDF',
-  K = 3,
-  type = 'response',
-  summary = TRUE
-)
-
-ggplot(data_test,
-       aes(x = lat,
-           y = lon,
-           colour = log(density + 1))) +
-  facet_wrap(~year) +
-  geom_point() +
-  scale_colour_viridis_c() +
-  theme_bw()
-
-ggplot(fc %>%
-         dplyr::bind_cols(data_test),
-       aes(x = lat,
-           y = lon,
-           colour = log(.estimate + 1))) +
   facet_wrap(~year) +
   geom_point() +
   scale_colour_viridis_c() +
@@ -404,6 +323,7 @@ fc <- forecast(
   object = mod,
   newdata = airdat$data_test,
   model = 'GPDF',
+  mean_model = 'ETS',
   K = 3,
   summary = TRUE
 )
@@ -425,77 +345,3 @@ ggplot(
                   ymin = .q10),
               alpha = 0.2) +
   geom_line()
-
-# An example of forecasting particulate matter over Graz-Mitte, Austria
-temp <- tempfile()
-download.file('https://github.com/cran/ftsa/raw/refs/heads/master/data/pm_10_GR.rda',
-              temp)
-load(temp)
-unlink(temp)
-
-pm_dat <- do.call(
-  rbind,
-  lapply(
-    seq_len(NCOL(pm_10_GR$y)), function(x){
-      data.frame(pm = pm_10_GR$y[, x],
-                 interval = 1 : 48,
-                 time = x)
-    })
-)
-
-ggplot(pm_dat %>%
-         dplyr::filter(time > 175),
-       aes(x = interval, y = pm, colour = time, group = time)) +
-  geom_line() +
-  scale_colour_viridis_c()
-
-# Forecast two days ahead
-dat_train <- pm_dat %>%
-  dplyr::filter(time <= 180)
-dat_test <- pm_dat %>%
-  dplyr::filter(time > 180)
-
-# Use thin-plate basis functions (which are orthogonal) for the curve
-# so they can be forecasted with independent ARIMA
-# models
-mod <- ffc_gam(
-  pm ~
-    fts(time, mean_only = TRUE, time_k = 100) +
-    fts(interval, k = 30, bs = 'tp', time_k = 100,
-        share_penalty = FALSE),
-  data = dat_train,
-  time = 'time',
-  family = tw(),
-  engine = 'bam',
-  discrete = TRUE,
-  select = TRUE,
-  nthreads = 4
-)
-summary(mod, re.test = FALSE)
-fts_coefs(mod, summary = FALSE) %>% autoplot()
-
-# Forecast basis coefficient time series with ARIMA models
-fcar <- forecast(
-  object = mod,
-  newdata = dat_test,
-  summary = TRUE
-)
-
-# Plot forecasts against the true curves
-ggplot(
-  dat_test %>%
-    dplyr::bind_cols(fcar),
-  aes(x = interval,
-      y = pm)
-) +
-  geom_ribbon(aes(ymax = .q97.5,
-                  ymin = .q2.5),
-              alpha = 0.3,
-              fill = 'darkred') +
-  geom_ribbon(aes(ymax = .q90,
-                  ymin = .q10),
-              alpha = 0.3,
-              fill = 'darkred') +
-  geom_line(linewidth = 1.5, col = 'white') +
-  geom_line() +
-  facet_wrap(~time)

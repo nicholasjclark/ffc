@@ -367,3 +367,161 @@ test_that("gam_setup and ffc_gam_setup work through ffc_gam interface", {
     family = gaussian()
   ), "knot.*must be supplied as lists")
 })
+
+test_that("parametric_penalty returns NULL when no penalties", {
+  # Create proper terms object using actual R terms functionality
+  f <- ~ 1
+  pterms <- terms(f)
+  
+  # Empty assignment (no terms beyond intercept)
+  assign <- c(0)  # only intercept
+  
+  # Test with empty paraPen
+  result <- SW(ffc:::parametric_penalty(
+    pterms = pterms,
+    assign = assign,
+    paraPen = list(),
+    sp0 = 0.1
+  ))
+  
+  # Function returns NULL when no penalties are processed
+  expect_null(result)
+})
+
+test_that("parametric_penalty returns NULL for terms without penalties", {
+  # Test with terms that have no penalties applied
+  f <- ~ x + z
+  pterms <- terms(f)
+  assign <- c(0, 1, 2)  # intercept, x, z
+  
+  # Call with NULL paraPen
+  result <- SW(ffc:::parametric_penalty(
+    pterms = pterms,
+    assign = assign,
+    paraPen = NULL,
+    sp0 = 0.1
+  ))
+  
+  # Returns NULL when no penalties are found
+  expect_null(result)
+})
+
+test_that("clone_smooth_spec clones smooth specifications correctly", {
+  # Create mock smooth specifications
+  specb <- list(
+    term = "s(x)",
+    label = "s(x)", 
+    dim = 1,
+    by = "NA",
+    id = 1,
+    margin = list(bs = "tp", k = 10),
+    xt = NULL
+  )
+  class(specb) <- "xx.smooth.spec"
+  
+  spec <- list(
+    term = "s(y)",
+    label = "s(y)",
+    dim = 1, 
+    by = "NA",
+    id = 1,
+    margin = list(bs = "tp", k = 10),
+    xt = NULL
+  )
+  class(spec) <- "xx.smooth.spec"
+  
+  # Test basic cloning
+  result <- SW(ffc:::clone_smooth_spec(specb, spec))
+  
+  expect_equal(result$term, "s(y)")
+  expect_equal(result$label, "s(y)")
+  expect_equal(result$by, "NA")
+  expect_equal(result$id, 1)
+  expect_true(inherits(result, "xx.smooth.spec"))
+})
+
+test_that("clone_smooth_spec handles by variables correctly", {
+  specb <- list(
+    term = "s(x)",
+    label = "s(x)",
+    dim = 1,
+    by = "group",
+    margin = list(bs = "tp", k = 10)
+  )
+  class(specb) <- "xx.smooth.spec"
+  
+  spec <- list(
+    term = "s(y)", 
+    label = "s(y)",
+    dim = 1,
+    by = "NA",
+    margin = list(bs = "tp", k = 10)
+  )
+  class(spec) <- "xx.smooth.spec"
+  
+  result <- SW(ffc:::clone_smooth_spec(specb, spec))
+  
+  expect_equal(result$by, "NA")
+  expect_equal(result$term, "s(y)")
+})
+
+test_that("initial_spg handles different family types", {
+  set.seed(42)
+  n <- 15
+  X <- cbind(1, runif(n), rnorm(n))
+  y <- rnorm(n)
+  S <- list(diag(3))
+  
+  # Test with Poisson family
+  y_pois <- rpois(n, lambda = 2)
+  sp_pois <- SW(ffc:::initial_spg(
+    x = X,
+    y = y_pois,
+    weights = rep(1, n),
+    family = poisson(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4)
+  ))
+  
+  expect_true(is.numeric(sp_pois))
+  expect_true(length(sp_pois) == 1)
+  expect_true(sp_pois >= 0)
+  
+  # Test with Gamma family  
+  y_gamma <- rgamma(n, shape = 2)
+  sp_gamma <- SW(ffc:::initial_spg(
+    x = X,
+    y = y_gamma,
+    weights = rep(1, n),
+    family = Gamma(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4)
+  ))
+  
+  expect_true(is.numeric(sp_gamma))
+  expect_true(length(sp_gamma) == 1)
+  expect_true(sp_gamma >= 0)
+})
+
+test_that("initial_spg handles empty penalty list", {
+  set.seed(123)
+  n <- 10
+  X <- cbind(1, runif(n))
+  y <- rnorm(n)
+  
+  # Test with empty penalty list
+  sp_empty <- SW(ffc:::initial_spg(
+    x = X,
+    y = y,
+    weights = rep(1, n), 
+    family = gaussian(),
+    S = list(),
+    rank = numeric(0),
+    off = numeric(0)
+  ))
+  
+  expect_true(is.numeric(sp_empty))
+  expect_true(length(sp_empty) == 0)
+})

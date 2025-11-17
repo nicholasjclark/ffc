@@ -39,18 +39,18 @@
 #' 
 #' # Step 2: Use GPDF for forecasting functional coefficients
 #' fc <- forecast(mod, newdata = test_data, model = "GPDF", 
-#'                chains = 1, iter = 500)
+#'                chains = 1, iter = 300)
 #' }
 #' @export
 GPDF = function(formula,
                 family = gaussian(),
-                h = 1,
-                chains = 4,
-                cores = 1,
-                iter = 1000,
+                h = get_stan_param("h", "forecast"),
+                chains = get_stan_param("chains"),
+                cores = get_stan_param("cores"),
+                iter = get_stan_param("iter"),
                 warmup = floor(iter / 2),
-                adapt_delta = 0.80,
-                max_treedepth = 10,
+                adapt_delta = get_stan_param("adapt_delta"),
+                max_treedepth = get_stan_param("max_treedepth"),
                 ...){
 
   gpdf_model <- new_model_class(
@@ -82,13 +82,13 @@ train_gpdf = function(
     .data,
     specials,
     family = gaussian(),
-    h = 1,
-    chains = 4,
-    cores = 1,
-    iter = 1000,
-    warmup = floor(iter / 2),
-    adapt_delta = 0.80,
-    max_treedepth = 10,
+    h = get_stan_param("h", "forecast"),
+    chains = get_stan_param("chains"),
+    cores = get_stan_param("cores"),
+    iter = get_stan_param("iter"),
+    warmup = floor(get_stan_param("iter") / 2),
+    adapt_delta = get_stan_param("adapt_delta"),
+    max_treedepth = get_stan_param("max_treedepth"),
     ...){
 
   # Validate arguments

@@ -169,16 +169,5 @@ extract_stan_fc = function(stanfit,
 
 #' @noRd
 set_series_levels = function(x){
-  unique_levels <- sort(unique(x))
-  if(any(grepl('_mean', unique_levels))){
-    newlevels <- vector(length = length(unique_levels))
-    n_means <- length(which(grepl('_mean', unique_levels)))
-    newlevels <- c(
-      grep('_mean', unique_levels, value = TRUE),
-      unique_levels[-grep('_mean', unique_levels)]
-    )
-  } else {
-    newlevels <- unique_levels
-  }
-  return(newlevels)
+  sort(unique(x))
 }

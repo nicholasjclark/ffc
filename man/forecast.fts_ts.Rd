@@ -4,19 +4,29 @@
 \alias{forecast.fts_ts}
 \title{Forecasting functional basis coefficients}
 \usage{
-\method{forecast}{fts_ts}(object, model = "ARIMA", h = 1, times = 25, stationary = FALSE, ...)
+\method{forecast}{fts_ts}(
+  object,
+  model = "ARIMA",
+  h = get_stan_param("h", "forecast"),
+  times = 25,
+  stationary = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{An object of class \code{fts_ts} containing time-varying
 basis function coefficients extracted from an \code{ffc_gam} object}
 
 \item{model}{A \code{character} string representing a valid univariate model definition
-from the \pkg{fable} package or one of the built-in Bayesian dynamic
+from the \pkg{fable} package, ensemble methods, or one of the built-in Bayesian dynamic
 factor models. Note that if a \pkg{fable} model is used,
 the chosen method must have an associated
 \code{generate()} method in order to simulate forecast realisations. Valid models
-currently include: \code{'ARDF'}, \code{'GPDF'}, '\code{VARDF},
-\code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'RW'}, \code{'NAIVE'}, and \code{'NNETAR'}}
+currently include: \code{'ENS'}, \code{'ARDF'}, \code{'GPDF'}, '\code{VARDF},
+\code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'RW'}, \code{'NAIVE'}, and \code{'NNETAR'}.
+The \code{'ENS'} option combines ETS and Random Walk forecasts with equal weights,
+hedging bets between exponential smoothing and random walk assumptions
+to provide more robust predictions when model uncertainty is high.}
 
 \item{h}{A positive \code{integer} specifying the length of the forecast
 horizon}

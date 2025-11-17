@@ -35,7 +35,7 @@ test_that("ARDF model works with basic functionality", {
     K = 1,
     lag = 1,
     chains = 1,
-    iter = 220,
+    iter = 300,
     summary = TRUE
   ))
 
@@ -82,7 +82,7 @@ test_that("GPDF model works with basic functionality", {
     model = "GPDF",
     K = 1,
     chains = 1,
-    iter = 200,
+    iter = 300,
     summary = TRUE
   ))
 
@@ -128,7 +128,7 @@ test_that("VARDF model works with basic functionality", {
     K = 2,
     lag = 1,
     chains = 1,
-    iter = 200,
+    iter = 300,
     summary = TRUE
   ))
 

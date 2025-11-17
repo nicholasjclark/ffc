@@ -25,13 +25,13 @@ test_that("forecast.fts_ts() works with ARIMA model", {
 test_that("forecast.fts_ts() works with different fable models", {
   functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
 
-  # Test ETS model
-  fc_ets <- SW(forecast(functional_coefs,
-                        model = "ETS",
+  # Test ENS ensemble model
+  fc_ens <- SW(forecast(functional_coefs,
+                        model = "ENS",
                         h = 2,
                         times = 2))
-  expect_true(inherits(fc_ets, "tbl_df"))
-  expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_ets)))
+  expect_true(inherits(fc_ens, "tbl_df"))
+  expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_ens)))
 
   # Test NAIVE model
   fc_naive <- SW(forecast(functional_coefs,
@@ -319,9 +319,9 @@ test_that("as_fable.ffc_gam() handles different forecast models", {
     time = c(76)
   )
 
-  # Test with ETS model
-  fc_ets <- SW(as_fable(example_mod, newdata = newdata, model = "ETS"))
-  expect_true("FFC_ETS" %in% fc_ets$.model)
+  # Test with ENS ensemble model
+  fc_ens <- SW(as_fable(example_mod, newdata = newdata, model = "ENS"))
+  expect_true("FFC_ENS" %in% fc_ens$.model)
 
   # Test with ARIMA model (default)
   fc_arima <- SW(as_fable(example_mod, newdata = newdata, model = "ARIMA"))
@@ -485,6 +485,76 @@ test_that("as_fable.ffc_gam() uses tsibble::new_tsibble correctly", {
   expect_true(all(c(".dist", ".mean", ".model") %in% names(fc_fable)))
 })
 
+test_that("as_fable.ffc_gam() error cases are properly handled", {
+  skip_if_not_installed("distributional")
+  
+  newdata <- data.frame(
+    y = c(10, 15),
+    season = c(1, 2),
+    time = c(76, 77)
+  )
+  
+  # Test error when formula is NULL and response not provided
+  mod_no_formula <- example_mod
+  mod_no_formula$formula <- NULL
+  
+  expect_error(
+    as_fable(mod_no_formula, newdata = newdata, response = NULL),
+    "Cannot auto-detect response variable"
+  )
+  
+  # Test error when time variable not found in model object
+  mod_no_time <- example_mod
+  mod_no_time$time_var <- NULL
+  
+  expect_error(
+    as_fable(mod_no_time, newdata = newdata),
+    "Time variable not found in model object"
+  )
+  
+  # Test error when forecast dimensions don't match newdata
+  forecasts_wrong_dim <- matrix(c(10, 12, 14), nrow = 1, ncol = 3)
+  
+  expect_error(
+    as_fable(example_mod, newdata = newdata, forecasts = forecasts_wrong_dim),
+    "Forecast dimensions.*do not match newdata rows"
+  )
+  
+  # Test time variable class validation with pre-computed forecasts
+  # Use pre-computed forecasts to bypass forecast generation issues
+  newdata_bad_time <- newdata
+  newdata_bad_time$time <- as.complex(newdata_bad_time$time)
+  forecasts_good <- matrix(c(10, 12, 14, 16), nrow = 2, ncol = 2)
+  
+  expect_error(
+    as_fable(example_mod, newdata = newdata_bad_time, forecasts = forecasts_good),
+    "must be Date.*POSIXct.*yearquarter.*yearmonth.*numeric.*integer"
+  )
+})
+
+test_that("as_fable.ffc_gam() handles character time variable conversion", {
+  skip_if_not_installed("distributional")
+  
+  # Use simple data that won't trigger forecast validation errors  
+  newdata <- data.frame(
+    y = c(10),
+    season = c(1),
+    time = c("76")  # single character time point
+  )
+  
+  # Pre-compute forecasts to avoid forecast generation issues
+  forecasts_good <- matrix(c(10, 12), nrow = 2, ncol = 1)
+  
+  # Should warn about conversion and convert to numeric
+  expect_warning(
+    fc_fable <- as_fable(example_mod, newdata = newdata, forecasts = forecasts_good),
+    "Converting character time variable to numeric"
+  )
+  
+  expect_true(inherits(fc_fable, "fbl_ts"))
+  expect_true(is.numeric(fc_fable$time))
+})
+
 # Tests for time interval validation
 test_that("forecast.ffc_gam() validates time intervals correctly", {
   # Use growth_data which has regular yearly intervals
@@ -553,6 +623,60 @@ test_that("forecast.ffc_gam() handles overlapping time points", {
   expect_error({
     forecast(mod_growth, newdata = newdata_all_overlap, model = "ETS")
   }, "No future time points found")
+})
+
+test_that("ENS ensemble works with Quarter time index (tourism example)", {
+  # Recreate tourism example from README
+  tourism_melb <- tsibble::tourism |>
+    dplyr::filter(
+      Region == "Melbourne",
+      Purpose == "Visiting"
+    ) |>
+    dplyr::mutate(
+      quarter = lubridate::quarter(Quarter),
+      time = dplyr::row_number()
+    )
+  
+  # Split data
+  train <- tourism_melb |> dplyr::slice_head(n = 75)
+  test <- tourism_melb |> dplyr::slice_tail(n = 5)
+  
+  # Fit model
+  mod <- SW(ffc_gam(
+    Trips ~
+      fts(
+        time,
+        mean_only = TRUE,
+        time_k = 50,
+        time_m = 1
+      ) +
+      fts(
+        quarter,
+        k = 4,
+        time_k = 15,
+        time_m = 1
+      ),
+    time = "time",
+    data = train,
+    family = tw(),
+    engine = "gam"
+  ))
+  
+  # Test ENS ensemble with Quarter time index
+  fc_ffc_ens <- SW(as_fable(mod, newdata = test, model = "ENS"))
+  
+  # Verify structure
+  expect_true(inherits(fc_ffc_ens, "fbl_ts"))
+  expect_true("FFC_ENS" %in% fc_ffc_ens$.model)
+  expect_true("Quarter" %in% names(fc_ffc_ens))
+  expect_equal(nrow(fc_ffc_ens), nrow(test))
+  
+  # Test other models still work
+  fc_ffc_ets <- SW(as_fable(mod, newdata = test, model = "ETS"))
+  fc_ffc_arima <- SW(as_fable(mod, newdata = test, model = "ARIMA"))
+  
+  expect_true("FFC_ETS" %in% fc_ffc_ets$.model)
+  expect_true("FFC_ARIMA" %in% fc_ffc_arima$.model)
 })
 
 test_that("forecast.ffc_gam() handles grouped data time validation", {

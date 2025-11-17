@@ -8,12 +8,12 @@
   object,
   newdata,
   type = "response",
-  model = "ETS",
+  model = "ENS",
   stationary = FALSE,
   summary = TRUE,
   robust = TRUE,
   probs = c(0.025, 0.1, 0.9, 0.975),
-  mean_model = "ETS",
+  mean_model = "ENS",
   ...
 )
 }
@@ -32,13 +32,11 @@ of the response (the mean) but ignore uncertainty in the observation process.
 When \code{response} is used (the default), the predictions take uncertainty in the observation
 process into account to return predictions on the outcome scale}
 
-\item{model}{A \code{character} string representing a valid univariate model definition
-from the \pkg{fable} package or one of the built-in Bayesian dynamic
-factor models. Note that if a \pkg{fable} model is used,
-the chosen method must have an associated
-\code{generate()} method in order to simulate forecast realisations. Valid models
-currently include: \code{'ARDF'}, \code{'GPDF'}, '\code{VARDF},
-\code{'ETS'}, \code{'ARIMA'}, \code{'AR'}, \code{'RW'}, \code{'NAIVE'}, and \code{'NNETAR'}}
+\item{model}{A character string specifying the forecasting model to use.
+Default is "ENS" (ensemble). Options include "ENS", "ETS", "ARIMA", "RW",
+"NAIVE", and Stan dynamic factor models ("ARDF", "VARDF", "GPDF").
+"ENS" combines ETS and Random Walk forecasts with equal weights,
+hedging bets between different forecasting assumptions to improve robustness.}
 
 \item{stationary}{If \code{TRUE}, the fitted time series models are
 constrained to be stationary. Default is \code{FALSE}. This option
@@ -57,7 +55,9 @@ Only used if \code{summary} is \code{TRUE}}
 
 \item{mean_model}{A character string specifying the forecasting model to use
 for mean basis coefficients when using Stan factor models (ARDF, VARDF, GPDF).
-Default is "ETS". Options include "ETS", "ARIMA", "RW", "NAIVE".
+Default is "ENS". Options include "ENS", "ETS", "ARIMA", "RW", "NAIVE".
+"ENS" creates an ensemble of ETS and RW forecasts with equal weights,
+hedging bets between different forecasting assumptions for mean coefficients.
 This is only used when forecasting mixed mean/non-mean basis functions with
 Stan factor models.}
 
@@ -96,7 +96,8 @@ where \eqn{\beta_j(t)} are time-varying coefficients and \eqn{B_j(x)} are basis 
 \item \strong{Extract basis coefficients:} Time-varying functional coefficients
 \eqn{\beta_j(t)} are extracted from the fitted GAM as time series
 \item \strong{Forecast coefficients:} These coefficient time series are forecast
-using either Stan dynamic factor models (ARDF/VARDF/GPDF) or ARIMA models
+using ensemble methods (ENS), Stan dynamic factor models (ARDF/VARDF/GPDF),
+or individual fable models (ETS, ARIMA, etc.)
 \item \strong{Reconstruct forecasts:} Forecasted coefficients are combined:
 \deqn{\hat{y}_{t+h} = \sum_{j=1}^{J} \hat{\beta}_j(t+h) B_j(x)}
 \item \strong{Combine uncertainties:} Multiple uncertainty sources are integrated
@@ -125,11 +126,16 @@ These components are combined additively: \eqn{\text{Stan forecasts} + \text{GAM
 \strong{Model Selection:}
 
 \itemize{
+\item \strong{ENS ensemble (default):} Combines ETS and Random Walk forecasts
+with equal weights. This hedges bets between exponential smoothing assumptions
+(trend and seasonality patterns continue) and random walk assumptions
+(future values equal current values). Provides robust predictions when
+model uncertainty is high, which is common in coefficient forecasting.
 \item \strong{Stan factor models (ARDF/VARDF/GPDF):} Used for multivariate
 forecasting of non-mean basis coefficients. Capture dependencies between
 coefficient series and assume zero-centered time series for efficiency.
 \item \strong{Mean basis models:} Used for mean basis coefficients (which operate
-at non-zero levels). Default is ETS, controlled by \code{mean_model} parameter.
+at non-zero levels). Default is ENS ensemble, controlled by \code{mean_model} parameter.
 }
 
 \strong{Important Note on \code{times} Parameter:}
@@ -156,15 +162,14 @@ newdata <- data.frame(
   id = "boy_11", 
   age_yr = c(16, 17, 18)
 )
-fc <- forecast(mod, newdata = newdata, model = "ETS")
+fc <- forecast(mod, newdata = newdata)  # Uses ENS ensemble by default
 
-# Forecast with random walk model
+# Forecast with specific models
+fc_ets <- forecast(mod, newdata = newdata, model = "ETS")
 fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 
 # Get raw forecast matrix without summary
-fc_raw <- forecast(mod, newdata = newdata,
-                  model = "ETS",
-                  summary = FALSE)
+fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
 }
 }
 \seealso{
