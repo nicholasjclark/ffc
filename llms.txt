@@ -74,7 +74,8 @@ Melbourne, Australia. The data can be found in the
 [`tsibble::tourism`](https://tsibble.tidyverts.org/reference/tourism.html)
 data set. For now we need to explicitly add the `quarter` and `time`
 variables to the data, but in future this will be done automatically for
-seamless integration with the `tsibbleverse`
+seamless integration with the
+[`tsibbleverse`](https://tsibble.tidyverts.org/)
 
 ``` r
 tourism_melb <- tourism %>%
@@ -144,8 +145,25 @@ mod <- ffc_gam(
 )
 ```
 
-Draw the time-varying basis coefficients using support for the
-[`gratia`](https://gavinsimpson.github.io/gratia/) package
+The
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+method is handy for viewing the time-varying basis coefficients from
+[`ffc_gam()`](https://nicholasjclark.github.io/ffc/reference/ffc_gam.md)
+models. Here we draw 10 realisations from the estimated coefficient
+distributions and plot them.
+
+``` r
+fts_coefs(mod, times = 10, summary = FALSE) |>
+  autoplot()
+```
+
+![autplot() plots showing time-varying coefficients for the tourism
+model, illustrating how basis coefficients have been estimated to vary
+through time.](reference/figures/README-tourism-coefficients0-1.png)
+
+We can also draw the time-varying basis coefficients using support from
+the [`gratia`](https://gavinsimpson.github.io/gratia/) package, which
+has helpful functions for plotting smooth effects:
 
 ``` r
 gratia::draw(mod)
@@ -187,11 +205,11 @@ fc_ffc
 #> # Key:     Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  740. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  753. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  737. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_E…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_E…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_E…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  759. FFC_E…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  859. FFC_E…
 ```
 
 Leverage the fabletools ecosystem for forecast analysis
@@ -200,9 +218,9 @@ Leverage the fabletools ecosystem for forecast analysis
 # Calculate accuracy metrics
 accuracy(fc_ffc, test)
 #> # A tibble: 1 × 13
-#>   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
-#>   <chr>     <chr>  <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ARIMA Melbo… Vict… Visiti… Test   26.5  84.4  66.1  2.14  7.95   NaN   NaN
+#>   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
+#>   <chr>   <chr>    <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 FFC_ETS Melbour… Vict… Visiti… Test   11.2  79.3  65.3 0.199  8.07   NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 
 # Generate prediction intervals  
@@ -212,11 +230,11 @@ fc_intervals
 #> # Key:       Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  740. FFC_A…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  753. FFC_A…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  737. FFC_A…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_A…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_E…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_E…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_E…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  759. FFC_E…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  859. FFC_E…
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
@@ -231,11 +249,11 @@ fc_summary
 #> # A tsibble: 5 x 5 [1Q]
 #>   Quarter mean_forecast median_forecast   q25   q75
 #>     <qtr>         <dbl>           <dbl> <dbl> <dbl>
-#> 1 2016 Q4          813.            810.  765.  862.
-#> 2 2017 Q1          740.            739.  698.  779.
-#> 3 2017 Q2          753.            753.  715.  797.
-#> 4 2017 Q3          737.            736.  693.  772.
-#> 5 2017 Q4          840.            831.  783.  899.
+#> 1 2016 Q4          813.            818.  755.  862.
+#> 2 2017 Q1          757.            759.  707.  808.
+#> 3 2017 Q2          773.            777.  727.  812.
+#> 4 2017 Q3          759.            762.  720.  803.
+#> 5 2017 Q4          859.            863.  809.  907.
 ```
 
 Next we can explore how to compare forecasts from `ffc` models to

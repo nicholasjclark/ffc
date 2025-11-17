@@ -82,8 +82,8 @@ if (FALSE) { # \dontrun{
 library(dplyr)
 
 # Split growth data into training and test sets
-train_data <- growth_data %>% filter(age_yr <= 16)
-test_data <- growth_data %>% filter(age_yr > 16)
+train_data <- growth_data |> filter(age_yr <= 16)
+test_data <- growth_data |> filter(age_yr > 16)
 
 # Step 1: Fit ffc_gam model with time-varying coefficients
 mod <- ffc_gam(

@@ -119,22 +119,25 @@ denominators.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"qld_mortality"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">qld_mortality</span>, <span class="fl">15</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    year age    sex deaths population</span></span>
-<span><span class="co">#&gt; 1  1980   0 female    190   17699.81</span></span>
-<span><span class="co">#&gt; 2  1980   1 female     20   17505.27</span></span>
-<span><span class="co">#&gt; 3  1980   2 female      6   17715.56</span></span>
-<span><span class="co">#&gt; 4  1980   3 female      6   18080.06</span></span>
-<span><span class="co">#&gt; 5  1980   4 female     10   18390.10</span></span>
-<span><span class="co">#&gt; 6  1980   5 female      6   18870.54</span></span>
-<span><span class="co">#&gt; 7  1980   6 female      1   19641.01</span></span>
-<span><span class="co">#&gt; 8  1980   7 female      2   20475.01</span></span>
-<span><span class="co">#&gt; 9  1980   8 female      2   21599.01</span></span>
-<span><span class="co">#&gt; 10 1980   9 female      7   22170.09</span></span>
-<span><span class="co">#&gt; 11 1980  10 female      2   21750.01</span></span>
-<span><span class="co">#&gt; 12 1980  11 female      3   20866.51</span></span>
-<span><span class="co">#&gt; 13 1980  12 female      1   20384.50</span></span>
-<span><span class="co">#&gt; 14 1980  13 female      8   19848.04</span></span>
-<span><span class="co">#&gt; 15 1980  14 female     11   19505.02</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tsibble: 15 x 5 [1Y]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Key:       age, sex [1]</span></span></span>
+<span><span class="co">#&gt;     year   age sex    deaths population</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>  <span style="text-decoration: underline;">1</span>980     0 female    190     <span style="text-decoration: underline;">17</span>700.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>  <span style="text-decoration: underline;">1</span>981     0 female    175     <span style="text-decoration: underline;">18</span>785.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>  <span style="text-decoration: underline;">1</span>982     0 female    190     <span style="text-decoration: underline;">19</span>698.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>  <span style="text-decoration: underline;">1</span>983     0 female    165     <span style="text-decoration: underline;">19</span>908.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>  <span style="text-decoration: underline;">1</span>984     0 female    148     <span style="text-decoration: underline;">19</span>573.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>  <span style="text-decoration: underline;">1</span>985     0 female    164     <span style="text-decoration: underline;">19</span>458.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>  <span style="text-decoration: underline;">1</span>986     0 female    147     <span style="text-decoration: underline;">19</span>405.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>  <span style="text-decoration: underline;">1</span>987     0 female    159     <span style="text-decoration: underline;">19</span>421.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>  <span style="text-decoration: underline;">1</span>988     0 female    153     <span style="text-decoration: underline;">19</span>841.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>  <span style="text-decoration: underline;">1</span>989     0 female    184     <span style="text-decoration: underline;">20</span>942.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span>  <span style="text-decoration: underline;">1</span>990     0 female    155     <span style="text-decoration: underline;">21</span>841.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span>  <span style="text-decoration: underline;">1</span>991     0 female    143     <span style="text-decoration: underline;">22</span>187.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span>  <span style="text-decoration: underline;">1</span>992     0 female    154     <span style="text-decoration: underline;">22</span>314.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span>  <span style="text-decoration: underline;">1</span>993     0 female    149     <span style="text-decoration: underline;">22</span>581.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span>  <span style="text-decoration: underline;">1</span>994     0 female    109     <span style="text-decoration: underline;">22</span>859.</span></span></code></pre></div>
 <p>The dataset structure is ideal for functional analysis: we have a
 functional predictor (age) whose relationship with the outcome
 (mortality) changes over time (year), with hierarchical structure
@@ -497,7 +500,7 @@ functional evolution</li>
 <span><span class="va">functional_fc</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tsibble: 9,500 x 6 [1Y]</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Key:       .basis, .realisation, .model, .rep [1,900]</span></span></span>
-<span><span class="co">#&gt;    .basis                     .realisation .model .time .rep   .sim</span></span>
+<span><span class="co">#&gt;    .basis                     .realisation .model  year .rep   .sim</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 1      1.96</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 1      1.95</span></span>
@@ -541,15 +544,15 @@ by combining the forecasted coefficients with the model structure:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">#&gt;   .estimate  .error    .q2.5     .q10     .q90   .q97.5</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  0.001<span style="text-decoration: underline;">78</span>  0.001<span style="text-decoration: underline;">71</span> 0.001<span style="text-decoration: underline;">53</span>  0.001<span style="text-decoration: underline;">62</span>  0.001<span style="text-decoration: underline;">97</span>  0.002<span style="text-decoration: underline;">06</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>  0.001<span style="text-decoration: underline;">14</span>  0.001<span style="text-decoration: underline;">18</span> 0.000<span style="text-decoration: underline;">987</span> 0.001<span style="text-decoration: underline;">03</span>  0.001<span style="text-decoration: underline;">24</span>  0.001<span style="text-decoration: underline;">29</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>  0.000<span style="text-decoration: underline;">723</span> 0.001<span style="text-decoration: underline;">35</span> 0.000<span style="text-decoration: underline;">637</span> 0.000<span style="text-decoration: underline;">660</span> 0.000<span style="text-decoration: underline;">796</span> 0.000<span style="text-decoration: underline;">817</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>  0.000<span style="text-decoration: underline;">469</span> 0.001<span style="text-decoration: underline;">44</span> 0.000<span style="text-decoration: underline;">411</span> 0.000<span style="text-decoration: underline;">426</span> 0.000<span style="text-decoration: underline;">514</span> 0.000<span style="text-decoration: underline;">529</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">308</span> 0.001<span style="text-decoration: underline;">63</span> 0.000<span style="text-decoration: underline;">269</span> 0.000<span style="text-decoration: underline;">279</span> 0.000<span style="text-decoration: underline;">336</span> 0.000<span style="text-decoration: underline;">348</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>  0.000<span style="text-decoration: underline;">207</span> 0.001<span style="text-decoration: underline;">87</span> 0.000<span style="text-decoration: underline;">180</span> 0.000<span style="text-decoration: underline;">187</span> 0.000<span style="text-decoration: underline;">228</span> 0.000<span style="text-decoration: underline;">235</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  0.001<span style="text-decoration: underline;">78</span>  0.001<span style="text-decoration: underline;">66</span> 0.001<span style="text-decoration: underline;">53</span>  0.001<span style="text-decoration: underline;">62</span>  0.001<span style="text-decoration: underline;">97</span>  0.002<span style="text-decoration: underline;">06</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>  0.001<span style="text-decoration: underline;">14</span>  0.001<span style="text-decoration: underline;">11</span> 0.000<span style="text-decoration: underline;">987</span> 0.001<span style="text-decoration: underline;">03</span>  0.001<span style="text-decoration: underline;">24</span>  0.001<span style="text-decoration: underline;">29</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>  0.000<span style="text-decoration: underline;">723</span> 0.001<span style="text-decoration: underline;">34</span> 0.000<span style="text-decoration: underline;">637</span> 0.000<span style="text-decoration: underline;">660</span> 0.000<span style="text-decoration: underline;">796</span> 0.000<span style="text-decoration: underline;">817</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>  0.000<span style="text-decoration: underline;">469</span> 0.001<span style="text-decoration: underline;">97</span> 0.000<span style="text-decoration: underline;">411</span> 0.000<span style="text-decoration: underline;">426</span> 0.000<span style="text-decoration: underline;">514</span> 0.000<span style="text-decoration: underline;">529</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">308</span> 0.001<span style="text-decoration: underline;">94</span> 0.000<span style="text-decoration: underline;">269</span> 0.000<span style="text-decoration: underline;">279</span> 0.000<span style="text-decoration: underline;">336</span> 0.000<span style="text-decoration: underline;">348</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>  0.000<span style="text-decoration: underline;">207</span> 0.001<span style="text-decoration: underline;">52</span> 0.000<span style="text-decoration: underline;">180</span> 0.000<span style="text-decoration: underline;">187</span> 0.000<span style="text-decoration: underline;">228</span> 0.000<span style="text-decoration: underline;">235</span></span></span>
 <span></span>
 <span><span class="co"># Plot forecasted mortality rates, together with uncertainties</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mortality_forecasts</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mortality_forecasts</span> <span class="op">|&gt;</span></span>
 <span>         <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_cols.html" class="external-link">bind_cols</a></span><span class="op">(</span><span class="va">newdata_forecast</span><span class="op">)</span>,</span>
 <span>       <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>,</span>
 <span>           y <span class="op">=</span> <span class="va">.estimate</span>,</span>

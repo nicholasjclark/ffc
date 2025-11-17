@@ -110,13 +110,13 @@
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tsibble.tidyverts.org" class="external-link">tsibble</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>; <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/get_theme.html" class="external-link">theme_set</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the <code><a href="https://tsibble.tidyverts.org/reference/tourism.html" class="external-link">tsibble::tourism</a></code> data set. For now we need to explicitly add the <code>quarter</code> and <code>time</code> variables to the data, but in future this will be done automatically for seamless integration with the <code>tsibbleverse</code></p>
+<p>Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the <code><a href="https://tsibble.tidyverts.org/reference/tourism.html" class="external-link">tsibble::tourism</a></code> data set. For now we need to explicitly add the <code>quarter</code> and <code>time</code> variables to the data, but in future this will be done automatically for seamless integration with the <a href="https://tsibble.tidyverts.org/" class="external-link"><code>tsibbleverse</code></a></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tourism_melb</span> <span class="op">&lt;-</span> <span class="va">tourism</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<code class="sourceCode R"><span><span class="va">tourism_melb</span> <span class="op">&lt;-</span> <span class="va">tourism</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
 <span>    <span class="va">Region</span> <span class="op">==</span> <span class="st">"Melbourne"</span>,</span>
 <span>    <span class="va">Purpose</span> <span class="op">==</span> <span class="st">"Visiting"</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    quarter <span class="op">=</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/quarter.html" class="external-link">quarter</a></span><span class="op">(</span><span class="va">Quarter</span><span class="op">)</span>,</span>
 <span>    time <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">row_number</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -139,10 +139,10 @@
 <span><span class="co">#&gt; # ℹ 70 more rows</span></span></code></pre></div>
 <p>Split into training and testing folds. We wil aim to forecast the last 5 quarters of the data</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">train</span> <span class="op">&lt;-</span> <span class="va">tourism_melb</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<code class="sourceCode R"><span><span class="va">train</span> <span class="op">&lt;-</span> <span class="va">tourism_melb</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_head</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">75</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">test</span> <span class="op">&lt;-</span> <span class="va">tourism_melb</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span><span class="va">test</span> <span class="op">&lt;-</span> <span class="va">tourism_melb</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_tail</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <p>Now fit an <code>ffc_gam</code>. We use time-varying level and time-varying seasonality components, together with a Tweedie observation model (because our outcome, <code>Trips</code>, consists of non-negative real values). This model is simpler so we use the <code>'gam'</code> engine for fitting:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -167,12 +167,17 @@
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/Tweedie.html" class="external-link">tw</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  engine <span class="op">=</span> <span class="st">"gam"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Draw the time-varying basis coefficients using support for the <a href="https://gavinsimpson.github.io/gratia/" class="external-link"><code>gratia</code></a> package</p>
+<p>The <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> method is handy for viewing the time-varying basis coefficients from <code><a href="reference/ffc_gam.html">ffc_gam()</a></code> models. Here we draw 10 realisations from the estimated coefficient distributions and plot them.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/fts_coefs.ffc_gam.html">fts_coefs</a></span><span class="op">(</span><span class="va">mod</span>, times <span class="op">=</span> <span class="fl">10</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-tourism-coefficients0-1.png" alt="autplot() plots showing time-varying coefficients for the tourism model, illustrating how basis coefficients have been estimated to vary through time." width="100%"></p>
+<p>We can also draw the time-varying basis coefficients using support from the <a href="https://gavinsimpson.github.io/gratia/" class="external-link"><code>gratia</code></a> package, which has helpful functions for plotting smooth effects:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">gratia</span><span class="fu">::</span><span class="fu"><a href="https://gavinsimpson.github.io/gratia/reference/draw.html" class="external-link">draw</a></span><span class="op">(</span><span class="va">mod</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-tourism-coefficients-1.png" alt="Smooth plots showing time-varying coefficients for the tourism model. The upper panel shows the time-varying level component while the lower panel displays seasonal coefficients that change over time, demonstrating how seasonality patterns evolve." width="100%"></p>
 <p>These plots show the time-varying <em>coefficients</em> for a set of basis functions. We have one function representing the mean of the series (essentially a constant) as well as three basis functions representing the quarterly seasonality. Each of these has a coefficient that can change through time, allowing the entire functional series to change shape over time. We can compute forecast distribution by fitting the basis coefficient forecast models in parallel (which is automatically supported within the <code>fable</code> package). Here we fit independent exponential smoothing models to each coefficient time series</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">mod</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="va">test</span>,</span>
@@ -180,7 +185,7 @@
 <span>  summary <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>We can also convert resulting forecasts to a <code>fable</code> object for automatic plotting and/or scoring of forecasts</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Using the new as_fable method for seamless conversion</span></span>
 <span><span class="va">fc_ffc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">test</span>, forecasts <span class="op">=</span> <span class="va">fc</span><span class="op">)</span></span>
 <span><span class="va">fc_ffc</span></span>
@@ -188,19 +193,19 @@
 <span><span class="co">#&gt; # Key:     Region, State, Purpose [1]</span></span>
 <span><span class="co">#&gt;   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model</span></span>
 <span><span class="co">#&gt;     &lt;qtr&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;   &lt;dbl&gt;   &lt;int&gt; &lt;int&gt;      &lt;dist&gt; &lt;dbl&gt; &lt;chr&gt; </span></span>
-<span><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…</span></span>
-<span><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  740. FFC_A…</span></span>
-<span><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  753. FFC_A…</span></span>
-<span><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  737. FFC_A…</span></span>
-<span><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_A…</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_E…</span></span>
+<span><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_E…</span></span>
+<span><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_E…</span></span>
+<span><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  759. FFC_E…</span></span>
+<span><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  859. FFC_E…</span></span></code></pre></div>
 <p>Leverage the fabletools ecosystem for forecast analysis</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate accuracy metrics</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/accuracy.html" class="external-link">accuracy</a></span><span class="op">(</span><span class="va">fc_ffc</span>, <span class="va">test</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 13</span></span>
-<span><span class="co">#&gt;   .model    Region State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;     &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 FFC_ARIMA Melbo… Vict… Visiti… Test   26.5  84.4  66.1  2.14  7.95   NaN   NaN</span></span>
+<span><span class="co">#&gt;   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 FFC_ETS Melbour… Vict… Visiti… Test   11.2  79.3  65.3 0.199  8.07   NaN   NaN</span></span>
 <span><span class="co">#&gt; # ℹ 1 more variable: ACF1 &lt;dbl&gt;</span></span>
 <span></span>
 <span><span class="co"># Generate prediction intervals  </span></span>
@@ -210,15 +215,15 @@
 <span><span class="co">#&gt; # Key:       Region, State, Purpose [1]</span></span>
 <span><span class="co">#&gt;   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model</span></span>
 <span><span class="co">#&gt;     &lt;qtr&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;   &lt;dbl&gt;   &lt;int&gt; &lt;int&gt;      &lt;dist&gt; &lt;dbl&gt; &lt;chr&gt; </span></span>
-<span><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_A…</span></span>
-<span><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  740. FFC_A…</span></span>
-<span><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  753. FFC_A…</span></span>
-<span><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  737. FFC_A…</span></span>
-<span><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_A…</span></span>
+<span><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  813. FFC_E…</span></span>
+<span><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  757. FFC_E…</span></span>
+<span><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_E…</span></span>
+<span><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  759. FFC_E…</span></span>
+<span><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  859. FFC_E…</span></span>
 <span><span class="co">#&gt; # ℹ 2 more variables: `80%` &lt;hilo&gt;, `95%` &lt;hilo&gt;</span></span>
 <span></span>
 <span><span class="co"># Distribution summaries</span></span>
-<span><span class="va">fc_summary</span> <span class="op">&lt;-</span> <span class="va">fc_ffc</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span><span class="va">fc_summary</span> <span class="op">&lt;-</span> <span class="va">fc_ffc</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
 <span>    mean_forecast <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.dist</span><span class="op">)</span>,</span>
 <span>    median_forecast <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">.dist</span><span class="op">)</span>,</span>
@@ -229,23 +234,23 @@
 <span><span class="co">#&gt; # A tsibble: 5 x 5 [1Q]</span></span>
 <span><span class="co">#&gt;   Quarter mean_forecast median_forecast   q25   q75</span></span>
 <span><span class="co">#&gt;     &lt;qtr&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 2016 Q4          813.            810.  765.  862.</span></span>
-<span><span class="co">#&gt; 2 2017 Q1          740.            739.  698.  779.</span></span>
-<span><span class="co">#&gt; 3 2017 Q2          753.            753.  715.  797.</span></span>
-<span><span class="co">#&gt; 4 2017 Q3          737.            736.  693.  772.</span></span>
-<span><span class="co">#&gt; 5 2017 Q4          840.            831.  783.  899.</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 2016 Q4          813.            818.  755.  862.</span></span>
+<span><span class="co">#&gt; 2 2017 Q1          757.            759.  707.  808.</span></span>
+<span><span class="co">#&gt; 3 2017 Q2          773.            777.  727.  812.</span></span>
+<span><span class="co">#&gt; 4 2017 Q3          759.            762.  720.  803.</span></span>
+<span><span class="co">#&gt; 5 2017 Q4          859.            863.  809.  907.</span></span></code></pre></div>
 <p>Next we can explore how to compare forecasts from <code>ffc</code> models to traditional time series models by again leveraging the simplicity and power of the <code>fable</code> ecosystem</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Generate FFC forecasts with different models</span></span>
 <span><span class="va">fc_ffc_arima</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">test</span>, model <span class="op">=</span> <span class="st">"ARIMA"</span><span class="op">)</span></span>
 <span><span class="va">fc_ffc_ets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">test</span>, model <span class="op">=</span> <span class="st">"ETS"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Generate traditional model forecasts</span></span>
-<span><span class="va">fc_traditional</span> <span class="op">&lt;-</span> <span class="va">train</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span><span class="va">fc_traditional</span> <span class="op">&lt;-</span> <span class="va">train</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://fabletools.tidyverts.org/reference/model.html" class="external-link">model</a></span><span class="op">(</span></span>
 <span>    ARIMA <span class="op">=</span> <span class="fu"><a href="https://fable.tidyverts.org/reference/ARIMA.html" class="external-link">ARIMA</a></span><span class="op">(</span><span class="va">Trips</span><span class="op">)</span>,</span>
 <span>    ETS <span class="op">=</span> <span class="fu"><a href="https://fable.tidyverts.org/reference/ETS.html" class="external-link">ETS</a></span><span class="op">(</span><span class="va">Trips</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span>h <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Calculate accuracy for all models</span></span>

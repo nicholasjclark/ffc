@@ -209,32 +209,30 @@ specified freely and controls the number of posterior draws.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="co"># Basic forecasting example</span></span></span>
+<span class="r-in"><span><span class="co"># Basic forecasting example with growth data</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"growth_data"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="ffc_gam.html">ffc_gam</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">Reaction</span> <span class="op">~</span> <span class="fu"><a href="fts.html">fts</a></span><span class="op">(</span><span class="va">Subject</span>, k <span class="op">=</span> <span class="fl">3</span>, time_k <span class="op">=</span> <span class="fl">8</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>             <span class="fu"><a href="fts.html">fts</a></span><span class="op">(</span><span class="va">Days</span>, k <span class="op">=</span> <span class="fl">3</span>, time_k <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  time <span class="op">=</span> <span class="st">"Days"</span>, data <span class="op">=</span> <span class="va">growth_data</span></span></span>
+<span class="r-in"><span>  <span class="va">height_cm</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/s.html" class="external-link">s</a></span><span class="op">(</span><span class="va">id</span>, bs <span class="op">=</span> <span class="st">"re"</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="fts.html">fts</a></span><span class="op">(</span><span class="va">age_yr</span>, k <span class="op">=</span> <span class="fl">8</span>, bs <span class="op">=</span> <span class="st">"cr"</span>, time_k <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  time <span class="op">=</span> <span class="st">"age_yr"</span>, </span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">growth_data</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">Gamma</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> the variable 'Days' cannot be found in data</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Forecast with ETS (default for mixed basis)</span></span></span>
-<span class="r-in"><span><span class="va">newdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"308"</span>, <span class="fl">3</span><span class="op">)</span>, Days <span class="op">=</span> <span class="fl">10</span><span class="op">:</span><span class="fl">12</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Forecast with ETS model</span></span></span>
+<span class="r-in"><span><span class="va">newdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  id <span class="op">=</span> <span class="st">"boy_11"</span>, </span></span>
+<span class="r-in"><span>  age_yr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">16</span>, <span class="fl">17</span>, <span class="fl">18</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, model <span class="op">=</span> <span class="st">"ETS"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'mod' not found</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Use ARDF with custom mean_model for mean basis</span></span></span>
-<span class="r-in"><span><span class="va">fc_ardf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">newdata</span>,</span></span>
-<span class="r-in"><span>                    model <span class="op">=</span> <span class="st">"ARDF"</span>,</span></span>
-<span class="r-in"><span>                    mean_model <span class="op">=</span> <span class="st">"RW"</span>,  <span class="co"># Use random walk for mean basis</span></span></span>
-<span class="r-in"><span>                    K <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'mod' not found</span>
+<span class="r-in"><span><span class="co"># Forecast with random walk model</span></span></span>
+<span class="r-in"><span><span class="va">fc_rw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, model <span class="op">=</span> <span class="st">"RW"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get raw forecast matrix without summary</span></span></span>
 <span class="r-in"><span><span class="va">fc_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">newdata</span>,</span></span>
 <span class="r-in"><span>                  model <span class="op">=</span> <span class="st">"ETS"</span>,</span></span>
 <span class="r-in"><span>                  summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'mod' not found</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -67,7 +67,7 @@ R CMD INSTALL --preclean --no-multiarch .
 
 - Tidyverse style guide
 - Line length: 80 characters maximum
-- Function names: snake_case
+- Function names: snake_case, prefer shorter names
 - Assignment: Use `<-` not `=`
 - Indentation: 2 spaces
 

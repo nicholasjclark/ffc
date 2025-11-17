@@ -44,22 +44,25 @@ counts by age, sex, and year with corresponding population denominators.
 ``` r
 data("qld_mortality")
 head(qld_mortality, 15)
-#>    year age    sex deaths population
-#> 1  1980   0 female    190   17699.81
-#> 2  1980   1 female     20   17505.27
-#> 3  1980   2 female      6   17715.56
-#> 4  1980   3 female      6   18080.06
-#> 5  1980   4 female     10   18390.10
-#> 6  1980   5 female      6   18870.54
-#> 7  1980   6 female      1   19641.01
-#> 8  1980   7 female      2   20475.01
-#> 9  1980   8 female      2   21599.01
-#> 10 1980   9 female      7   22170.09
-#> 11 1980  10 female      2   21750.01
-#> 12 1980  11 female      3   20866.51
-#> 13 1980  12 female      1   20384.50
-#> 14 1980  13 female      8   19848.04
-#> 15 1980  14 female     11   19505.02
+#> # A tsibble: 15 x 5 [1Y]
+#> # Key:       age, sex [1]
+#>     year   age sex    deaths population
+#>    <int> <int> <fct>   <dbl>      <dbl>
+#>  1  1980     0 female    190     17700.
+#>  2  1981     0 female    175     18785.
+#>  3  1982     0 female    190     19698.
+#>  4  1983     0 female    165     19908.
+#>  5  1984     0 female    148     19573.
+#>  6  1985     0 female    164     19458.
+#>  7  1986     0 female    147     19405.
+#>  8  1987     0 female    159     19421.
+#>  9  1988     0 female    153     19841.
+#> 10  1989     0 female    184     20942.
+#> 11  1990     0 female    155     21841.
+#> 12  1991     0 female    143     22187.
+#> 13  1992     0 female    154     22314.
+#> 14  1993     0 female    149     22581.
+#> 15  1994     0 female    109     22859.
 ```
 
 The dataset structure is ideal for functional analysis: we have a
@@ -430,7 +433,7 @@ functional_fc <- forecast(
 functional_fc
 #> # A tsibble: 9,500 x 6 [1Y]
 #> # Key:       .basis, .realisation, .model, .rep [1,900]
-#>    .basis                     .realisation .model .time .rep   .sim
+#>    .basis                     .realisation .model  year .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
 #>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      1.96
 #>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      1.95
@@ -476,15 +479,15 @@ head(mortality_forecasts)
 #> # A tibble: 6 × 6
 #>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
 #>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-#> 1  0.00178  0.00171 0.00153  0.00162  0.00197  0.00206 
-#> 2  0.00114  0.00118 0.000987 0.00103  0.00124  0.00129 
-#> 3  0.000723 0.00135 0.000637 0.000660 0.000796 0.000817
-#> 4  0.000469 0.00144 0.000411 0.000426 0.000514 0.000529
-#> 5  0.000308 0.00163 0.000269 0.000279 0.000336 0.000348
-#> 6  0.000207 0.00187 0.000180 0.000187 0.000228 0.000235
+#> 1  0.00178  0.00166 0.00153  0.00162  0.00197  0.00206 
+#> 2  0.00114  0.00111 0.000987 0.00103  0.00124  0.00129 
+#> 3  0.000723 0.00134 0.000637 0.000660 0.000796 0.000817
+#> 4  0.000469 0.00197 0.000411 0.000426 0.000514 0.000529
+#> 5  0.000308 0.00194 0.000269 0.000279 0.000336 0.000348
+#> 6  0.000207 0.00152 0.000180 0.000187 0.000228 0.000235
 
 # Plot forecasted mortality rates, together with uncertainties
-ggplot(mortality_forecasts %>%
+ggplot(mortality_forecasts |>
          dplyr::bind_cols(newdata_forecast),
        aes(x = age,
            y = .estimate,

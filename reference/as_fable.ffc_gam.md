@@ -98,14 +98,14 @@ library(dplyr)
 #>     intersect, setdiff, setequal, union
 
 # Prepare tourism data
-tourism_melb <- tourism %>%
-  filter(Region == "Melbourne", Purpose == "Visiting") %>%
+tourism_melb <- tourism |>
+  filter(Region == "Melbourne", Purpose == "Visiting") |>
   mutate(quarter = as.numeric(format(Quarter, "%q")),
          time = row_number())
 
 # Split data
-train <- tourism_melb %>% slice_head(n = 75)
-test <- tourism_melb %>% slice_tail(n = 5)
+train <- tourism_melb |> slice_head(n = 75)
+test <- tourism_melb |> slice_tail(n = 5)
 
 # Fit model
 mod <- ffc_gam(
@@ -139,7 +139,7 @@ hilo(fc_fable, level = c(80, 95))  # Prediction intervals
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
-fc_fable %>%
+fc_fable |>
   summarise(
     mean_forecast = mean(.dist),
     q25 = quantile(.dist, 0.25),

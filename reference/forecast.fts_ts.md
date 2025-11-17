@@ -88,17 +88,17 @@ coefs <- fts_coefs(mod, summary = FALSE, times = 5)
 forecast(coefs, model = "ETS", h = 3)
 #> # A tsibble: 2,625 x 6 [1Y]
 #> # Key:       .basis, .realisation, .model, .rep [875]
-#>    .basis          .realisation .model .time .rep   .sim
+#>    .basis          .realisation .model  year .rep   .sim
 #>    <chr>                  <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.95
-#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.90
-#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.86
+#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.97
+#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.94
+#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.90
 #>  4 fts_bs_s_age__1            1 ETS     2021 10    -1.96
 #>  5 fts_bs_s_age__1            1 ETS     2022 10    -1.93
-#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.91
-#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.95
-#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.90
-#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.86
+#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.90
+#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.97
+#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.93
+#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.90
 #> 10 fts_bs_s_age__1            1 ETS     2021 12    -1.96
 #> # ℹ 2,615 more rows
 # }

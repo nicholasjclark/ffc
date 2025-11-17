@@ -146,10 +146,10 @@ summary(mod)
 # Predictions work in the usual way
 head(predict(mod, type = "link"))
 #>        1        2        3        4        5        6 
-#> 3.985387 3.572323 3.185908 2.815229 2.452154 2.112488 
+#> 3.985387 4.010376 4.023095 3.998402 3.945344 3.902329 
 head(predict(mod, type = "response"))
-#>         1         2         3         4         5         6 
-#> 53.806134 35.599209 24.189249 16.697007 11.613336  8.268789 
+#>        1        2        3        4        5        6 
+#> 53.80613 55.16762 55.87379 54.51097 51.69412 49.51764 
 
 # Extract basis coefficient time series
 (functional_ts <- fts_coefs(mod))
