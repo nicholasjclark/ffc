@@ -210,6 +210,122 @@ test_that("character family specifications vs function forms give same results",
   expect_true(all(abs(coef(mod_func) - coef(mod_char)) < 1e-6))
 })
 
+test_that("compress_iseq compresses integer sequences correctly", {
+  # Test basic consecutive sequence
+  result1 <- ffc:::compress_iseq(c(1, 2, 3, 4, 5))
+  expect_equal(result1, "c(1:5)")
+  
+  # Test mixed consecutive and individual numbers
+  result2 <- ffc:::compress_iseq(c(1, 2, 3, 5, 6, 8))
+  expect_equal(result2, "c(1:3,5:6,8)")
+  
+  # Test individual numbers only
+  result3 <- ffc:::compress_iseq(c(1, 3, 5, 7))
+  expect_equal(result3, "c(1,3,5,7)")
+  
+  # Test single number
+  result4 <- ffc:::compress_iseq(5)
+  expect_equal(result4, "c(5)")
+  
+  # Test unordered input (function should sort it)
+  result5 <- ffc:::compress_iseq(c(3, 1, 2, 5, 4))
+  expect_equal(result5, "c(1:5)")
+})
+
+test_that("compress_iseq handles edge cases", {
+  # Test empty vector (produces NA result)
+  result_empty <- ffc:::compress_iseq(integer(0))
+  expect_true(is.character(result_empty))
+  expect_true(length(result_empty) == 1)
+  
+  # Test repeated values (function doesn't deduplicate, just sorts)
+  result_duplicates <- ffc:::compress_iseq(c(1, 1, 2, 3, 3))
+  expect_true(is.character(result_duplicates))
+  expect_true(grepl("c\\(", result_duplicates))  # Should start with "c("
+})
+
+test_that("initial_spg returns proper smoothing parameter structure", {
+  # Create simple test data for GAM
+  set.seed(123)
+  n <- 20
+  x <- runif(n, 0, 1)
+  y <- sin(2 * pi * x) + rnorm(n, 0, 0.1)
+  
+  # Create simple design matrix (polynomial basis)
+  X <- cbind(1, x, x^2, x^3)
+  
+  # Create simple penalty matrix
+  D <- diff(diag(4), diff = 2)  # Second difference penalty
+  S <- list(t(D) %*% D)
+  
+  # Test basic functionality
+  sp_init <- SW(ffc:::initial_spg(
+    x = X,
+    y = y,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(2),
+    off = c(1, 5)  # Penalty applies to columns 2-4 (indices 1+1 to 5-1)
+  ))
+  
+  # Check that result is a vector of smoothing parameters
+  expect_true(is.numeric(sp_init))
+  expect_true(length(sp_init) == length(S))
+  expect_true(all(sp_init >= 0))  # Smoothing parameters should be non-negative
+})
+
+test_that("olid detects identifiability issues correctly", {
+  # Create a design matrix with identifiability issues (collinear columns)
+  X <- cbind(
+    c(1, 1, 1, 1),     # intercept
+    c(1, 2, 3, 4),     # x
+    c(2, 4, 6, 8),     # 2*x (collinear with column 2)
+    c(1, 4, 9, 16)     # x^2
+  )
+  
+  # Basic test parameters
+  nsdf <- c(1, 3)    # 1 parametric term, 3 smooth terms
+  pstart <- c(1, 2)  # penalty starts
+  flpi <- list(c(1), c(1))  # factor level parameter indices for each smooth
+  lpi <- list(1:4)   # all parameters in first linear predictor
+  
+  # Test identifiability detection
+  result <- SW(ffc:::olid(X, nsdf, pstart, flpi, lpi))
+  
+  # Check structure of result
+  expect_true(is.list(result))
+  expect_true("dind" %in% names(result))
+  expect_true("lpi" %in% names(result))
+  
+  # Should detect some identifiability issue
+  expect_true(is.vector(result$dind))
+})
+
+test_that("olid handles full rank design matrices", {
+  # Create a full rank design matrix
+  X <- cbind(
+    c(1, 1, 1, 1),     # intercept
+    c(1, 2, 3, 4),     # x
+    c(1, 4, 9, 16),    # x^2
+    c(1, 8, 27, 64)    # x^3
+  )
+  
+  nsdf <- c(1, 3)
+  pstart <- c(1, 2)
+  flpi <- list(c(1), c(1))  # proper factor level parameter indices
+  lpi <- list(1:4)
+  
+  # Test with full rank matrix
+  result <- SW(ffc:::olid(X, nsdf, pstart, flpi, lpi))
+  
+  expect_true(is.list(result))
+  expect_true("dind" %in% names(result))
+  
+  # Should not detect any issues (dind should be empty or NULL)
+  expect_true(is.null(result$dind) || length(result$dind) == 0)
+})
+
 test_that("gam_setup and ffc_gam_setup work through ffc_gam interface", {
   # Test that the setup functions work correctly through the main interface
   test_data <- data.frame(

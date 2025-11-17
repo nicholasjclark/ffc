@@ -212,11 +212,15 @@ update_mod_data <- function(
   )
 
   # Check if this is a tsibble; if so, add the index var
+  # but only if it's not already in the model
   if (inherits(data, "tbl_ts")) {
-    vars_to_add <- c(
-      vars_to_add,
-      tsibble::index_var(data)
-    )
+    index_var <- tsibble::index_var(data)
+    if (!index_var %in% colnames(gam_object$model)) {
+      vars_to_add <- c(
+        vars_to_add,
+        index_var
+      )
+    }
   }
 
   if (length(vars_to_add)) {

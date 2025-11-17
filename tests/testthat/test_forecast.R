@@ -686,6 +686,105 @@ test_that("adjust_forecast_uncertainty handles missing .sd data correctly", {
   expect_true(any(!is.na(result$.sd)))
 })
 
+test_that("forecast.ffc_gam() works with models without fts() terms", {
+  # Create a model without any fts() terms - just a regular GAM
+  test_data <- data.frame(
+    y = rnorm(50, mean = 10, sd = 2),
+    x1 = runif(50, 0, 10),
+    x2 = rnorm(50, 0, 1),
+    time = 1:50
+  )
+  
+  # Fit a model without fts() terms
+  mod_no_fts <- SW(ffc_gam(
+    y ~ s(x1, k = 5) + s(x2, k = 5),
+    time = "time",
+    data = test_data,
+    family = gaussian()
+  ))
+  
+  # Check that gam_init is empty (no fts terms)
+  expect_equal(length(mod_no_fts$gam_init), 0)
+  
+  # Create newdata for forecasting
+  newdata <- data.frame(
+    x1 = runif(5, 0, 10),
+    x2 = rnorm(5, 0, 1),
+    time = 51:55
+  )
+  
+  # Test that forecast works and returns predictions
+  fc_no_fts <- SW(forecast(mod_no_fts, newdata = newdata))
+  
+  # Check that result has expected structure
+  expect_true(inherits(fc_no_fts, "tbl_df"))
+  expect_true(all(c(".estimate", ".error") %in% names(fc_no_fts)))
+  expect_equal(nrow(fc_no_fts), nrow(newdata))
+  
+  # Check that predictions are numeric and finite
+  expect_true(is.numeric(fc_no_fts$.estimate))
+  expect_true(all(is.finite(fc_no_fts$.estimate)))
+  expect_true(is.numeric(fc_no_fts$.error))
+  expect_true(all(fc_no_fts$.error >= 0))
+  
+  # Test with different types
+  fc_link <- SW(forecast(mod_no_fts, newdata = newdata, type = "link"))
+  fc_response <- SW(forecast(mod_no_fts, newdata = newdata, type = "response"))
+  
+  expect_true(inherits(fc_link, "tbl_df"))
+  expect_true(inherits(fc_response, "tbl_df"))
+  
+  # Check that both produce numeric results (may differ due to link function)
+  expect_true(is.numeric(fc_link$.estimate))
+  expect_true(is.numeric(fc_response$.estimate))
+  expect_true(all(is.finite(fc_link$.estimate)))
+  expect_true(all(is.finite(fc_response$.estimate)))
+})
+
+test_that("forecast.ffc_gam() works with mixed models (some fts, some regular smooths)", {
+  # Create a model with both fts() and regular smooth terms
+  test_data <- data.frame(
+    y = rnorm(60, mean = 15, sd = 3),
+    x1 = runif(60, 0, 10),
+    x2 = rnorm(60, 0, 2),
+    time = 1:60
+  )
+  
+  # Fit a model with mixed terms
+  mod_mixed <- SW(ffc_gam(
+    y ~ s(x1, k = 5) + fts(x2, k = 4, time_k = 5),
+    time = "time",
+    data = test_data,
+    family = gaussian()
+  ))
+  
+  # Check that the model has fts_smooths
+  expect_false(is.null(mod_mixed$fts_smooths))
+  expect_true(length(mod_mixed$fts_smooths) > 0)
+  expect_true(length(mod_mixed$gam_init) > 0)
+  
+  # Create newdata for forecasting
+  newdata <- data.frame(
+    x1 = runif(5, 0, 10),
+    x2 = rnorm(5, 0, 2),
+    time = 61:65
+  )
+  
+  # This should work since we have fts terms to forecast
+  fc_mixed <- SW(forecast(mod_mixed, newdata = newdata))
+  
+  expect_true(inherits(fc_mixed, "tbl_df"))
+  expect_true(all(c(".estimate", ".error") %in% names(fc_mixed)))
+  expect_equal(nrow(fc_mixed), nrow(newdata))
+  
+  # Test that coefficients can be extracted from mixed model
+  coefs <- fts_coefs(mod_mixed, summary = TRUE)
+  expect_true(inherits(coefs, "fts_ts"))
+  
+  # Coefficients should only be for the fts terms, not regular smooths
+  expect_true(all(grepl("fts", coefs$.basis)))
+})
+
 test_that("adjust_forecast_uncertainty preserves group structure", {
   # Create forecast data with multiple groups
   forecast_df <- data.frame(
