@@ -100,16 +100,16 @@ forecast(coefs, model = "ETS", h = 3)
 #> # Key:       .basis, .realisation, .model, .rep [875]
 #>    .basis          .realisation .model  year .rep   .sim
 #>    <chr>                  <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.93
-#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.89
-#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.85
-#>  4 fts_bs_s_age__1            1 ETS     2021 10    -1.92
-#>  5 fts_bs_s_age__1            1 ETS     2022 10    -1.88
-#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.83
-#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.93
-#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.88
-#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.82
-#> 10 fts_bs_s_age__1            1 ETS     2021 12    -1.93
+#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.91
+#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.87
+#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.82
+#>  4 fts_bs_s_age__1            1 ETS     2021 10    -1.91
+#>  5 fts_bs_s_age__1            1 ETS     2022 10    -1.86
+#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.81
+#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.91
+#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.86
+#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.81
+#> 10 fts_bs_s_age__1            1 ETS     2021 12    -1.91
 #> # ℹ 2,615 more rows
 # }
 ```
