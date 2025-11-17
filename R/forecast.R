@@ -533,9 +533,9 @@ forecast.ffc_gam <- function(
 
     fc_horizons <- interpreted$data[[time_var]] -
       max(object$model[[time_var]])
-    # Use number of forecast time points instead of maximum horizon
-    # This handles fractional and non-consecutive time steps
-    max_horizon <- length(fc_horizons)
+    # Use number of unique forecast time steps, not total data points
+    # This prevents massive memory usage when forecasting many data points
+    max_horizon <- length(unique(fc_horizons))
 
     # Extract functional basis coefficient time series
     # Use the same temp_params that was already adjusted for Stan models
@@ -702,7 +702,7 @@ forecast.ffc_gam <- function(
 
     # Map forecast .time values to actual target time values
     # The forecast generates consecutive integer steps, but we need specific time values
-    target_times <- interpreted$data[[time_var]]
+    target_times <- unique(interpreted$data[[time_var]])
     forecast_times <- sort(unique(functional_fc$.time))
     
     
