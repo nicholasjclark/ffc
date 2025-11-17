@@ -10,11 +10,12 @@ forecast(
   object,
   newdata,
   type = "response",
-  model = "ARIMA",
+  model = "ETS",
   stationary = FALSE,
   summary = TRUE,
   robust = TRUE,
   probs = c(0.025, 0.1, 0.9, 0.975),
+  mean_model = "ETS",
   ...
 )
 ```
@@ -78,6 +79,14 @@ forecast(
   The percentiles to be computed by the
   [`quantile()`](https://rdrr.io/r/stats/quantile.html) function. Only
   used if `summary` is `TRUE`
+
+- mean_model:
+
+  A character string specifying the forecasting model to use for mean
+  basis coefficients when using Stan factor models (ARDF, VARDF, GPDF).
+  Default is "ETS". Options include "ETS", "ARIMA", "RW", "NAIVE". This
+  is only used when forecasting mixed mean/non-mean basis functions with
+  Stan factor models.
 
 - ...:
 
@@ -183,8 +192,9 @@ These components are combined additively: \\\text{Stan forecasts} +
   between coefficient series and assume zero-centered time series for
   efficiency.
 
-- **ARIMA models:** Used for mean basis coefficients (which operate at
-  non-zero levels) and when `model = "ARIMA"` is specified.
+- **Mean basis models:** Used for mean basis coefficients (which operate
+  at non-zero levels). Default is ETS, controlled by `mean_model`
+  parameter.
 
 **Important Note on `times` Parameter:**
 
@@ -203,3 +213,36 @@ posterior draws.
 ## Author
 
 Nicholas J Clark
+
+## Examples
+
+``` r
+# \donttest{
+# Basic forecasting example
+data("growth_data")
+mod <- ffc_gam(
+  Reaction ~ fts(Subject, k = 3, time_k = 8) +
+             fts(Days, k = 3, time_k = 8),
+  time = "Days", data = growth_data
+)
+#> Error: the variable 'Days' cannot be found in data
+
+# Forecast with ETS (default for mixed basis)
+newdata <- data.frame(Subject = rep("308", 3), Days = 10:12)
+fc <- forecast(mod, newdata = newdata, model = "ETS")
+#> Error: object 'mod' not found
+
+# Use ARDF with custom mean_model for mean basis
+fc_ardf <- forecast(mod, newdata = newdata,
+                    model = "ARDF",
+                    mean_model = "RW",  # Use random walk for mean basis
+                    K = 2)
+#> Error: object 'mod' not found
+
+# Get raw forecast matrix without summary
+fc_raw <- forecast(mod, newdata = newdata,
+                  model = "ETS",
+                  summary = FALSE)
+#> Error: object 'mod' not found
+# }
+```

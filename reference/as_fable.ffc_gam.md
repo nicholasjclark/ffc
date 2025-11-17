@@ -11,7 +11,7 @@ as_fable(
   newdata,
   forecasts = NULL,
   response = NULL,
-  model = "ARIMA",
+  model = "ETS",
   key_vars = NULL,
   ...
 )
@@ -41,7 +41,7 @@ as_fable(
 - model:
 
   A character string representing the forecasting model to use if
-  generating forecasts. Default is "ARIMA"
+  generating forecasts. Default is "ETS"
 
 - key_vars:
 
