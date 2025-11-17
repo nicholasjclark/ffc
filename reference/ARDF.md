@@ -8,13 +8,13 @@ Fit an autoregressive dynamic factor model using Stan
 ARDF(
   formula,
   family = gaussian(),
-  h = 1,
-  chains = 4,
-  cores = 1,
-  iter = 1000,
+  h = get_stan_param("h", "forecast"),
+  chains = get_stan_param("chains"),
+  cores = get_stan_param("cores"),
+  iter = get_stan_param("iter"),
   warmup = floor(iter/2),
-  adapt_delta = 0.8,
-  max_treedepth = 10,
+  adapt_delta = get_stan_param("adapt_delta"),
+  max_treedepth = get_stan_param("max_treedepth"),
   ...
 )
 ```
@@ -95,6 +95,6 @@ mod <- ffc_gam(
 
 # Step 2: Use ARDF for forecasting functional coefficients
 fc <- forecast(mod, newdata = test_data, model = "ARDF", 
-               chains = 1, iter = 500)
+               chains = 1, iter = 300)
 } # }
 ```

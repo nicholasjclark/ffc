@@ -6,7 +6,14 @@ Forecasting functional basis coefficients
 
 ``` r
 # S3 method for class 'fts_ts'
-forecast(object, model = "ARIMA", h = 1, times = 25, stationary = FALSE, ...)
+forecast(
+  object,
+  model = "ARIMA",
+  h = get_stan_param("h", "forecast"),
+  times = 25,
+  stationary = FALSE,
+  ...
+)
 ```
 
 ## Arguments
@@ -19,13 +26,16 @@ forecast(object, model = "ARIMA", h = 1, times = 25, stationary = FALSE, ...)
 - model:
 
   A `character` string representing a valid univariate model definition
-  from the fable package or one of the built-in Bayesian dynamic factor
-  models. Note that if a fable model is used, the chosen method must
-  have an associated
+  from the fable package, ensemble methods, or one of the built-in
+  Bayesian dynamic factor models. Note that if a fable model is used,
+  the chosen method must have an associated
   [`generate()`](https://generics.r-lib.org/reference/generate.html)
   method in order to simulate forecast realisations. Valid models
-  currently include: `'ARDF'`, `'GPDF'`, '`VARDF`, `'ETS'`, `'ARIMA'`,
-  `'AR'`, `'RW'`, `'NAIVE'`, and `'NNETAR'`
+  currently include: `'ENS'`, `'ARDF'`, `'GPDF'`, '`VARDF`, `'ETS'`,
+  `'ARIMA'`, `'AR'`, `'RW'`, `'NAIVE'`, and `'NNETAR'`. The `'ENS'`
+  option combines ETS and Random Walk forecasts with equal weights,
+  hedging bets between exponential smoothing and random walk assumptions
+  to provide more robust predictions when model uncertainty is high.
 
 - h:
 
@@ -90,16 +100,16 @@ forecast(coefs, model = "ETS", h = 3)
 #> # Key:       .basis, .realisation, .model, .rep [875]
 #>    .basis          .realisation .model  year .rep   .sim
 #>    <chr>                  <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.97
-#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.94
-#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.90
-#>  4 fts_bs_s_age__1            1 ETS     2021 10    -1.96
-#>  5 fts_bs_s_age__1            1 ETS     2022 10    -1.93
-#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.90
-#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.97
-#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.93
-#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.90
-#> 10 fts_bs_s_age__1            1 ETS     2021 12    -1.96
+#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.93
+#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.89
+#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.85
+#>  4 fts_bs_s_age__1            1 ETS     2021 10    -1.92
+#>  5 fts_bs_s_age__1            1 ETS     2022 10    -1.88
+#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.83
+#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.93
+#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.88
+#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.82
+#> 10 fts_bs_s_age__1            1 ETS     2021 12    -1.93
 #> # ℹ 2,615 more rows
 # }
 ```
