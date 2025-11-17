@@ -97,6 +97,21 @@ ffc_gam <- function(
 
   # Validate data has no missing values
   validate_no_missing_values(data)
+  
+  # Convert character variables to factors for random effects  
+  data <- convert_re_to_factors(formula, data)
+  
+  # Auto-detect grouping variables and validate time intervals
+  exclude_vars <- time
+  potential_keys <- setdiff(colnames(data), exclude_vars)
+  group_vars <- potential_keys[sapply(potential_keys, function(var) {
+    is.factor(data[[var]]) || is.character(data[[var]])
+  })]
+  
+  # Validate consistent time intervals within groups
+  if (nrow(data) >= 2) {
+    validate_time_intervals(data, time, group_vars)
+  }
 
   # Update formula and data by checking for any fts() terms
   dots <- list(...)

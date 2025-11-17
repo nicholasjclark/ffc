@@ -20,13 +20,10 @@ Depends:
 Imports: 
     mgcv,
     methods,
-    glue,
-    lifecycle,
     rlang (>= 0.4.5),
     ggplot2 (>= 3.0.0),
     dplyr (>= 1.0.0),
     tsibble,
-    magrittr,
     tidyr,
     tibble,
     purrr,

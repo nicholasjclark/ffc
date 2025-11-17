@@ -25,13 +25,13 @@ expand_tbl_ts = function(.data, h){
   min_time <- min(.data$.time)
   max_time <- max(.data$.time) + h
 
-  .expanded <- .data %>%
+  .expanded <- .data |>
     tidyr::expand(tidyr::nesting(.basis, .realisation),
                   .time = min_time:max_time)
-  .data %>%
-    as.data.frame() %>%
+  .data |>
+    as.data.frame() |>
     dplyr::right_join(.expanded,
-                      by = dplyr::join_by(.basis, .time, .realisation)) %>%
+                      by = dplyr::join_by(.basis, .time, .realisation)) |>
     dplyr::ungroup()
 }
 
@@ -47,7 +47,7 @@ make_future_data <- function(.data, h = NULL){
 
   out <- tsibble::new_data(.data, round(n))
   if (tsibble::index_var(.data) == '.time') {
-    out <- out %>%
+    out <- out |>
       dplyr::mutate(!!attr(.data, 'time_var') := .time)
   }
   return(out)

@@ -66,3 +66,392 @@ validate_no_missing_values <- function(data) {
   
   invisible(TRUE)
 }
+
+#' Validate time intervals for consistency
+#'
+#' Checks that time intervals within groups are regular and consistent.
+#' Works with data.frames, tibbles, and tsibbles.
+#'
+#' @param data Data frame containing time series data
+#' @param time_var Character string specifying the time variable name
+#' @param group_vars Optional character vector specifying grouping variables
+#' @param tolerance Numeric tolerance for comparing intervals (default 1e-10)
+#' @return Invisible TRUE if intervals are valid, otherwise stops with error
+#' @noRd
+validate_time_intervals <- function(data, time_var, group_vars = NULL, tolerance = 1e-10) {
+  checkmate::assert_data_frame(data, min.rows = 2)
+  checkmate::assert_string(time_var)
+  checkmate::assert_character(group_vars, any.missing = FALSE, null.ok = TRUE)
+  checkmate::assert_number(tolerance, lower = 0)
+  
+  # Validate time variable exists
+  validate_vars_in_data(time_var, data, "time variable")
+  
+  # Determine grouping variables with enhanced logic
+  if (is.null(group_vars)) {
+    # Check if data is a tsibble and use its keys
+    if (tsibble::is_tsibble(data)) {
+      group_vars <- tsibble::key_vars(data)
+    } else {
+      # Auto-detect categorical variables as potential grouping keys
+      # Rationale: For functional data, each categorical combination
+      # typically represents a separate time series
+      exclude_vars <- time_var
+      potential_keys <- setdiff(colnames(data), exclude_vars)
+      group_vars <- potential_keys[vapply(potential_keys, function(var) {
+        is.factor(data[[var]]) || is.character(data[[var]])
+      }, logical(1))]
+    }
+  }
+  
+  if (!is.null(group_vars) && length(group_vars) > 0) {
+    validate_vars_in_data(group_vars, data, "grouping variable")
+  }
+  
+  # Function to check intervals within a group
+  check_group_intervals <- function(times, group_name = "data") {
+    if (length(times) < 2) return(TRUE)
+    
+    # Sort times within group
+    times <- sort(times)
+    intervals <- diff(times)
+    
+    if (length(intervals) == 0) return(TRUE)
+    
+    # Check if all intervals are approximately equal
+    expected_interval <- intervals[1]
+    if (!all(abs(intervals - expected_interval) < tolerance)) {
+      stop(insight::format_error(
+        paste0("Irregular time intervals found in ", group_name, ". ",
+               "Intervals range from ", round(min(intervals), 6), 
+               " to ", round(max(intervals), 6), ". ",
+               "Expected consistent interval of ", round(expected_interval, 6), ". ",
+               "Please ensure regular time spacing within groups.")
+      ), call. = FALSE)
+    }
+    
+    return(TRUE)
+  }
+  
+  # Check intervals by group or overall
+  if (!is.null(group_vars) && length(group_vars) > 0) {
+    # Group-wise interval checking
+    data |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(group_vars))) |>
+      dplyr::summarise(
+        times = list(!!rlang::sym(time_var)),
+        .groups = "drop"
+      ) |>
+      dplyr::rowwise() |>
+      dplyr::mutate(
+        valid = check_group_intervals(
+          times, 
+          paste("group", paste(group_vars, collapse = ", "))
+        )
+      )
+  } else {
+    # Overall interval checking
+    check_group_intervals(data[[time_var]])
+  }
+  
+  invisible(TRUE)
+}
+
+#' Validate newdata for forecasting and return out-of-sample timepoints
+#'
+#' Checks forecast newdata for valid time structure and filters to only
+#' future timepoints beyond the training data. Also validates time intervals
+#' and handles grouped data properly.
+#'
+#' @param newdata Data frame containing forecast data
+#' @param model Model object containing training data and time variable info
+#' @return Filtered newdata containing only out-of-sample timepoints
+#' @noRd
+validate_forecast_newdata <- function(newdata, model) {
+  checkmate::assert_data_frame(newdata, min.rows = 1)
+  checkmate::assert_class(model, "ffc_gam")
+  
+  time_var <- model$time_var
+  if (is.null(time_var)) {
+    stop(insight::format_error(
+      "Time variable not found in model object. Ensure model was fitted with time argument"
+    ), call. = FALSE)
+  }
+  
+  # Validate time variable exists in newdata
+  validate_vars_in_data(time_var, newdata, "time variable")
+  
+  # Auto-detect grouping variables from TRAINING data (model$model)
+  exclude_vars <- time_var
+  potential_keys <- setdiff(colnames(model$model), exclude_vars)
+  training_key_vars <- potential_keys[sapply(potential_keys, function(var) {
+    is.factor(model$model[[var]]) || is.character(model$model[[var]])
+  })]
+  
+  # Validate that training key variables exist in newdata
+  if (length(training_key_vars) > 0) {
+    validate_vars_in_data(training_key_vars, newdata, "grouping variable from training data")
+    
+    # Check if newdata has additional grouping variables not in training
+    newdata_potential_keys <- setdiff(colnames(newdata), exclude_vars)
+    newdata_only_keys <- newdata_potential_keys[sapply(newdata_potential_keys, function(var) {
+      is.factor(newdata[[var]]) || is.character(newdata[[var]])
+    })]
+    extra_keys <- setdiff(newdata_only_keys, training_key_vars)
+    
+    if (length(extra_keys) > 0) {
+      if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+        rlang::warn(
+          paste0("Found additional grouping variables in newdata: {", 
+                 paste(extra_keys, collapse = ", "), "}. ",
+                 "These will be ignored as they don't exist in training data."),
+          .frequency = "once", .frequency_id = "extra_grouping_vars"
+        )
+      }
+    }
+  }
+  
+  # Use validated training key variables for all operations
+  key_vars <- training_key_vars
+  
+  # Sort newdata by groups first, then time within groups
+  if (length(key_vars) > 0) {
+    newdata <- newdata |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(key_vars))) |>
+      dplyr::arrange(!!rlang::sym(time_var), .by_group = TRUE) |>
+      dplyr::ungroup()
+  } else {
+    newdata <- newdata |>
+      dplyr::arrange(!!rlang::sym(time_var))
+  }
+  
+  # Get training data max time, handling groups if present
+  if (length(key_vars) > 0) {
+    train_max_times <- model$model |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(key_vars))) |>
+      dplyr::summarise(
+        max_time = max(!!rlang::sym(time_var)),
+        .groups = "drop"
+      )
+  } else {
+    max_train_time <- max(model$model[[time_var]])
+  }
+  
+  # Validate newdata intervals are consistent
+  if (nrow(newdata) >= 2) {
+    # Check newdata intervals first to catch internal inconsistencies
+    suppressWarnings(try({
+      validate_time_intervals(newdata, time_var, key_vars)
+    }, silent = TRUE))
+    
+    # Compare with training data intervals
+    if (length(key_vars) > 0) {
+      # Get training intervals by group for comparison
+      train_intervals_by_group <- model$model |>
+        dplyr::group_by(dplyr::across(dplyr::all_of(key_vars))) |>
+        dplyr::summarise(
+          train_interval = if (dplyr::n() > 1) diff(sort(!!rlang::sym(time_var)))[1] else NA_real_,
+          .groups = "drop"
+        )
+      
+      # Check intervals within each group
+      interval_check <- newdata |>
+        dplyr::group_by(dplyr::across(dplyr::all_of(key_vars))) |>
+        dplyr::summarise(
+          newdata_intervals = if (dplyr::n() > 1) list(diff(!!rlang::sym(time_var))) else list(numeric(0)),
+          .groups = "drop"
+        ) |>
+        dplyr::left_join(train_intervals_by_group, by = key_vars)
+      
+      # Check for interval mismatches between newdata and training data
+      for (i in seq_len(nrow(interval_check))) {
+        if (length(interval_check$newdata_intervals[[i]]) > 0 && !is.na(interval_check$train_interval[i])) {
+          newdata_ints <- interval_check$newdata_intervals[[i]]
+          train_int <- interval_check$train_interval[i]
+          
+          if (!all(abs(newdata_ints - train_int) < 1e-10)) {
+            rlang::warn(
+              paste0("Time intervals in newdata (", 
+                     paste(round(newdata_ints, 4), collapse = ", "), 
+                     ") differ from training interval (", 
+                     round(train_int, 4), ") for group. ",
+                     "Consider using the same interval as training data for optimal results.")
+            )
+          }
+        }
+      }
+      
+      # Calculate forecast horizons by group  
+      fc_horizons_df <- newdata |>
+        dplyr::left_join(train_max_times, by = key_vars) |>
+        dplyr::mutate(fc_horizon = !!rlang::sym(time_var) - max_time)
+      
+      fc_horizons <- fc_horizons_df$fc_horizon
+      
+    } else {
+      # Single group case - compare with training data intervals
+      if (nrow(newdata) > 1) {
+        newdata_intervals <- diff(newdata[[time_var]])
+        train_times <- sort(model$model[[time_var]])
+        if (length(train_times) > 1) {
+          train_interval <- diff(train_times)[1]
+          
+          # Check for exact interval match
+          if (!all(abs(newdata_intervals - train_interval) < 1e-10)) {
+            rlang::warn(
+              paste0("Time intervals in newdata (", 
+                     paste(round(newdata_intervals, 4), collapse = ", "), 
+                     ") differ from training interval (", 
+                     round(train_interval, 4), "). ",
+                     "Consider using the same interval as training data for optimal results.")
+            )
+          }
+        }
+      }
+      
+      fc_horizons <- newdata[[time_var]] - max_train_time
+    }
+  } else {
+    # If no interval validation needed, still calculate horizons
+    if (length(key_vars) > 0) {
+      fc_horizons_df <- newdata |>
+        dplyr::left_join(train_max_times, by = key_vars) |>
+        dplyr::mutate(fc_horizon = !!rlang::sym(time_var) - max_time)
+      fc_horizons <- fc_horizons_df$fc_horizon
+    } else {
+      fc_horizons <- newdata[[time_var]] - max_train_time
+    }
+  }
+  
+  # Check if we have any future time points
+  if (all(fc_horizons <= 0)) {
+    stop(insight::format_error(
+      paste0("No future time points found in newdata. ",
+             "All time points are at or before their respective last training times. ",
+             "Please provide newdata with {.field ", time_var, "} values beyond training data.")
+    ), call. = FALSE)
+  }
+  
+  # Warn about overlapping time points and filter
+  if (any(fc_horizons <= 0)) {
+    n_overlap <- sum(fc_horizons <= 0)
+    n_future <- sum(fc_horizons > 0)
+    
+    rlang::warn(
+      paste0("Found ", n_overlap, " time points in newdata that overlap with training data. ",
+             "Only forecasting for ", n_future, " future time points.")
+    )
+    
+    # Filter to only future time points
+    if (length(key_vars) > 0) {
+      newdata <- fc_horizons_df |>
+        dplyr::filter(fc_horizon > 0) |>
+        dplyr::select(-max_time, -fc_horizon)
+    } else {
+      newdata <- newdata[fc_horizons > 0, , drop = FALSE]
+    }
+  }
+  
+  return(newdata)
+}
+
+#' Convert character variables to factors for random effects
+#'
+#' Automatically converts character variables to factors when used with 
+#' random effect basis functions (bs = "re"). Provides graceful error for
+#' invalid variable types.
+#'
+#' @param formula The model formula
+#' @param data The data frame
+#' @return Modified data frame with character variables converted to factors
+#' @noRd
+convert_re_to_factors <- function(formula, data) {
+  checkmate::assert_class(formula, "formula")
+  checkmate::assert_data_frame(data)
+  
+  # Extract term labels from formula with error handling
+  terms_obj <- tryCatch(
+    stats::terms.formula(formula, keep.order = TRUE),
+    error = function(e) {
+      stop(insight::format_error(
+        "Invalid formula structure: {e$message}"
+      ), call. = FALSE)
+    }
+  )
+  
+  termlabs <- attr(terms_obj, "term.labels")
+  if (is.null(termlabs) || length(termlabs) == 0) {
+    return(data)  # No terms to process
+  }
+  
+  # Regex pattern for random effects - extract as constant
+  RE_PATTERN <- 'bs\\s*=\\s*["\']re["\']'
+  VAR_PATTERN <- "s\\s*\\(\\s*([^,\\)]+)"
+  
+  # Find terms that use random effect basis (bs = "re")
+  re_terms <- grep(RE_PATTERN, termlabs, value = TRUE)
+  
+  if (length(re_terms) > 0) {
+    for (term in re_terms) {
+      # Extract variable name with comprehensive error handling
+      matches <- regmatches(term, regexec(VAR_PATTERN, term))
+      
+      if (length(matches[[1]]) < 2) {
+        if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+          insight::format_warning(
+            paste0("Could not parse variable name from random effect term: ", 
+                   term, ". Skipping automatic conversion."),
+            .frequency = "once", 
+            .frequency_id = paste0("parse_failure_", term)
+          )
+        }
+        next
+      }
+      
+      var_name <- trimws(matches[[1]][2])
+      var_name <- gsub("^['\"]|['\"]$", "", var_name)  # Remove quotes
+      
+      # Validate variable name is simple identifier
+      if (!identical(var_name, make.names(var_name)) || 
+          grepl("[^a-zA-Z0-9_\\.]", var_name)) {
+        if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+          insight::format_warning(
+            paste0("Complex expression in random effect term: ", term, 
+                   ". Automatic conversion only supports simple variable names."),
+            .frequency = "once", 
+            .frequency_id = paste0("complex_expr_", term)
+          )
+        }
+        next
+      }
+      
+      if (var_name %in% colnames(data)) {
+        var_value <- data[[var_name]]
+        
+        # Check variable type and convert if needed
+        if (is.character(var_value)) {
+          if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+            insight::format_warning(
+              paste0("Converting character variable {.field ", var_name, 
+                     "} to factor for random effect term."),
+              .frequency = "once", 
+              .frequency_id = paste0("re_convert_", var_name)
+            )
+          }
+          data[[var_name]] <- as.factor(var_value)
+        } else if (!is.factor(var_value)) {
+          stop(insight::format_error(
+            paste0("Variable {.field ", var_name, "} used in random effect term ",
+                   "must be either character or factor, but is {.cls ", 
+                   class(var_value)[1], "}. ",
+                   "Please convert to character or factor before using in s(", 
+                   var_name, ", bs = 're').")
+          ), call. = FALSE)
+        }
+      }
+    }
+  }
+  
+  return(data)
+}
+

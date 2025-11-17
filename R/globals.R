@@ -25,6 +25,9 @@ utils::globalVariables(
     "P",
     "Q",
     ".series",
-    ".y"
+    ".y",
+    "max_time",
+    "fc_horizon",
+    "times"
   )
 )

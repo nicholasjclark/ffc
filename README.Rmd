@@ -79,13 +79,14 @@ library(tidyverse)
 library(ggplot2); theme_set(theme_bw(base_size = 12))
 ```
 
-Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the `tsibbleverse`
+Our aim here is to forecast the number of domestic visitors to Melbourne, Australia. The data can be found in the `tsibble::tourism` data set. For now we need to explicitly add the `quarter` and `time` variables to the data, but in future this will be done automatically for seamless integration with the [`tsibbleverse`](https://tsibble.tidyverts.org/)
+
 ```{r tourism-data}
-tourism_melb <- tourism %>%
+tourism_melb <- tourism |>
   filter(
     Region == "Melbourne",
     Purpose == "Visiting"
-  ) %>%
+  ) |>
   mutate(
     quarter = lubridate::quarter(Quarter),
     time = dplyr::row_number()
@@ -95,10 +96,10 @@ tourism_melb
 
 Split into training and testing folds. We wil aim to forecast the last 5 quarters of the data
 ```{r train-test-split}
-train <- tourism_melb %>%
+train <- tourism_melb |>
   dplyr::slice_head(n = 75)
 
-test <- tourism_melb %>%
+test <- tourism_melb |>
   dplyr::slice_tail(n = 5)
 ```
 
@@ -127,7 +128,14 @@ mod <- ffc_gam(
 )
 ```
 
-Draw the time-varying basis coefficients using support for the [`gratia`](https://gavinsimpson.github.io/gratia/) package
+The `autoplot()` method is handy for viewing the time-varying basis coefficients from `ffc_gam()` models. Here we draw 10 realisations from the estimated coefficient distributions and plot them.
+
+```{r tourism-coefficients0, fig.alt="autplot() plots showing time-varying coefficients for the tourism model, illustrating how basis coefficients have been estimated to vary through time."}
+fts_coefs(mod, times = 10, summary = FALSE) |>
+  autoplot()
+```
+
+We can also draw the time-varying basis coefficients using support from the [`gratia`](https://gavinsimpson.github.io/gratia/) package, which has helpful functions for plotting smooth effects:
 
 ```{r tourism-coefficients, fig.alt="Smooth plots showing time-varying coefficients for the tourism model. The upper panel shows the time-varying level component while the lower panel displays seasonal coefficients that change over time, demonstrating how seasonality patterns evolve."}
 gratia::draw(mod)
@@ -160,7 +168,7 @@ fc_intervals <- hilo(fc_ffc, level = c(80, 95))
 fc_intervals
 
 # Distribution summaries
-fc_summary <- fc_ffc %>%
+fc_summary <- fc_ffc |>
   summarise(
     mean_forecast = mean(.dist),
     median_forecast = median(.dist),
@@ -178,11 +186,11 @@ fc_ffc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
 fc_ffc_ets <- as_fable(mod, newdata = test, model = "ETS")
 
 # Generate traditional model forecasts
-fc_traditional <- train %>%
+fc_traditional <- train |>
   model(
     ARIMA = ARIMA(Trips),
     ETS = ETS(Trips)
-  ) %>%
+  ) |>
   forecast(h = 5)
 
 # Calculate accuracy for all models

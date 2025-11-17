@@ -304,7 +304,7 @@ mortality_forecasts <- forecast(
 head(mortality_forecasts)
 
 # Plot forecasted mortality rates, together with uncertainties
-ggplot(mortality_forecasts %>%
+ggplot(mortality_forecasts |>
          dplyr::bind_cols(newdata_forecast),
        aes(x = age,
            y = .estimate,

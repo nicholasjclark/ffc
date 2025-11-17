@@ -10,7 +10,7 @@ prep_tbl_ts_stan = function(.data,
   model <- match.arg(model, choices = c('ardf', 'gpdf', 'vardf'))
 
   # Expand the data to include NAs for the out of sample period
-  .fulldata <- expand_tbl_ts(.data, h) %>%
+  .fulldata <- expand_tbl_ts(.data, h) |>
 
     # add 'series' indicator
     dplyr::mutate(
@@ -19,8 +19,8 @@ prep_tbl_ts_stan = function(.data,
         levels = set_series_levels(unique(.basis))
       ),
       .y = .estimate
-    ) %>%
-    dplyr::arrange(.series, .time) %>%
+    ) |>
+    dplyr::arrange(.series, .time) |>
     dplyr::select(.series, .time, .y)
 
   # Pull some key arguments
@@ -35,10 +35,10 @@ prep_tbl_ts_stan = function(.data,
   n_timepoints <- length(unique(.fulldata$.time))
 
   # Need a matrix of values for the series, excluding forecast values
-  Y <- .fulldata %>%
+  Y <- .fulldata |>
     tidyr::pivot_wider(names_from = '.series',
-                       values_from = '.y') %>%
-    dplyr::select(-.time) %>%
+                       values_from = '.y') |>
+    dplyr::select(-.time) |>
     as.matrix()
 
   stopifnot(identical(NROW(Y), n_timepoints))
@@ -141,23 +141,23 @@ extract_stan_fc = function(stanfit,
         )
       }
     )
-  ) %>%
+  ) |>
     dplyr::as_tibble()
 
   # Extend any other time variables ...
   index <- tsibble::index_var(.data)
   out <- suppressMessages(
-    make_future_data(.data, h = h) %>%
-      dplyr::as_tibble() %>%
+    make_future_data(.data, h = h) |>
+      dplyr::as_tibble() |>
       dplyr::mutate(.time = rep((ends[1] - h + 1) : (ends[1]),
-                                n_series)) %>%
-      dplyr::select(-.basis, -.realisation) %>%
-      dplyr::distinct() %>%
+                                n_series)) |>
+      dplyr::select(-.basis, -.realisation) |>
+      dplyr::distinct() |>
 
       # ... and join to the forecast data
       dplyr::right_join(series_fcs,
                         relationship = 'many-to-many',
-                        by = dplyr::join_by(.time)) %>%
+                        by = dplyr::join_by(.time)) |>
       tsibble::as_tsibble(
         key = c(.basis, .realisation, .model, .rep),
         index = index

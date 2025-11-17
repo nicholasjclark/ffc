@@ -75,9 +75,9 @@ forecast.fts_ts <- function(
 
   # If using fable, check for uncertainty estimates and simulate forecasts
   if (exists(".sd", object_tsbl)) {
-    object_sds <- object_tsbl %>%
-      as.data.frame() %>%
-      dplyr::group_by(.basis, .realisation) %>%
+    object_sds <- object_tsbl |>
+      as.data.frame() |>
+      dplyr::group_by(.basis, .realisation) |>
       dplyr::summarise(.sd = tail(.sd, 1))
   } else {
     object_sds <- NULL
@@ -222,11 +222,11 @@ adjust_forecast_uncertainty <- function(
     times,
     h
 ) {
-  forecast_df %>%
+  forecast_df |>
     dplyr::left_join(
       object_sds,
       by = dplyr::join_by(.basis, .realisation)
-    ) %>%
+    ) |>
     dplyr::mutate(
       .estimate = vctrs::new_vctr(
         purrr::map2(
@@ -243,12 +243,12 @@ adjust_forecast_uncertainty <- function(
         ),
         class = "distribution"
       )
-    ) %>%
-    tidyr::unnest(cols = .estimate) %>%
-    tidyr::unnest(cols = .estimate) %>%
-    dplyr::rename(".sim" = ".estimate") %>%
-    dplyr::group_by(.basis, .realisation) %>%
-    dplyr::mutate(.rep = rep(1:times, h)) %>%
+    ) |>
+    tidyr::unnest(cols = .estimate) |>
+    tidyr::unnest(cols = .estimate) |>
+    dplyr::rename(".sim" = ".estimate") |>
+    dplyr::group_by(.basis, .realisation) |>
+    dplyr::mutate(.rep = rep(1:times, h)) |>
     dplyr::ungroup()
 }
 
@@ -282,9 +282,9 @@ fable_forecast <- function(
 
   # Adjust observation variance if necessary
   if (!is.null(object_sds)) {
-    forecast_df <- object_tsbl %>%
-      fabletools::model(model_call) %>%
-      forecast(h = h) %>%
+    forecast_df <- object_tsbl |>
+      fabletools::model(model_call) |>
+      forecast(h = h) |>
       dplyr::mutate(.model = model)
 
     return(
@@ -296,9 +296,9 @@ fable_forecast <- function(
       )
     )
   } else {
-    forecast_df <- object_tsbl %>%
-      fabletools::model(model_call) %>%
-      fabletools::generate(h = h, times = times) %>%
+    forecast_df <- object_tsbl |>
+      fabletools::model(model_call) |>
+      fabletools::generate(h = h, times = times) |>
       dplyr::mutate(.model = model)
 
     return(forecast_df)
@@ -307,7 +307,7 @@ fable_forecast <- function(
 
 #' Forecasting `ffc_gam` models
 #'
-#' @importFrom stats median quantile
+#' @importFrom stats median quantile setNames
 #' @inheritParams forecast.fts_ts
 #' @param object An object of class `ffc_gam`. See [ffc_gam()]
 #' @param newdata `dataframe` or `list` of test data containing the
@@ -403,23 +403,25 @@ fable_forecast <- function(
 #' specified freely and controls the number of posterior draws.
 #' @examples
 #' \donttest{
-#' # Basic forecasting example
+#' # Basic forecasting example with growth data
 #' data("growth_data")
 #' mod <- ffc_gam(
-#'   Reaction ~ fts(Subject, k = 3, time_k = 8) +
-#'              fts(Days, k = 3, time_k = 8),
-#'   time = "Days", data = growth_data
+#'   height_cm ~ s(id, bs = "re") +
+#'     fts(age_yr, k = 8, bs = "cr", time_k = 10),
+#'   time = "age_yr", 
+#'   data = growth_data,
+#'   family = Gamma()
 #' )
 #'
-#' # Forecast with ETS (default for mixed basis)
-#' newdata <- data.frame(Subject = rep("308", 3), Days = 10:12)
+#' # Forecast with ETS model
+#' newdata <- data.frame(
+#'   id = "boy_11", 
+#'   age_yr = c(16, 17, 18)
+#' )
 #' fc <- forecast(mod, newdata = newdata, model = "ETS")
 #'
-#' # Use ARDF with custom mean_model for mean basis
-#' fc_ardf <- forecast(mod, newdata = newdata,
-#'                     model = "ARDF",
-#'                     mean_model = "RW",  # Use random walk for mean basis
-#'                     K = 2)
+#' # Forecast with random walk model
+#' fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 #'
 #' # Get raw forecast matrix without summary
 #' fc_raw <- forecast(mod, newdata = newdata,
@@ -499,6 +501,13 @@ forecast.ffc_gam <- function(
       nrow = NROW(orig_betas)
     )
   } else {
+    # Determine horizon (assuming equal time gaps)
+    time_var <- object$time_var
+
+    # Validate newdata and filter to future time points only
+    newdata <- validate_forecast_newdata(newdata, object)
+    validated_newdata_size <- nrow(newdata)
+    
     # Predict by fixing time to its last training value; this allows
     # us to later add the uncertainty from the zero-centred time-varying
     # basis coefficient time series
@@ -512,12 +521,8 @@ forecast.ffc_gam <- function(
       type = "lpmatrix"
     )
     rm(newdata_shift, last_train)
-
-    # Determine horizon (assuming equal time gaps)
-    time_var <- object$time_var
-
-    # Now create basis coefficient data for forecasting, using
-    # the user-supplied newdata
+    
+    # Now create basis coefficient data for forecasting using filtered newdata
     interpreted <- interpret_ffc(
       formula = object$orig_formula,
       data = newdata,
@@ -528,8 +533,9 @@ forecast.ffc_gam <- function(
 
     fc_horizons <- interpreted$data[[time_var]] -
       max(object$model[[time_var]])
-
-    max_horizon <- max(fc_horizons)
+    # Use number of forecast time points instead of maximum horizon
+    # This handles fractional and non-consecutive time steps
+    max_horizon <- length(fc_horizons)
 
     # Extract functional basis coefficient time series
     # Use the same temp_params that was already adjusted for Stan models
@@ -542,22 +548,22 @@ forecast.ffc_gam <- function(
     # Calculate mean and shift so that last time point
     # is zero
     shift_tail = function(x) x - tail(x, 1)
-      functional_coefs <- intermed_coefs %>%
-        dplyr::group_by(.basis, .time) %>%
+      functional_coefs <- intermed_coefs |>
+        dplyr::group_by(.basis, .time) |>
         dplyr::mutate(
           .mean = mean(.estimate)
-        ) %>%
-        dplyr::select(.basis, .time, !!time_var, .mean) %>%
-        dplyr::ungroup() %>%
-        dplyr::distinct() %>%
-        dplyr::group_by(.basis) %>%
-        dplyr::arrange(.time) %>%
-        dplyr::mutate(.mean = shift_tail(.mean)) %>%
-        dplyr::ungroup() %>%
+        ) |>
+        dplyr::select(.basis, .time, !!time_var, .mean) |>
+        dplyr::ungroup() |>
+        dplyr::distinct() |>
+        dplyr::group_by(.basis) |>
+        dplyr::arrange(.time) |>
+        dplyr::mutate(.mean = shift_tail(.mean)) |>
+        dplyr::ungroup() |>
         dplyr::mutate(
           .realisation = 1,
           .estimate = .mean
-        ) %>%
+        ) |>
         tsibble::as_tsibble(
           key = c(.basis, .realisation),
           index = .time
@@ -568,10 +574,10 @@ forecast.ffc_gam <- function(
     # a tsibble format)
       if (!is.null(attr(intermed_coefs, "index"))) {
         if (!attr(intermed_coefs, "index") %in% names(functional_coefs)){
-          functional_coefs <- functional_coefs %>%
+          functional_coefs <- functional_coefs |>
             dplyr::left_join(
-              intermed_coefs %>%
-                dplyr::select(.time, !!attr(intermed_coefs, "index")) %>%
+              intermed_coefs |>
+                dplyr::select(.time, !!attr(intermed_coefs, "index")) |>
                 dplyr::distinct(),
               by = dplyr::join_by(.time)
             )
@@ -607,7 +613,7 @@ forecast.ffc_gam <- function(
       # basis functions
       functional_fc_others <- suppressWarnings(
         forecast(
-          object = functional_coefs %>%
+          object = functional_coefs |>
             dplyr::filter(!grepl('_mean', .basis)),
           h = max_horizon,
           times = temp_params$times,
@@ -618,14 +624,14 @@ forecast.ffc_gam <- function(
       )
 
       if('.time' %in% colnames(functional_fc_others)){
-        functional_fc_others <- functional_fc_others %>%
+        functional_fc_others <- functional_fc_others |>
           dplyr::select(-.time)
       }
 
       # Now forecast the _mean basis with the specified model
       functional_fc_mean <- suppressWarnings(
         forecast(
-          object = functional_coefs %>%
+          object = functional_coefs |>
             dplyr::filter(grepl('_mean', .basis)),
           h = max_horizon,
           times = temp_params$times,
@@ -633,19 +639,19 @@ forecast.ffc_gam <- function(
           stationary = FALSE,
           ...
         )
-      ) %>%
-        tsibble::as_tibble() %>%
+      ) |>
+        tsibble::as_tibble() |>
         dplyr::select(dplyr::any_of(names(functional_fc_others)))
 
       if(!time_var %in% colnames(functional_fc_mean) &
          is.null(attr(intermed_coefs, "index"))){
-        functional_fc_mean <- functional_fc_mean %>%
+        functional_fc_mean <- functional_fc_mean |>
           dplyr::mutate({{time_var}} := .time)
       }
 
       # Bind the two forecasts together
-      functional_fc <- functional_fc_others %>%
-        dplyr::mutate(.rep = as.character(.rep)) %>%
+      functional_fc <- functional_fc_others |>
+        dplyr::mutate(.rep = as.character(.rep)) |>
         dplyr::bind_rows(functional_fc_mean)
 
     } else {
@@ -671,35 +677,52 @@ forecast.ffc_gam <- function(
 
     if (!is.null(index_var)) {
       # Join original time data using the index attribute
-      functional_fc <- functional_fc %>%
+      functional_fc <- functional_fc |>
         dplyr::left_join(
-          interpreted$orig_data %>%
-            tibble::as_tibble() %>%
-            dplyr::select(!!time_var, !!index_var) %>%
+          interpreted$orig_data |>
+            tibble::as_tibble() |>
+            dplyr::select(!!time_var, !!index_var) |>
             dplyr::distinct(),
           by = dplyr::join_by(!!index_var)
-        ) %>%
+        ) |>
         dplyr::rename(.time = !!time_var)
 
     } else if (time_var %in% colnames(functional_fc)) {
       # Replace .time column with time_var if available
-      functional_fc <- functional_fc %>%
-        tsibble::as_tibble() %>%
-        dplyr::select(-.time) %>%
+      functional_fc <- functional_fc |>
+        tsibble::as_tibble() |>
+        dplyr::select(-.time) |>
         dplyr::bind_cols(
-          functional_fc %>%
-            tsibble::as_tibble() %>%
-            dplyr::select(!!time_var) %>%
+          functional_fc |>
+            tsibble::as_tibble() |>
+            dplyr::select(!!time_var) |>
             dplyr::rename(.time = !!time_var)
         )
     }
 
-    # Only need to return forecasts for those times that are
-    # in newdata
-    functional_fc <- functional_fc %>%
-      dplyr::filter(
-        .time %in% unique(interpreted$data[[time_var]])
-      )
+    # Map forecast .time values to actual target time values
+    # The forecast generates consecutive integer steps, but we need specific time values
+    target_times <- interpreted$data[[time_var]]
+    forecast_times <- sort(unique(functional_fc$.time))
+    
+    
+    # Validate time mapping is mathematically possible
+    if (length(forecast_times) != length(target_times)) {
+      stop(insight::format_error(
+        paste0("Cannot map forecast times: generated ", length(forecast_times), 
+               " unique time steps but newdata has ", length(target_times), 
+               " unique time values. This may indicate an issue with the forecasting horizon.")
+      ))
+    }
+    
+    # Create mapping from forecast times to target times
+    time_mapping <- setNames(target_times, forecast_times)
+    
+    # Remap the .time values
+    # Convert to tibble first to avoid tsibble validation issues with duplicate key+time combinations
+    functional_fc <- functional_fc |>
+      tsibble::as_tibble() |>
+      dplyr::mutate(.time = time_mapping[as.character(.time)])
 
     # Calculate intermediate linear predictors
     model_offset <- attr(orig_lpmat, "model.offset")
@@ -715,35 +738,37 @@ forecast.ffc_gam <- function(
     )
 
     # Join forecasts to the basis function evaluations
-    fts_fc <- interpreted$data %>%
-      dplyr::select(tidyr::matches("^fts_")) %>%
+    fts_fc <- interpreted$data |>
+      dplyr::select(tidyr::matches("^fts_")) |>
       dplyr::mutate(
         .time = interpreted$data[[time_var]],
         .row = dplyr::row_number()
-      ) %>%
+      ) |>
       tidyr::pivot_longer(
         cols = tidyr::starts_with("fts_"),,
         names_to = ".basis",
         values_to = ".evaluation"
-      ) %>%
+      ) |>
       dplyr::left_join(
         functional_fc,
         dplyr::join_by(.time, .basis),
         relationship = "many-to-many"
-      ) %>%
+      ) |>
       # Calculate prediction
-      dplyr::mutate(.pred = .evaluation * .sim) %>%
+      dplyr::mutate(.pred = .evaluation * .sim) |>
       # Now take 'draws' of the betas
       dplyr::select(
         .basis, .time, .realisation, .rep, .pred, .row
-      ) %>%
+      ) |>
       # Pivot back to wide format
+      # Reason: Handle duplicate combinations from many-to-many join  
       tidyr::pivot_wider(
         names_from = .basis,
-        values_from = .pred
-      ) %>%
-      dplyr::arrange(.row) %>%
-      dplyr::mutate(.draw = paste0(.realisation, "_", .rep)) %>%
+        values_from = .pred,
+        values_fn = mean
+      ) |>
+      dplyr::arrange(.row) |>
+      dplyr::mutate(.draw = paste0(.realisation, "_", .rep)) |>
       dplyr::select(
         -.time,
         -.realisation,
@@ -764,10 +789,9 @@ forecast.ffc_gam <- function(
     }
 
     # If dimensions correct, take rowsums for each draw
-    fc_linpreds <- fts_fc %>%
-      dplyr::select(-c(.draw, .row)) %>%
+    fc_linpreds <- fts_fc |>
+      dplyr::select(-c(.draw, .row)) |>
       rowSums()
-
     # Add the draw-specific row predictions to the
     # intermediate prediction matrix
     unique_draws <- unique(fts_fc$.draw)
@@ -945,9 +969,9 @@ rtw <- function(mu, p, phi) {
     lab = rep(seq_along(N), N)
   )
   out <- numeric(length(N))
-  out[which(N != 0)] <- tab %>%
-    dplyr::group_by(.data$lab) %>%
-    dplyr::summarise(summed = sum(.data$y)) %>%
+  out[which(N != 0)] <- tab |>
+    dplyr::group_by(.data$lab) |>
+    dplyr::summarise(summed = sum(.data$y)) |>
     dplyr::pull(.data$summed)
   out
 }

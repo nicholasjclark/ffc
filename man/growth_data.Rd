@@ -5,18 +5,20 @@
 \alias{growth_data}
 \title{Berkeley growth study data}
 \format{
-A \code{data.frame} containing the following fields:
+A \code{data.frame} with 507 observations and 3 variables:
 \describe{
 \item{height_cm}{numeric height, in centimeters}
-\item{age_yr}{numeric age at which the boys were measured, in years}
-\item{id}{factor indicating the different subjects}
+\item{age_yr}{numeric age at which the boys were measured, in years (3, 4, 5, ..., 15)}
+\item{id}{factor indicating the different subjects (39 boys)}
 }
 }
 \usage{
 growth_data
 }
 \description{
-A dataset containing the heights of 39 boys measured at ages ranging from 1 to 18 years
+A dataset containing the heights of 39 boys measured at ages 3 to 15 years with
+regular yearly intervals. This is a subset of the original Berkeley Growth Study
+data filtered to contain only regular time intervals suitable for time series modeling.
 }
 \references{
 Tuddenham, R. D., and Snyder, M. M. (1954) "Physical growth of

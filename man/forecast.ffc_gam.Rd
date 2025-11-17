@@ -141,23 +141,25 @@ specified freely and controls the number of posterior draws.
 }
 \examples{
 \donttest{
-# Basic forecasting example
+# Basic forecasting example with growth data
 data("growth_data")
 mod <- ffc_gam(
-  Reaction ~ fts(Subject, k = 3, time_k = 8) +
-             fts(Days, k = 3, time_k = 8),
-  time = "Days", data = growth_data
+  height_cm ~ s(id, bs = "re") +
+    fts(age_yr, k = 8, bs = "cr", time_k = 10),
+  time = "age_yr", 
+  data = growth_data,
+  family = Gamma()
 )
 
-# Forecast with ETS (default for mixed basis)
-newdata <- data.frame(Subject = rep("308", 3), Days = 10:12)
+# Forecast with ETS model
+newdata <- data.frame(
+  id = "boy_11", 
+  age_yr = c(16, 17, 18)
+)
 fc <- forecast(mod, newdata = newdata, model = "ETS")
 
-# Use ARDF with custom mean_model for mean basis
-fc_ardf <- forecast(mod, newdata = newdata,
-                    model = "ARDF",
-                    mean_model = "RW",  # Use random walk for mean basis
-                    K = 2)
+# Forecast with random walk model
+fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 
 # Get raw forecast matrix without summary
 fc_raw <- forecast(mod, newdata = newdata,
