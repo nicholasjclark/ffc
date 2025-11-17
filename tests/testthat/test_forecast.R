@@ -487,45 +487,45 @@ test_that("as_fable.ffc_gam() uses tsibble::new_tsibble correctly", {
 
 test_that("as_fable.ffc_gam() error cases are properly handled", {
   skip_if_not_installed("distributional")
-  
+
   newdata <- data.frame(
     y = c(10, 15),
     season = c(1, 2),
     time = c(76, 77)
   )
-  
+
   # Test error when formula is NULL and response not provided
   mod_no_formula <- example_mod
   mod_no_formula$formula <- NULL
-  
+
   expect_error(
     as_fable(mod_no_formula, newdata = newdata, response = NULL),
     "Cannot auto-detect response variable"
   )
-  
+
   # Test error when time variable not found in model object
   mod_no_time <- example_mod
   mod_no_time$time_var <- NULL
-  
+
   expect_error(
     as_fable(mod_no_time, newdata = newdata),
     "Time variable not found in model object"
   )
-  
+
   # Test error when forecast dimensions don't match newdata
   forecasts_wrong_dim <- matrix(c(10, 12, 14), nrow = 1, ncol = 3)
-  
+
   expect_error(
     as_fable(example_mod, newdata = newdata, forecasts = forecasts_wrong_dim),
     "Forecast dimensions.*do not match newdata rows"
   )
-  
+
   # Test time variable class validation with pre-computed forecasts
   # Use pre-computed forecasts to bypass forecast generation issues
   newdata_bad_time <- newdata
   newdata_bad_time$time <- as.complex(newdata_bad_time$time)
   forecasts_good <- matrix(c(10, 12, 14, 16), nrow = 2, ncol = 2)
-  
+
   expect_error(
     as_fable(example_mod, newdata = newdata_bad_time, forecasts = forecasts_good),
     "must be Date.*POSIXct.*yearquarter.*yearmonth.*numeric.*integer"
@@ -534,23 +534,23 @@ test_that("as_fable.ffc_gam() error cases are properly handled", {
 
 test_that("as_fable.ffc_gam() handles character time variable conversion", {
   skip_if_not_installed("distributional")
-  
-  # Use simple data that won't trigger forecast validation errors  
+
+  # Use simple data that won't trigger forecast validation errors
   newdata <- data.frame(
     y = c(10),
     season = c(1),
     time = c("76")  # single character time point
   )
-  
+
   # Pre-compute forecasts to avoid forecast generation issues
   forecasts_good <- matrix(c(10, 12), nrow = 2, ncol = 1)
-  
+
   # Should warn about conversion and convert to numeric
   expect_warning(
     fc_fable <- as_fable(example_mod, newdata = newdata, forecasts = forecasts_good),
     "Converting character time variable to numeric"
   )
-  
+
   expect_true(inherits(fc_fable, "fbl_ts"))
   expect_true(is.numeric(fc_fable$time))
 })
@@ -559,31 +559,31 @@ test_that("as_fable.ffc_gam() handles character time variable conversion", {
 test_that("forecast.ffc_gam() validates time intervals correctly", {
   # Use growth_data which has regular yearly intervals
   mod_growth <- SW(ffc_gam(
-    height_cm ~ s(id, bs = "re") + 
+    height_cm ~ s(id, bs = "re") +
       fts(age_yr, k = 4, bs = "cr", time_k = 5),
-    time = "age_yr", 
+    time = "age_yr",
     data = growth_data,
     family = Gamma()
   ))
-  
+
   # Test with correct intervals (should work without warnings)
   newdata_good <- data.frame(
-    id = "boy_11", 
+    id = "boy_11",
     age_yr = c(16, 17, 18)
   )
-  
+
   expect_no_warning({
     fc_good <- forecast(mod_growth, newdata = newdata_good, model = "ETS")
   })
   expect_true(inherits(fc_good, "tbl_df"))
   expect_equal(nrow(fc_good), nrow(newdata_good))
-  
+
   # Test with mismatched intervals (should warn)
   newdata_warn <- data.frame(
-    id = "boy_11", 
+    id = "boy_11",
     age_yr = c(16, 16.5, 17, 17.5)
   )
-  
+
   expect_warning({
     fc_warn <- forecast(mod_growth, newdata = newdata_warn, model = "ETS")
   }, "differ from training interval")
@@ -594,32 +594,32 @@ test_that("forecast.ffc_gam() validates time intervals correctly", {
 test_that("forecast.ffc_gam() handles overlapping time points", {
   # Use growth_data which has training data from age 3-15
   mod_growth <- SW(ffc_gam(
-    height_cm ~ s(id, bs = "re") + 
+    height_cm ~ s(id, bs = "re") +
       fts(age_yr, k = 4, bs = "cr", time_k = 5),
-    time = "age_yr", 
+    time = "age_yr",
     data = growth_data,
     family = Gamma()
   ))
-  
+
   # Test with some overlapping time points (should warn and filter)
   newdata_overlap <- data.frame(
-    id = "boy_11", 
+    id = "boy_11",
     age_yr = c(14, 15, 16, 17)  # 14, 15 overlap with training data
   )
-  
+
   expect_warning({
     fc_overlap <- forecast(mod_growth, newdata = newdata_overlap, model = "ETS")
   }, "overlap with training data")
-  
+
   expect_true(inherits(fc_overlap, "tbl_df"))
   expect_equal(nrow(fc_overlap), 2)  # Should only forecast for 16, 17
-  
+
   # Test with all overlapping time points (should error)
   newdata_all_overlap <- data.frame(
-    id = "boy_11", 
+    id = "boy_11",
     age_yr = c(13, 14, 15)  # All overlap with training data
   )
-  
+
   expect_error({
     forecast(mod_growth, newdata = newdata_all_overlap, model = "ETS")
   }, "No future time points found")
@@ -627,6 +627,7 @@ test_that("forecast.ffc_gam() handles overlapping time points", {
 
 test_that("ENS ensemble works with Quarter time index (tourism example)", {
   # Recreate tourism example from README
+  testthat::skip_if_not_installed("lubridate")
   tourism_melb <- tsibble::tourism |>
     dplyr::filter(
       Region == "Melbourne",
@@ -636,11 +637,11 @@ test_that("ENS ensemble works with Quarter time index (tourism example)", {
       quarter = lubridate::quarter(Quarter),
       time = dplyr::row_number()
     )
-  
+
   # Split data
   train <- tourism_melb |> dplyr::slice_head(n = 75)
   test <- tourism_melb |> dplyr::slice_tail(n = 5)
-  
+
   # Fit model
   mod <- SW(ffc_gam(
     Trips ~
@@ -661,22 +662,22 @@ test_that("ENS ensemble works with Quarter time index (tourism example)", {
     family = tw(),
     engine = "gam"
   ))
-  
+
   # Test ENS ensemble with Quarter time index
   fc_ffc_ens <- SW(as_fable(mod, newdata = test, model = "ENS"))
-  
+
   # Verify structure
   expect_true(inherits(fc_ffc_ens, "fbl_ts"))
   expect_true("FFC_ENS" %in% fc_ffc_ens$.model)
   expect_true("Quarter" %in% names(fc_ffc_ens))
   expect_equal(nrow(fc_ffc_ens), nrow(test))
-  
+
   # Test other models still work
   fc_ffc_ets <- SW(as_fable(mod, newdata = test, model = "ETS"))
-  fc_ffc_arima <- SW(as_fable(mod, newdata = test, model = "ARIMA"))
-  
+  fc_ffc_rw <- SW(as_fable(mod, newdata = test, model = "RW"))
+
   expect_true("FFC_ETS" %in% fc_ffc_ets$.model)
-  expect_true("FFC_ARIMA" %in% fc_ffc_arima$.model)
+  expect_true("FFC_RW" %in% fc_ffc_rw$.model)
 })
 
 test_that("forecast.ffc_gam() handles grouped data time validation", {
@@ -686,32 +687,32 @@ test_that("forecast.ffc_gam() handles grouped data time validation", {
     group = rep(c("A", "B", "C"), each = 10),
     time = rep(1:10, 3)
   )
-  
+
   mod_grouped <- SW(ffc_gam(
     y ~ s(group, bs = "re") + fts(time, k = 4, time_k = 5),
     time = "time",
     data = test_data,
     family = gaussian()
   ))
-  
+
   # Test with correct intervals for all groups
   newdata_good <- data.frame(
     group = c("A", "A", "B", "B"),
     time = c(11, 12, 11, 12)
   )
-  
+
   expect_no_warning({
     fc_good <- forecast(mod_grouped, newdata = newdata_good, model = "RW")
   })
   expect_true(inherits(fc_good, "tbl_df"))
   expect_equal(nrow(fc_good), nrow(newdata_good))
-  
+
   # Test with mismatched intervals (should warn)
   newdata_bad <- data.frame(
     group = c("A", "A", "A"),
     time = c(11, 11.5, 12)  # 0.5 intervals vs training 1.0 intervals
   )
-  
+
   expect_warning({
     fc_bad <- forecast(mod_grouped, newdata = newdata_bad, model = "RW")
   }, "differ from training interval")
@@ -723,12 +724,12 @@ test_that("adjust_forecast_uncertainty works correctly", {
     .basis = rep(c("fts_1", "fts_2"), each = 2),
     .realisation = rep(1:2, 2),
     .estimate = distributional::dist_normal(
-      mean = c(10, 15, 12, 18), 
+      mean = c(10, 15, 12, 18),
       sd = rep(0.5, 4)
     ),
     stringsAsFactors = FALSE
   )
-  
+
   # Create mock standard deviations data
   object_sds <- data.frame(
     .basis = rep(c("fts_1", "fts_2"), each = 2),
@@ -736,10 +737,10 @@ test_that("adjust_forecast_uncertainty works correctly", {
     .sd = c(1.2, 1.5, 0.8, 1.1),
     stringsAsFactors = FALSE
   )
-  
+
   times <- 2
   h <- 1
-  
+
   # Test the internal function
   result <- SW(ffc:::adjust_forecast_uncertainty(
     forecast_df = forecast_df,
@@ -747,28 +748,28 @@ test_that("adjust_forecast_uncertainty works correctly", {
     times = times,
     h = h
   ))
-  
+
   # Check that result has expected structure
   expect_true(inherits(result, "tbl_df"))
   expect_true(all(c(".basis", ".realisation", ".sim", ".rep") %in% names(result)))
-  
+
   # Check dimensions - should have times * h rows for each basis/realisation combination
   expected_rows <- nrow(forecast_df) * times * h
   expect_equal(nrow(result), expected_rows)
-  
+
   # Check that .rep variable is properly structured
   expect_true(all(result$.rep %in% 1:times))
   expect_equal(length(unique(result$.rep)), times)
-  
+
   # Check that .sim values are numeric
   expect_true(is.numeric(result$.sim))
   expect_true(all(is.finite(result$.sim)))
-  
+
   # Check that all original basis and realisation combinations are preserved
   original_combos <- paste(forecast_df$.basis, forecast_df$.realisation)
   result_combos <- unique(paste(result$.basis, result$.realisation))
   expect_setequal(result_combos, original_combos)
-  
+
   # Check that standard deviations were properly joined
   expect_true(".sd" %in% names(result))
   expect_true(all(is.finite(result$.sd)))
@@ -782,7 +783,7 @@ test_that("adjust_forecast_uncertainty handles missing .sd data correctly", {
     .estimate = distributional::dist_normal(mean = c(10, 15), sd = c(0.5, 0.7)),
     stringsAsFactors = FALSE
   )
-  
+
   # Create object_sds with only partial matches
   object_sds <- data.frame(
     .basis = "fts_1",
@@ -790,10 +791,10 @@ test_that("adjust_forecast_uncertainty handles missing .sd data correctly", {
     .sd = 1.2,
     stringsAsFactors = FALSE
   )
-  
+
   times <- 2
   h <- 1
-  
+
   # Should handle the missing .sd gracefully through the left_join
   result <- SW(ffc:::adjust_forecast_uncertainty(
     forecast_df = forecast_df,
@@ -801,10 +802,10 @@ test_that("adjust_forecast_uncertainty handles missing .sd data correctly", {
     times = times,
     h = h
   ))
-  
+
   expect_true(inherits(result, "tbl_df"))
   expect_equal(nrow(result), nrow(forecast_df) * times * h)
-  
+
   # Check that we have some NA values where .sd wasn't available
   expect_true(any(is.na(result$.sd)))
   expect_true(any(!is.na(result$.sd)))
@@ -818,7 +819,7 @@ test_that("forecast.ffc_gam() works with models without fts() terms", {
     x2 = rnorm(50, 0, 1),
     time = 1:50
   )
-  
+
   # Fit a model without fts() terms
   mod_no_fts <- SW(ffc_gam(
     y ~ s(x1, k = 5) + s(x2, k = 5),
@@ -826,38 +827,38 @@ test_that("forecast.ffc_gam() works with models without fts() terms", {
     data = test_data,
     family = gaussian()
   ))
-  
+
   # Check that gam_init is empty (no fts terms)
   expect_equal(length(mod_no_fts$gam_init), 0)
-  
+
   # Create newdata for forecasting
   newdata <- data.frame(
     x1 = runif(5, 0, 10),
     x2 = rnorm(5, 0, 1),
     time = 51:55
   )
-  
+
   # Test that forecast works and returns predictions
   fc_no_fts <- SW(forecast(mod_no_fts, newdata = newdata))
-  
+
   # Check that result has expected structure
   expect_true(inherits(fc_no_fts, "tbl_df"))
   expect_true(all(c(".estimate", ".error") %in% names(fc_no_fts)))
   expect_equal(nrow(fc_no_fts), nrow(newdata))
-  
+
   # Check that predictions are numeric and finite
   expect_true(is.numeric(fc_no_fts$.estimate))
   expect_true(all(is.finite(fc_no_fts$.estimate)))
   expect_true(is.numeric(fc_no_fts$.error))
   expect_true(all(fc_no_fts$.error >= 0))
-  
+
   # Test with different types
   fc_link <- SW(forecast(mod_no_fts, newdata = newdata, type = "link"))
   fc_response <- SW(forecast(mod_no_fts, newdata = newdata, type = "response"))
-  
+
   expect_true(inherits(fc_link, "tbl_df"))
   expect_true(inherits(fc_response, "tbl_df"))
-  
+
   # Check that both produce numeric results (may differ due to link function)
   expect_true(is.numeric(fc_link$.estimate))
   expect_true(is.numeric(fc_response$.estimate))
@@ -873,7 +874,7 @@ test_that("forecast.ffc_gam() works with mixed models (some fts, some regular sm
     x2 = rnorm(60, 0, 2),
     time = 1:60
   )
-  
+
   # Fit a model with mixed terms
   mod_mixed <- SW(ffc_gam(
     y ~ s(x1, k = 5) + fts(x2, k = 4, time_k = 5),
@@ -881,30 +882,30 @@ test_that("forecast.ffc_gam() works with mixed models (some fts, some regular sm
     data = test_data,
     family = gaussian()
   ))
-  
+
   # Check that the model has fts_smooths
   expect_false(is.null(mod_mixed$fts_smooths))
   expect_true(length(mod_mixed$fts_smooths) > 0)
   expect_true(length(mod_mixed$gam_init) > 0)
-  
+
   # Create newdata for forecasting
   newdata <- data.frame(
     x1 = runif(5, 0, 10),
     x2 = rnorm(5, 0, 2),
     time = 61:65
   )
-  
+
   # This should work since we have fts terms to forecast
   fc_mixed <- SW(forecast(mod_mixed, newdata = newdata))
-  
+
   expect_true(inherits(fc_mixed, "tbl_df"))
   expect_true(all(c(".estimate", ".error") %in% names(fc_mixed)))
   expect_equal(nrow(fc_mixed), nrow(newdata))
-  
+
   # Test that coefficients can be extracted from mixed model
   coefs <- fts_coefs(mod_mixed, summary = TRUE)
   expect_true(inherits(coefs, "fts_ts"))
-  
+
   # Coefficients should only be for the fts terms, not regular smooths
   expect_true(all(grepl("fts", coefs$.basis)))
 })
@@ -915,36 +916,36 @@ test_that("adjust_forecast_uncertainty preserves group structure", {
     .basis = c("fts_1", "fts_1", "fts_2", "fts_2"),
     .realisation = c(1, 2, 1, 2),
     .estimate = distributional::dist_normal(
-      mean = c(2, 4, 6, 8), 
+      mean = c(2, 4, 6, 8),
       sd = rep(0.3, 4)
     ),
     stringsAsFactors = FALSE
   )
-  
+
   object_sds <- data.frame(
     .basis = c("fts_1", "fts_1", "fts_2", "fts_2"),
     .realisation = c(1, 2, 1, 2),
     .sd = c(0.8, 1.0, 0.6, 1.2),
     stringsAsFactors = FALSE
   )
-  
+
   times <- 2
   h <- 1
-  
+
   result <- SW(ffc:::adjust_forecast_uncertainty(
     forecast_df = forecast_df,
     object_sds = object_sds,
     times = times,
     h = h
   ))
-  
+
   # Check that each basis/realisation group has the correct number of rows
   group_counts <- result |>
     dplyr::group_by(.basis, .realisation) |>
     dplyr::summarise(n = dplyr::n(), .groups = "drop")
-  
+
   expect_true(all(group_counts$n == times * h))
-  
+
   # Check that .rep is correctly structured within each group
   rep_structure <- result |>
     dplyr::group_by(.basis, .realisation) |>
@@ -954,7 +955,7 @@ test_that("adjust_forecast_uncertainty preserves group structure", {
       unique_reps = length(unique(.rep)),
       .groups = "drop"
     )
-  
+
   expect_true(all(rep_structure$min_rep == 1))
   expect_true(all(rep_structure$max_rep == times))
   expect_true(all(rep_structure$unique_reps == times))
