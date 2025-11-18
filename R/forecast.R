@@ -119,6 +119,7 @@ extract_model_params <- function(...) {
   cores <- if ("cores" %in% names(dots)) dots$cores else min(get_stan_param("chains"), parallel::detectCores() - 1)
   adapt_delta <- if ("adapt_delta" %in% names(dots)) dots$adapt_delta else get_stan_param("adapt_delta")
   max_treedepth <- if ("max_treedepth" %in% names(dots)) dots$max_treedepth else get_stan_param("max_treedepth")
+  silent <- if ("silent" %in% names(dots)) dots$silent else get_stan_param("silent")
   times <- if ("times" %in% names(dots)) dots$times else get_stan_param("times", "forecast")
 
   # Validate parameters using checkmate
@@ -130,6 +131,7 @@ extract_model_params <- function(...) {
   checkmate::assert_count(cores, positive = TRUE)
   checkmate::assert_number(adapt_delta, lower = 0, upper = 1)
   checkmate::assert_count(max_treedepth, positive = TRUE)
+  checkmate::assert_logical(silent, len = 1)
   checkmate::assert_count(times, positive = TRUE)
 
   # Additional logic checks
@@ -167,6 +169,7 @@ extract_model_params <- function(...) {
     cores = cores,
     adapt_delta = adapt_delta,
     max_treedepth = max_treedepth,
+    silent = silent,
     times = times
   )
 }
@@ -188,7 +191,8 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
       iter = params$iter,
       warmup = params$warmup,
       adapt_delta = params$adapt_delta,
-      max_treedepth = params$max_treedepth
+      max_treedepth = params$max_treedepth,
+      silent = params$silent
     )
   } else if (model == "VARDF") {
     train_vardf(
@@ -201,7 +205,8 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
       iter = params$iter,
       warmup = params$warmup,
       adapt_delta = params$adapt_delta,
-      max_treedepth = params$max_treedepth
+      max_treedepth = params$max_treedepth,
+      silent = params$silent
     )
   } else if (model == "GPDF") {
     train_gpdf(
@@ -214,7 +219,8 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
       iter = params$iter,
       warmup = params$warmup,
       adapt_delta = params$adapt_delta,
-      max_treedepth = params$max_treedepth
+      max_treedepth = params$max_treedepth,
+      silent = params$silent
     )
   }
 }
@@ -310,7 +316,7 @@ fable_forecast <- function(
     # Validate forecast compatibility
     if (!identical(dim(ets_fc), dim(rw_fc))) {
       stop(insight::format_error(
-        "ETS and RW forecasts have incompatible dimensions: {.field ETS} = {paste(dim(ets_fc), collapse='x')}, {.field RW} = {paste(dim(rw_fc), collapse='x')}"
+        "ETS and RW forecasts have incompatible dimensions: ETS = {paste(dim(ets_fc), collapse='x')}, RW = {paste(dim(rw_fc), collapse='x')}"
       ))
     }
     
@@ -419,20 +425,10 @@ fable_forecast <- function(
 #' hedging bets between different forecasting assumptions for mean coefficients.
 #' This is only used when forecasting mixed mean/non-mean basis functions with
 #' Stan factor models.
-#' @param ... Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF):
-#'   \describe{
-#'     \item{K}{Number of latent factors (default: 2). Must be positive.}
-#'     \item{lag}{Number of time lags for autoregressive terms (default: 1). Must be positive.}
-#'     \item{chains}{Number of MCMC chains (default: 4)}
-#'     \item{iter}{Total iterations per chain (default: 500)}
-#'     \item{warmup}{Warmup iterations per chain (default: iter/2)}
-#'     \item{cores}{Number of CPU cores to use (default: min(chains, available cores))}
-#'     \item{adapt_delta}{Target acceptance rate (default: 0.75)}
-#'     \item{max_treedepth}{Maximum tree depth (default: 9)}
-#'     \item{times}{Number of posterior samples to draw for coefficient forecasting.
-#'       For Stan models, this is automatically set to (iter - warmup) * chains
-#'       to ensure dimension consistency. Minimum 100 total posterior samples required.}
-#'   }
+#' @param ... Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF).
+#'   Key arguments include: K (number of factors, default: 2), lag (AR order, default: 1),
+#'   chains (MCMC chains, default: 4), iter (iterations, default: 500), 
+#'   silent (suppress progress, default: TRUE), cores, adapt_delta, max_treedepth.
 #' @details
 #' \strong{Forecasting Methodology:}
 #'

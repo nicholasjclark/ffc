@@ -14,6 +14,7 @@ VARDF(
   warmup = floor(iter/2),
   adapt_delta = get_stan_param("adapt_delta"),
   max_treedepth = get_stan_param("max_treedepth"),
+  silent = get_stan_param("silent"),
   ...
 )
 }
@@ -39,6 +40,9 @@ use as burnin}
 
 \item{max_treedepth}{maximum tree depth per iteration}
 
+\item{silent}{Logical indicating whether to suppress Stan sampling progress output.
+Default is \code{TRUE}. When \code{FALSE}, shows progress approximately every 10\% of iterations.}
+
 \item{...}{other arguments to pass to \code{rstan::sampling()}}
 }
 \value{
@@ -48,7 +52,6 @@ A model specification
 Fit a Vector autoregressive dynamic factor model using Stan
 }
 \examples{
-\dontrun{
 # Fit a functional forecasting model, then use VARDF for forecasting
 library(dplyr)
 
@@ -67,7 +70,6 @@ mod <- ffc_gam(
 # Step 2: Use VARDF for forecasting functional coefficients
 fc <- forecast(mod, newdata = test_data, model = "VARDF", 
                chains = 1, iter = 300)
-}
 }
 \author{
 Nicholas J Clark

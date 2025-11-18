@@ -3,19 +3,7 @@
 #' Fit a Vector autoregressive dynamic factor model using Stan
 #'
 #' @importFrom fabletools new_model_class new_model_definition new_specials
-#' @param formula Model specification (see "Specials" section)
-#' @param family A family object specifying the outcome distribution to use in fitting.
-#' Currently only `gaussian()` and `scat()` (i.e. Student-T) are supported
-#' @param h `integer` specifying the forecast horizon
-#' @param chains `integer` specifying the number of chains to be run
-#' @param cores `integer` specifying the number of parallel cores to use
-#' @param iter `integer` specifying the total number of iterations to run per chain
-#' (including warmup)
-#' @param warmup `integer` specifying the number of initial iterations to
-#' use as burnin
-#' @param adapt_delta the thin of the jumps in a HMC method
-#' @param max_treedepth maximum tree depth per iteration
-#' @param ... other arguments to pass to `rstan::sampling()`
+#' @inheritParams ARDF
 #'
 #' @author Nicholas J Clark
 #'
@@ -49,6 +37,7 @@ VARDF = function(formula,
                 warmup = floor(iter / 2),
                 adapt_delta = get_stan_param("adapt_delta"),
                 max_treedepth = get_stan_param("max_treedepth"),
+                silent = get_stan_param("silent"),
                 ...){
 
   vardf_model <- new_model_class(
@@ -69,6 +58,7 @@ VARDF = function(formula,
     warmup = warmup,
     adapt_delta = adapt_delta,
     max_treedepth = max_treedepth,
+    silent = silent,
     ...
   )
 }
@@ -87,13 +77,8 @@ train_vardf = function(
     warmup = floor(get_stan_param("iter") / 2),
     adapt_delta = get_stan_param("adapt_delta"),
     max_treedepth = get_stan_param("max_treedepth"),
+    silent = get_stan_param("silent"),
     ...){
-
-  # Validate arguments
-  checkmate::assert_count(chains, positive = TRUE)
-  checkmate::assert_count(cores, positive = TRUE)
-  checkmate::assert_count(iter, positive = TRUE)
-  checkmate::assert_count(warmup, positive = TRUE)
 
   # Extract arguments from specials
   if(length(specials$K) > 1 || length(specials$p) > 1){
@@ -113,17 +98,8 @@ train_vardf = function(
   )
 
   # Fit the model
-  stanfit <- suppressWarnings(rstan::sampling(
-    stanmodels$vardf,
-    data = model_data,
-    chains = chains,
-    cores = cores,
-    iter = iter,
-    warmup = warmup,
-    control = list(adapt_delta = adapt_delta,
-                   max_treedepth = max_treedepth),
-    ...
-  ))
+  stanfit <- run_stan_sampling("vardf", model_data, chains, cores, iter, warmup, 
+                               adapt_delta, max_treedepth, silent, ...)
 
   # Extract forecasts as a tsibble
   out <- extract_stan_fc(

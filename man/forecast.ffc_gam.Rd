@@ -61,20 +61,10 @@ hedging bets between different forecasting assumptions for mean coefficients.
 This is only used when forecasting mixed mean/non-mean basis functions with
 Stan factor models.}
 
-\item{...}{Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF):
-\describe{
-\item{K}{Number of latent factors (default: 2). Must be positive.}
-\item{lag}{Number of time lags for autoregressive terms (default: 1). Must be positive.}
-\item{chains}{Number of MCMC chains (default: 4)}
-\item{iter}{Total iterations per chain (default: 500)}
-\item{warmup}{Warmup iterations per chain (default: iter/2)}
-\item{cores}{Number of CPU cores to use (default: min(chains, available cores))}
-\item{adapt_delta}{Target acceptance rate (default: 0.75)}
-\item{max_treedepth}{Maximum tree depth (default: 9)}
-\item{times}{Number of posterior samples to draw for coefficient forecasting.
-For Stan models, this is automatically set to (iter - warmup) * chains
-to ensure dimension consistency. Minimum 100 total posterior samples required.}
-}}
+\item{...}{Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF).
+Key arguments include: K (number of factors, default: 2), lag (AR order, default: 1),
+chains (MCMC chains, default: 4), iter (iterations, default: 500),
+silent (suppress progress, default: TRUE), cores, adapt_delta, max_treedepth.}
 }
 \value{
 Predicted values on the appropriate scale.
@@ -146,7 +136,6 @@ For Stan dynamic factor models, the \code{times} parameter is automatically set 
 specified freely and controls the number of posterior draws.
 }
 \examples{
-\donttest{
 # Basic forecasting example with growth data
 data("growth_data")
 mod <- ffc_gam(
@@ -170,7 +159,6 @@ fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 
 # Get raw forecast matrix without summary
 fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
-}
 }
 \seealso{
 \code{\link[=ffc_gam]{ffc_gam()}}, \code{\link[=fts]{fts()}}, \code{\link[=forecast.fts_ts]{forecast.fts_ts()}}

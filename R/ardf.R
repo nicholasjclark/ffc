@@ -15,6 +15,8 @@
 #' use as burnin
 #' @param adapt_delta the thin of the jumps in a HMC method
 #' @param max_treedepth maximum tree depth per iteration
+#' @param silent Logical indicating whether to suppress Stan sampling progress output.
+#' Default is `TRUE`. When `FALSE`, shows progress approximately every 10% of iterations.
 #' @param ... other arguments to pass to `rstan::sampling()`
 #'
 #' @author Nicholas J Clark
@@ -49,6 +51,7 @@ ARDF = function(formula,
                 warmup = floor(iter / 2),
                 adapt_delta = get_stan_param("adapt_delta"),
                 max_treedepth = get_stan_param("max_treedepth"),
+                silent = get_stan_param("silent"),
                 ...){
 
   ardf_model <- new_model_class(
@@ -69,6 +72,7 @@ ARDF = function(formula,
     warmup = warmup,
     adapt_delta = adapt_delta,
     max_treedepth = max_treedepth,
+    silent = silent,
     ...
   )
 }
@@ -87,13 +91,8 @@ train_ardf = function(
     warmup = floor(get_stan_param("iter") / 2),
     adapt_delta = get_stan_param("adapt_delta"),
     max_treedepth = get_stan_param("max_treedepth"),
+    silent = get_stan_param("silent"),
     ...){
-
-  # Validate arguments
-  checkmate::assert_count(chains, positive = TRUE)
-  checkmate::assert_count(cores, positive = TRUE)
-  checkmate::assert_count(iter, positive = TRUE)
-  checkmate::assert_count(warmup, positive = TRUE)
 
   # Extract arguments from specials
   if(length(specials$K) > 1 || length(specials$p) > 1){
@@ -113,17 +112,8 @@ train_ardf = function(
   )
 
   # Fit the model
-  stanfit <- suppressWarnings(rstan::sampling(
-    stanmodels$ardf,
-    data = model_data,
-    chains = chains,
-    cores = cores,
-    iter = iter,
-    warmup = warmup,
-    control = list(adapt_delta = adapt_delta,
-                   max_treedepth = max_treedepth),
-    ...
-  ))
+  stanfit <- run_stan_sampling("ardf", model_data, chains, cores, iter, warmup, 
+                               adapt_delta, max_treedepth, silent, ...)
 
   # Extract forecasts as a tsibble
   out <- extract_stan_fc(
