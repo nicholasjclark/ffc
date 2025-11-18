@@ -96,18 +96,6 @@ ffc_gam <- function(
   # Convert character variables to factors for random effects
   data <- convert_re_to_factors(formula, data)
 
-  # Auto-detect grouping variables and validate time intervals
-  exclude_vars <- time
-  potential_keys <- setdiff(colnames(data), exclude_vars)
-  group_vars <- potential_keys[sapply(potential_keys, function(var) {
-    is.factor(data[[var]]) || is.character(data[[var]])
-  })]
-
-  # Validate consistent time intervals within groups
-  if (nrow(data) >= 2) {
-    validate_time_intervals(data, time, group_vars)
-  }
-
   # Update formula and data by checking for any fts() terms
   dots <- list(...)
   if ("knots" %in% names(dots)) {
@@ -122,6 +110,17 @@ ffc_gam <- function(
     time_var = time,
     knots = knots
   )
+
+  # Validate time intervals only for fts() by variables if fts() terms present
+  if (length(interpreted$fts_smooths) > 0 && nrow(data) >= 2) {
+    fts_by_vars <- extract_fts_by_variables(interpreted$fts_smooths)
+    if (length(fts_by_vars) > 0) {
+      # Validate that by variables exist in data
+      validate_vars_in_data(fts_by_vars, data, "fts() by variable")
+      # Validate time intervals only for variables used in fts() terms
+      validate_time_intervals(data, time, fts_by_vars)
+    }
+  }
 
   # Fit the model using the specified engine
   fit_args <- list(

@@ -1181,3 +1181,57 @@ test_that("prediction matrix construction patterns work", {
   expect_equal(length(pred_with_se$se.fit), nrow(pred_data))
   expect_true(all(pred_with_se$se.fit > 0))
 })
+
+test_that("extract_fts_by_variables extracts by variables correctly", {
+  # Test empty fts_smooths list
+  empty_list <- list()
+  result_empty <- ffc:::extract_fts_by_variables(empty_list)
+  expect_equal(result_empty, character(0))
+  expect_equal(length(result_empty), 0)
+  
+  # Test fts_smooths list with no by variables
+  fts_no_by <- list(
+    list(term = "x", by = "NA", time_bs = "cr", time_k = 10),
+    list(term = "y", by = "NA", time_bs = "tp", time_k = 5)
+  )
+  result_no_by <- ffc:::extract_fts_by_variables(fts_no_by)
+  expect_equal(result_no_by, character(0))
+  
+  # Test fts_smooths list with single by variable
+  fts_single_by <- list(
+    list(term = "x", by = "group1", time_bs = "cr", time_k = 10),
+    list(term = "y", by = "NA", time_bs = "tp", time_k = 5)
+  )
+  result_single <- ffc:::extract_fts_by_variables(fts_single_by)
+  expect_equal(result_single, "group1")
+  expect_equal(length(result_single), 1)
+  
+  # Test fts_smooths list with multiple by variables
+  fts_multiple_by <- list(
+    list(term = "x", by = "group1", time_bs = "cr", time_k = 10),
+    list(term = "y", by = "group2", time_bs = "tp", time_k = 5),
+    list(term = "z", by = "NA", time_bs = "bs", time_k = 8)
+  )
+  result_multiple <- ffc:::extract_fts_by_variables(fts_multiple_by)
+  expect_equal(sort(result_multiple), c("group1", "group2"))
+  expect_equal(length(result_multiple), 2)
+  
+  # Test fts_smooths list with duplicate by variables (should be unique)
+  fts_duplicate_by <- list(
+    list(term = "x", by = "group1", time_bs = "cr", time_k = 10),
+    list(term = "y", by = "group1", time_bs = "tp", time_k = 5),
+    list(term = "z", by = "group2", time_bs = "bs", time_k = 8)
+  )
+  result_duplicate <- ffc:::extract_fts_by_variables(fts_duplicate_by)
+  expect_equal(sort(result_duplicate), c("group1", "group2"))
+  expect_equal(length(result_duplicate), 2)
+  
+  # Test with NULL by variable
+  fts_null_by <- list(
+    list(term = "x", by = NULL, time_bs = "cr", time_k = 10),
+    list(term = "y", by = "group1", time_bs = "tp", time_k = 5)
+  )
+  result_null <- ffc:::extract_fts_by_variables(fts_null_by)
+  expect_equal(result_null, "group1")
+  expect_equal(length(result_null), 1)
+})

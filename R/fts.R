@@ -125,3 +125,22 @@ fts <- function(
     )
   )
 }
+
+#' Extract by variables from fts_smooths list
+#' @param fts_smooths List of fts objects from interpret_ffc
+#' @return Character vector of unique by variable names
+#' @noRd
+extract_fts_by_variables <- function(fts_smooths) {
+  if (length(fts_smooths) == 0) {
+    return(character(0))
+  }
+  
+  by_vars <- character(0)
+  for (fts_obj in fts_smooths) {
+    if (!is.null(fts_obj$by) && fts_obj$by != "NA") {
+      by_vars <- c(by_vars, fts_obj$by)
+    }
+  }
+  
+  unique(by_vars)
+}

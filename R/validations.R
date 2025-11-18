@@ -167,6 +167,78 @@ validate_time_intervals <- function(data, time_var, group_vars = NULL, tolerance
 #' @param model Model object containing training data and time variable info
 #' @return Filtered newdata containing only out-of-sample timepoints
 #' @noRd
+validate_time_intervals_for_forecast <- function(newdata, model, time_var, 
+                                                 group_vars = character(0)) {
+  checkmate::assert_data_frame(newdata)
+  checkmate::assert_class(model, "ffc_gam")
+  checkmate::assert_string(time_var)
+  checkmate::assert_character(group_vars, any.missing = FALSE)
+  
+  # Only proceed if we have multiple time points and fts() terms
+  if (nrow(newdata) < 2 || length(model$fts_smooths) == 0) {
+    return(list(intervals_valid = TRUE, warnings = character(0)))
+  }
+  
+  warnings <- character(0)
+  
+  # Extract unique training times (fixing the repeated values bug)
+  if (length(group_vars) > 0) {
+    # Grouped case: check intervals within each group
+    train_intervals_by_group <- model$model |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(group_vars))) |>
+      dplyr::summarise(
+        unique_times = list(sort(unique(!!rlang::sym(time_var)))),
+        train_interval = if (length(unique(!!rlang::sym(time_var))) > 1) 
+          diff(sort(unique(!!rlang::sym(time_var))))[1] else NA_real_,
+        .groups = "drop"
+      )
+    
+    # Check intervals within each group in newdata
+    interval_check <- newdata |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(group_vars))) |>
+      dplyr::summarise(
+        newdata_intervals = if (dplyr::n() > 1) list(diff(sort(!!rlang::sym(time_var)))) else list(numeric(0)),
+        .groups = "drop"
+      ) |>
+      dplyr::left_join(train_intervals_by_group, by = group_vars)
+    
+    # Check for interval mismatches between newdata and training data
+    for (i in seq_len(nrow(interval_check))) {
+      if (length(interval_check$newdata_intervals[[i]]) > 0 && !is.na(interval_check$train_interval[i])) {
+        newdata_ints <- interval_check$newdata_intervals[[i]]
+        train_int <- interval_check$train_interval[i]
+        
+        if (!all(abs(newdata_ints - train_int) < 1e-10)) {
+          warnings <- c(warnings, paste0("Time intervals in newdata (", 
+                 paste(round(newdata_ints, 4), collapse = ", "), 
+                 ") differ from training interval (", 
+                 round(train_int, 4), ") for group. ",
+                 "Consider using the same interval as training data for optimal results."))
+        }
+      }
+    }
+  } else {
+    # Single group case: check overall intervals using unique time points
+    newdata_intervals <- diff(sort(unique(newdata[[time_var]])))
+    unique_train_times <- sort(unique(model$model[[time_var]]))
+    
+    if (length(unique_train_times) > 1) {
+      train_interval <- diff(unique_train_times)[1]
+      
+      # Check for exact interval match
+      if (!all(abs(newdata_intervals - train_interval) < 1e-10)) {
+        warnings <- c(warnings, paste0("Time intervals in newdata (", 
+               paste(round(newdata_intervals, 4), collapse = ", "), 
+               ") differ from training interval (", 
+               round(train_interval, 4), "). ",
+               "Consider using the same interval as training data for optimal results."))
+      }
+    }
+  }
+  
+  return(list(intervals_valid = length(warnings) == 0, warnings = warnings))
+}
+
 validate_forecast_newdata <- function(newdata, model) {
   checkmate::assert_data_frame(newdata, min.rows = 1)
   checkmate::assert_class(model, "ffc_gam")
@@ -181,12 +253,14 @@ validate_forecast_newdata <- function(newdata, model) {
   # Validate time variable exists in newdata
   validate_vars_in_data(time_var, newdata, "time variable")
   
-  # Auto-detect grouping variables from TRAINING data (model$model)
+  # Extract grouping variables only from fts() terms with by variables
   exclude_vars <- time_var
-  potential_keys <- setdiff(colnames(model$model), exclude_vars)
-  training_key_vars <- potential_keys[sapply(potential_keys, function(var) {
-    is.factor(model$model[[var]]) || is.character(model$model[[var]])
-  })]
+  training_key_vars <- character(0)
+  if (length(model$fts_smooths) > 0) {
+    fts_by_vars <- extract_fts_by_variables(model$fts_smooths)
+    # Keep only variables that exist in training data
+    training_key_vars <- fts_by_vars[fts_by_vars %in% colnames(model$model)]
+  }
   
   # Validate that training key variables exist in newdata
   if (length(training_key_vars) > 0) {
@@ -237,91 +311,34 @@ validate_forecast_newdata <- function(newdata, model) {
     max_train_time <- max(model$model[[time_var]])
   }
   
-  # Validate newdata intervals are consistent
+  # Validate newdata intervals are consistent (internal check first)
   if (nrow(newdata) >= 2) {
-    # Check newdata intervals first to catch internal inconsistencies
     suppressWarnings(try({
       validate_time_intervals(newdata, time_var, key_vars)
     }, silent = TRUE))
-    
-    # Compare with training data intervals
-    if (length(key_vars) > 0) {
-      # Get training intervals by group for comparison
-      train_intervals_by_group <- model$model |>
-        dplyr::group_by(dplyr::across(dplyr::all_of(key_vars))) |>
-        dplyr::summarise(
-          train_interval = if (dplyr::n() > 1) diff(sort(!!rlang::sym(time_var)))[1] else NA_real_,
-          .groups = "drop"
-        )
-      
-      # Check intervals within each group
-      interval_check <- newdata |>
-        dplyr::group_by(dplyr::across(dplyr::all_of(key_vars))) |>
-        dplyr::summarise(
-          newdata_intervals = if (dplyr::n() > 1) list(diff(!!rlang::sym(time_var))) else list(numeric(0)),
-          .groups = "drop"
-        ) |>
-        dplyr::left_join(train_intervals_by_group, by = key_vars)
-      
-      # Check for interval mismatches between newdata and training data
-      for (i in seq_len(nrow(interval_check))) {
-        if (length(interval_check$newdata_intervals[[i]]) > 0 && !is.na(interval_check$train_interval[i])) {
-          newdata_ints <- interval_check$newdata_intervals[[i]]
-          train_int <- interval_check$train_interval[i]
-          
-          if (!all(abs(newdata_ints - train_int) < 1e-10)) {
-            rlang::warn(
-              paste0("Time intervals in newdata (", 
-                     paste(round(newdata_ints, 4), collapse = ", "), 
-                     ") differ from training interval (", 
-                     round(train_int, 4), ") for group. ",
-                     "Consider using the same interval as training data for optimal results.")
-            )
-          }
-        }
-      }
-      
-      # Calculate forecast horizons by group  
-      fc_horizons_df <- newdata |>
-        dplyr::left_join(train_max_times, by = key_vars) |>
-        dplyr::mutate(fc_horizon = !!rlang::sym(time_var) - max_time)
-      
-      fc_horizons <- fc_horizons_df$fc_horizon
-      
-    } else {
-      # Single group case - compare with training data intervals
-      if (nrow(newdata) > 1) {
-        newdata_intervals <- diff(newdata[[time_var]])
-        train_times <- sort(model$model[[time_var]])
-        if (length(train_times) > 1) {
-          train_interval <- diff(train_times)[1]
-          
-          # Check for exact interval match
-          if (!all(abs(newdata_intervals - train_interval) < 1e-10)) {
-            rlang::warn(
-              paste0("Time intervals in newdata (", 
-                     paste(round(newdata_intervals, 4), collapse = ", "), 
-                     ") differ from training interval (", 
-                     round(train_interval, 4), "). ",
-                     "Consider using the same interval as training data for optimal results.")
-            )
-          }
-        }
-      }
-      
-      fc_horizons <- newdata[[time_var]] - max_train_time
-    }
-  } else {
-    # If no interval validation needed, still calculate horizons
-    if (length(key_vars) > 0) {
-      fc_horizons_df <- newdata |>
-        dplyr::left_join(train_max_times, by = key_vars) |>
-        dplyr::mutate(fc_horizon = !!rlang::sym(time_var) - max_time)
-      fc_horizons <- fc_horizons_df$fc_horizon
-    } else {
-      fc_horizons <- newdata[[time_var]] - max_train_time
-    }
   }
+  
+  # Validate intervals against training data using DRY helper function
+  interval_validation <- validate_time_intervals_for_forecast(newdata, model, time_var, key_vars)
+  
+  # Emit any warnings found
+  for (warning_msg in interval_validation$warnings) {
+    rlang::warn(warning_msg)
+  }
+  
+  # Calculate forecast horizons
+  if (length(key_vars) > 0) {
+    # Calculate forecast horizons by group  
+    fc_horizons_df <- newdata |>
+      dplyr::left_join(train_max_times, by = key_vars) |>
+      dplyr::mutate(fc_horizon = !!rlang::sym(time_var) - max_time)
+    
+    fc_horizons <- fc_horizons_df$fc_horizon
+  } else {
+    # Single group case
+    fc_horizons <- newdata[[time_var]] - max_train_time
+  }
+  
   
   # Check if we have any future time points
   if (all(fc_horizons <= 0)) {

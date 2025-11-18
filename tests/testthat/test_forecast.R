@@ -684,12 +684,12 @@ test_that("forecast.ffc_gam() handles grouped data time validation", {
   # Create test data with multiple groups
   test_data <- data.frame(
     y = rnorm(30),
-    group = rep(c("A", "B", "C"), each = 10),
+    group = factor(rep(c("A", "B", "C"), each = 10)),
     time = rep(1:10, 3)
   )
 
   mod_grouped <- SW(ffc_gam(
-    y ~ s(group, bs = "re") + fts(time, k = 4, time_k = 5),
+    y ~ group + fts(time, by = group, k = 4, time_k = 5),
     time = "time",
     data = test_data,
     family = gaussian()
