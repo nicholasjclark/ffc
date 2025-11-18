@@ -109,6 +109,7 @@ mod <- ffc_gam(
   deaths ~
     offset(log(population)) +
     sex +
+    age +
     # Time-varying level: shared temporal trends
     fts(
       year,
@@ -141,7 +142,7 @@ summary(mod)
 
 Key components:
 
-1. Fixed effects: `sex` captures baseline male-female differences
+1. Fixed effects: `sex` captures baseline male-female differences, `age` captures baseline mortality rates per age
 2. Time-varying level: `fts(year, mean_only = TRUE)` models shared temporal trends  
 3. Time-varying functions: `fts(age, by = sex)` captures how age patterns evolve differently by sex
 
@@ -281,7 +282,7 @@ The forecast includes uncertainty in both the time series models and the origina
 
 ### Future mortality patterns
 
-Let's demonstrate how to generate complete mortality curve forecasts by combining the forecasted coefficients with the model structure:
+Let's demonstrate how to generate complete mortality curve forecasts by combining the forecasted coefficients with the model structure. Here we will use the ensemble model ("ENS") to forecast the time-varying mean, which tends to give more robust forecasts than any of the mdoels on their own:
 
 ```{r forecast-curves, fig.cap="Forecasted mortality curves for Queensland, 2021-2025. Shows how the functional forecasting approach predicts future age-mortality patterns."}
 # Create forecast data for future years
@@ -299,6 +300,7 @@ mortality_forecasts <- forecast(
   object = mod,
   newdata = newdata_forecast,
   model = "ARIMA",
+  mean_model = "ENS",
   type = "expected"
 )
 head(mortality_forecasts)

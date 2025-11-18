@@ -11,7 +11,12 @@ interpret_ffc <- function(
     knots = NULL) {
   # Tibbles often get rearranged by mgcv in very strange ways; grouping?
   # best to convert to plain-Jane data.frames first
+  
+  # Save original data before adding row identifiers
   orig_data <- data
+  
+  # Add row identifiers for tracking through pipeline
+  data <- add_row_identifiers(data)
   if (inherits(data, "tbl_df")) {
     data <- as.data.frame(data)
   }
@@ -137,6 +142,39 @@ dyn_to_spline <- function(
       newdata = newdata,
       type = "lpmatrix"
     )
+  }
+  
+  # Validate basis matrix dimensions match data structure for row tracking
+  expected_rows <- if (is.null(newdata)) nrow(data) else nrow(newdata)
+  actual_rows <- nrow(X)
+  
+  if (actual_rows != expected_rows) {
+    stop(insight::format_error(
+      paste0("Basis matrix dimensions mismatch: got ", actual_rows, 
+             " rows but expected ", expected_rows, 
+             " rows to match data structure")
+    ), call. = FALSE)
+  }
+  
+  # Validate row count consistency for proper row ID mapping
+  # Only warn if we expect 1:1 correspondence in training data
+  if (!is.null(newdata) && ".original_row_id" %in% names(newdata)) {
+    unique_ids <- length(unique(newdata$.original_row_id))
+    # Only validate if expecting direct correspondence
+    if (actual_rows != unique_ids && actual_rows == nrow(newdata)) {
+      warning(insight::format_warning(
+        paste0("Basis matrix rows (", actual_rows, 
+               ") may not correspond to unique row IDs (", unique_ids, ")")
+      ))
+    }
+  } else if (is.null(newdata) && ".row_id" %in% names(data)) {
+    unique_ids <- length(unique(data$.row_id))
+    if (actual_rows != unique_ids) {
+      warning(insight::format_warning(
+        paste0("Basis matrix rows (", actual_rows, 
+               ") may not correspond to unique row IDs (", unique_ids, ")")
+      ))
+    }
   }
 
   # Get indices of null space functions

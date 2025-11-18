@@ -70,8 +70,23 @@ run_stan_sampling <- function(model_name, model_data, chains, cores, iter,
   checkmate::assert_count(max_treedepth, positive = TRUE)
   checkmate::assert_logical(silent, len = 1)
   
-  suppressWarnings(rstan::sampling(
-    stanmodels[[model_name]],
+  # Temporarily override rstan options and environment when silent
+  if (silent) {
+    old_messages <- getOption("rstan.show_messages", TRUE)
+    options(rstan.show_messages = FALSE)
+    on.exit(options(rstan.show_messages = old_messages), add = TRUE)
+    
+    # Temporarily disable RStudio detection by modifying environment
+    old_rstudio <- Sys.getenv("RSTUDIO", unset = NA)
+    if (!is.na(old_rstudio)) {
+      Sys.unsetenv("RSTUDIO")
+      on.exit(Sys.setenv(RSTUDIO = old_rstudio), add = TRUE)
+    }
+  }
+  
+  # Build sampling arguments
+  sampling_args <- list(
+    object = stanmodels[[model_name]],
     data = model_data,
     chains = chains,
     cores = cores,
@@ -79,9 +94,19 @@ run_stan_sampling <- function(model_name, model_data, chains, cores, iter,
     warmup = warmup,
     verbose = !silent,
     refresh = if (silent) 0 else max(1, iter %/% 10),
-    open_progress = !silent,
+    show_messages = !silent,
     control = list(adapt_delta = adapt_delta,
-                   max_treedepth = max_treedepth),
-    ...
-  ))
+                   max_treedepth = max_treedepth)
+  )
+  
+  # Only set open_progress when we want to disable it
+  # Let rstan handle progress automatically when silent = FALSE
+  if (silent) {
+    sampling_args$open_progress <- FALSE
+  }
+  
+  # Add any additional arguments
+  sampling_args <- c(sampling_args, list(...))
+  
+  suppressWarnings(do.call(rstan::sampling, sampling_args))
 }

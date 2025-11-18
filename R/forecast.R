@@ -800,29 +800,66 @@ forecast.ffc_gam <- function(
         )
     }
 
-    # Map forecast .time values to actual target time values
-    # The forecast generates consecutive integer steps, but we need specific time values
-    target_times <- unique(interpreted$data[[time_var]])
-    forecast_times <- sort(unique(functional_fc$.time))
+    # Map forecast times to target times based on sorted temporal order
+    # This preserves relative temporal ordering while mapping to target values
+    target_times <- interpreted$data |>
+      dplyr::distinct(!!rlang::sym(time_var)) |>
+      dplyr::arrange(!!rlang::sym(time_var)) |>
+      dplyr::pull(!!rlang::sym(time_var))
     
+    forecast_times <- functional_fc |>
+      dplyr::distinct(.time) |>
+      dplyr::arrange(.time) |>
+      dplyr::pull(.time)
     
-    # Validate time mapping is mathematically possible
-    if (length(forecast_times) != length(target_times)) {
+    # Floating point tolerance for numeric time comparisons
+    TIME_TOLERANCE <- 1e-10
+    
+    # Create time mapping based on sorted temporal order
+    if (length(forecast_times) == length(target_times)) {
+      # Direct 1:1 mapping when counts match
+      time_mapping <- data.frame(
+        .time = forecast_times,
+        .time_target = target_times
+      )
+    } else if (length(forecast_times) < length(target_times)) {
+      # Forecast times are subset of target times - map by temporal value
+      if (is.numeric(forecast_times) && is.numeric(target_times)) {
+        # Use tolerance for floating point comparison
+        available_targets <- target_times[sapply(target_times, function(t) 
+          any(abs(forecast_times - t) < TIME_TOLERANCE))]
+      } else {
+        available_targets <- target_times[target_times %in% forecast_times]
+      }
+      
+      if (length(available_targets) == length(forecast_times)) {
+        time_mapping <- data.frame(
+          .time = forecast_times,
+          .time_target = forecast_times  # Direct mapping for matching values
+        )
+      } else {
+        stop(insight::format_error(
+          paste0("Cannot map forecast times to target times. ",
+                 "Forecast generated {.field ", length(forecast_times), 
+                 "} time steps but only {.field ", length(available_targets),
+                 "} match target times.")
+        ), call. = FALSE)
+      }
+    } else {
+      # More forecast times than target times - internal error
       stop(insight::format_error(
-        paste0("Cannot map forecast times: generated ", length(forecast_times), 
-               " unique time steps but newdata has ", length(target_times), 
-               " unique time values. This may indicate an issue with the forecasting horizon.")
-      ))
+        paste0("Generated {.field ", length(forecast_times), 
+               "} forecast times but found {.field ", length(target_times), 
+               "} target times. This suggests an internal forecasting error.")
+      ), call. = FALSE)
     }
     
-    # Create mapping from forecast times to target times
-    time_mapping <- setNames(target_times, forecast_times)
-    
-    # Remap the .time values
-    # Convert to tibble first to avoid tsibble validation issues with duplicate key+time combinations
+    # Remap the .time values using the mapping table
     functional_fc <- functional_fc |>
       tsibble::as_tibble() |>
-      dplyr::mutate(.time = time_mapping[as.character(.time)])
+      dplyr::left_join(time_mapping, by = ".time") |>
+      dplyr::mutate(.time = .time_target) |>
+      dplyr::select(-.time_target)
 
     # Calculate intermediate linear predictors
     model_offset <- attr(orig_lpmat, "model.offset")
@@ -858,6 +895,8 @@ forecast.ffc_gam <- function(
     }
 
     # If dimensions correct, take rowsums for each draw
+    # Preserve original row order by tracking row indices before computation
+    original_row_indices <- fts_fc$.row
     fc_linpreds <- fts_fc |>
       dplyr::select(-c(.draw, .row)) |>
       rowSums()

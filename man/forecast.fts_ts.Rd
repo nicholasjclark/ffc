@@ -2,7 +2,7 @@
 % Please edit documentation in R/forecast.R
 \name{forecast.fts_ts}
 \alias{forecast.fts_ts}
-\title{Forecasting functional basis coefficients}
+\title{Forecasting functional basis coefficients (Internal)}
 \usage{
 \method{forecast}{fts_ts}(
   object,
@@ -15,7 +15,7 @@
 }
 \arguments{
 \item{object}{An object of class \code{fts_ts} containing time-varying
-basis function coefficients extracted from an \code{ffc_gam} object}
+basis function coefficients extracted from an \code{ffc_gam} object using \code{\link[=fts_coefs]{fts_coefs()}}}
 
 \item{model}{A \code{character} string representing a valid univariate model definition
 from the \pkg{fable} package, ensemble methods, or one of the built-in Bayesian dynamic
@@ -46,7 +46,10 @@ A \code{tsibble} object containing the forecast prediction (\code{.sim}) for eac
 replicate realisation (\code{.rep}) at each timestep in the forecast horizon \code{h}
 }
 \description{
-Forecasting functional basis coefficients
+\strong{For internal use:} This function is primarily used internally by
+\code{forecast.ffc_gam()}. Most users should call \code{forecast()} directly on their
+\code{ffc_gam} object instead of using this function, which requires properly
+structured coefficient data and has specific format requirements.
 }
 \details{
 Basis function coefficient time series will be used as input
@@ -55,7 +58,6 @@ extrapolated \code{h} timesteps into the future. A total of \code{times} forecas
 will be returned for each basis coefficient
 }
 \examples{
-\donttest{
 # Extract coefficients and generate forecasts
 mod <- ffc_gam(
   deaths ~ offset(log(population)) + sex +
@@ -69,7 +71,6 @@ coefs <- fts_coefs(mod, summary = FALSE, times = 5)
 
 # Generate ETS forecasts
 forecast(coefs, model = "ETS", h = 3)
-}
 }
 \seealso{
 \code{\link[=predict]{predict()}}, \code{\link[=fts]{fts()}}

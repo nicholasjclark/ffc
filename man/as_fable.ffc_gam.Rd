@@ -48,7 +48,6 @@ formatted \code{fable} x that can be used with \code{fabletools} functions like
 \code{autoplot()}, \code{accuracy()}, and forecast combination methods
 }
 \examples{
-\donttest{
 # Basic usage with automatic detection
 library(fable)
 library(tsibble)
@@ -99,7 +98,6 @@ fc_fable3 <- as_fable(
   response = "Trips",
   key_vars = c("Region", "State")
 )
-}
 }
 \seealso{
 \code{\link[=forecast.ffc_gam]{forecast.ffc_gam()}}

@@ -61,12 +61,9 @@
 #' )
 #'
 #' # Generate forecasts using ETS model for coefficients
-#' mortality_fc <- forecast(mod, newdata = future_data, model = "ETS", 
+#' mortality_fc <- forecast(mod, newdata = future_data, model = "ETS",
 #'                          type = "expected")
 #' head(mortality_fc)
-#'
-#' # Integration with fabletools ecosystem
-#' # fc_fable <- as_fable(mod, newdata = future_data, model = "ETS")
 #'
 #' @export
 ffc_gam <- function(

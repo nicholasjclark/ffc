@@ -243,6 +243,9 @@ validate_forecast_newdata <- function(newdata, model) {
   checkmate::assert_data_frame(newdata, min.rows = 1)
   checkmate::assert_class(model, "ffc_gam")
   
+  # Add row identifiers to preserve original ordering through validation
+  newdata <- add_row_identifiers(newdata, ".original_row_id")
+  
   time_var <- model$time_var
   if (is.null(time_var)) {
     stop(insight::format_error(

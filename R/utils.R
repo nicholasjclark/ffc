@@ -261,6 +261,10 @@ compute_functional_predictions <- function(interpreted_data, functional_fc,
   checkmate::assert_data_frame(functional_fc, min.rows = 1)
   checkmate::assert_string(time_var)
   
+  # Ensure row identifiers exist for proper tracking
+  interpreted_data <- add_row_identifiers(interpreted_data, ".row_id", 
+                                         validate_only = FALSE)
+  
   # Validate time variable exists
   if (!time_var %in% names(interpreted_data)) {
     stop(insight::format_error(
@@ -318,21 +322,23 @@ compute_functional_predictions <- function(interpreted_data, functional_fc,
     ), call. = FALSE)
   }
   
-  # Compute predictions by time point using matrix operations
+  # Compute predictions by row ID instead of positional indexing
   result_list <- list()
   n_obs <- nrow(interpreted_data)
   
-  for (time_idx in seq_len(n_obs)) {
-    time_point <- interpreted_data[[time_var]][time_idx]
+  for (row_idx in seq_len(n_obs)) {
+    # Get row ID for tracking (while maintaining .row interface)
+    row_id <- interpreted_data$.row_id[row_idx]
+    time_point <- interpreted_data[[time_var]][row_idx]
     
     # Get basis evaluations for this observation
-    basis_vals <- basis_matrix[time_idx, fts_cols, drop = FALSE]
+    basis_vals <- basis_matrix[row_idx, fts_cols, drop = FALSE]
     
     # Get coefficients for this time point 
     time_mask <- coeff_wide$.time == time_point
     if (!any(time_mask)) {
       stop(insight::format_error(
-        paste0("No coefficient data found for time point {time_point}")
+        "No coefficient data found for time point {.field {time_point}}"
       ), call. = FALSE)
     }
     
@@ -342,14 +348,14 @@ compute_functional_predictions <- function(interpreted_data, functional_fc,
     # Vectorized element-wise multiplication
     pred_matrix <- sweep(time_coeffs, 2, basis_vals, "*")
     
-    # Create result data frame
+    # Create result data frame (maintain .row interface, use row_id value)
     result_df <- cbind(
-      data.frame(.row = time_idx),
+      data.frame(.row = row_id),
       pred_matrix,
       data.frame(.draw = paste0(time_meta$.realisation, "_", time_meta$.rep))
     )
     
-    result_list[[time_idx]] <- result_df
+    result_list[[row_idx]] <- result_df
   }
   
   # Combine results and ensure proper ordering
@@ -359,3 +365,92 @@ compute_functional_predictions <- function(interpreted_data, functional_fc,
   return(fts_fc)
 }
 
+#' Add row identifiers to data for tracking through pipeline
+#' 
+#' Adds a unique .row_id column to track original row positions throughout
+#' the forecasting pipeline. This ensures results can be mapped back to their
+#' original data rows regardless of intermediate sorting operations.
+#' 
+#' @param data A data frame or tibble to add row identifiers to
+#' @param id_col Character name of the row ID column (default ".row_id")
+#' @param validate_only Logical, if TRUE only validate existing IDs
+#' @return The input data with row IDs, or logical if validate_only=TRUE
+#' @noRd
+add_row_identifiers <- function(data, 
+                                id_col = ".row_id",
+                                validate_only = FALSE) {
+  # Input validation following package standards
+  checkmate::assert_data_frame(data, min.rows = 1)
+  checkmate::assert_string(id_col, min.chars = 1, 
+                          pattern = "^[a-zA-Z_\\.][a-zA-Z0-9_\\.]*$")
+  checkmate::assert_logical(validate_only, len = 1)
+  
+  # Check if row ID column already exists
+  has_id_col <- id_col %in% names(data)
+  
+  if (has_id_col) {
+    # Validate existing IDs are unique and complete
+    existing_ids <- data[[id_col]]
+    is_valid <- length(unique(existing_ids)) == nrow(data) && 
+                !any(is.na(existing_ids))
+    
+    if (validate_only) {
+      return(is_valid)
+    }
+    
+    if (is_valid) {
+      return(data)
+    }
+    
+    # Replace with new IDs using proper warning format
+    warning(insight::format_warning(
+      paste0("Replacing existing ", id_col, 
+             " column with new row identifiers")
+    ))
+  } else if (validate_only) {
+    # Column doesn't exist and we're only validating
+    return(FALSE)
+  }
+  
+  # Add sequential row identifiers
+  data[[id_col]] <- seq_len(nrow(data))
+  
+  return(data)
+}
+
+#' Restore data to original row order using row IDs
+#' 
+#' Reorders data back to match original row ordering based on row IDs.
+#' This ensures forecast results are returned in the user's expected order.
+#' 
+#' @param data A data frame with row identifiers
+#' @param id_col Character name of the row ID column (default ".row_id")
+#' @param drop_id Logical whether to remove ID column after ordering
+#' @return The data reordered by row IDs
+#' @noRd
+restore_original_order <- function(data,
+                                  id_col = ".row_id", 
+                                  drop_id = FALSE) {
+  # Input validation
+  checkmate::assert_data_frame(data, min.rows = 1)
+  checkmate::assert_string(id_col, min.chars = 1)
+  checkmate::assert_logical(drop_id, len = 1)
+  
+  # Check row ID column exists
+  if (!(id_col %in% names(data))) {
+    stop(insight::format_error(
+      paste0("Row ID column {.field ", id_col,
+             "} not found. Cannot restore original order.")
+    ), call. = FALSE)
+  }
+  
+  # Sort by row ID to restore original order
+  data <- data[order(data[[id_col]]), ]
+  
+  # Optionally remove the ID column
+  if (drop_id) {
+    data[[id_col]] <- NULL
+  }
+  
+  return(data)
+}

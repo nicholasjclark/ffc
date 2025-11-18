@@ -27,10 +27,9 @@ fitting etc. See \code{\link{glm}} and \code{\link{family}} for more
 details. The extended families listed in \code{\link[mgcv]{family.mgcv}} can also be used.
 }
 
-\item{data}{ A data frame or list containing the model response variable and 
-covariates required by the formula. By default the variables are taken 
-from \code{environment(formula)}: typically the environment from 
-which \code{gam} is called.}
+\item{data}{A \code{data.frame} containing the variables in the model. Unlike
+\code{\link[mgcv]{gam}}, \code{ffc_gam} requires data to be a data.frame and does
+not support list data structures.}
 
 \item{time}{\code{character} specifying which variable in \code{data} represents the
 the time ordering of the observations}
@@ -42,7 +41,7 @@ for fitting the model.}
 }
 \value{
 An object of class \code{ffc_gam}, which inherits from objects of class \code{gam} or
-\code{bam}
+\code{bam}. Use \code{methods(class = "ffc_gam")} to see available methods.
 }
 \description{
 Fit Generalized Additive Models that can include time-varying (dynamic)
@@ -63,8 +62,8 @@ mod <- ffc_gam(
     offset(log(population)) +
     sex +
     fts(age,
-      k = 8, bs = "cr",
-      time_bs = "cr", time_k = 10
+      k = 8,
+      time_k = 10
     ),
   time = "year",
   data = qld_mortality,
@@ -74,37 +73,26 @@ mod <- ffc_gam(
 class(mod)
 summary(mod)
 
-# Predictions work in the usual way
-head(predict(mod, type = "link"))
-head(predict(mod, type = "response"))
+# Extract and visualize time-varying coefficients
+coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+autoplot(coefs)
 
-# Extract basis coefficient time series
-(functional_ts <- fts_coefs(mod))
-
-# Binomial model with cbind() response for trials data
-data("qld_mortality")
-# Create binomial version of the data for demonstration
-qld_binomial <- qld_mortality
-qld_binomial$successes <- qld_binomial$deaths
-qld_binomial$failures <- qld_binomial$population - qld_binomial$deaths
-
-mod_binomial <- ffc_gam(
-  cbind(successes, failures) ~
-    sex +
-    fts(age,
-      k = 6, bs = "cr",
-      time_bs = "cr", time_k = 8
-    ),
-  time = "year",
-  data = qld_binomial,
-  family = binomial(),
-  engine = "bam"
+# Forecast future mortality patterns
+future_data <- expand.grid(
+  age = unique(qld_mortality$age),
+  sex = unique(qld_mortality$sex),
+  year = 2021:2025,
+  population = 1  # Use rate scale (deaths per person)
 )
-summary(mod_binomial)
+
+# Generate forecasts using ETS model for coefficients
+mortality_fc <- forecast(mod, newdata = future_data, model = "ETS",
+                         type = "expected")
+head(mortality_fc)
 
 }
 \seealso{
-\code{\link[=fts]{fts()}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
+\code{\link[=fts]{fts()}}, \code{\link[=forecast.ffc_gam]{forecast.ffc_gam()}}, \code{\link[=fts_coefs]{fts_coefs()}}, \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
 }
 \author{
 Nicholas J Clark
