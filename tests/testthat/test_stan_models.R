@@ -172,3 +172,45 @@ test_that("Stan models validate parameters correctly", {
     "Assertion on 'lag' failed: Must be >= 1"
   )
 })
+
+test_that("ARDF forecasting works with mortality data example", {
+  skip_on_cran()
+  
+  # Test exact example from ffc_gam documentation 
+  # This currently fails with duplicate .time column bug - needs to be fixed
+  
+  data("qld_mortality")
+  
+  # Use subset for faster testing
+  qld_subset <- qld_mortality[qld_mortality$year >= 1990, ]
+  
+  mod <- SW(ffc_gam(
+    deaths ~
+      offset(log(population)) +
+      sex +
+      fts(age, k = 8, time_k = 10),
+    time = "year",
+    data = qld_subset,
+    family = poisson(),
+    engine = "bam"
+  ))
+
+  # Create forecast data exactly as in documentation example
+  future_data <- expand.grid(
+    age = unique(qld_subset$age),
+    sex = unique(qld_subset$sex),
+    year = 2021:2025,
+    population = 1  # Use rate scale (deaths per person)
+  )
+
+  # This should work - currently fails due to duplicate .time column bug
+  mortality_fc_ardf <- forecast(mod, newdata = future_data, model = "ARDF", 
+                               K = 3, lag = 3, chains = 1, iter = 250, 
+                               type = "expected")
+  
+  # Test that results are reasonable
+  expect_true(is.data.frame(mortality_fc_ardf))
+  expect_true(nrow(mortality_fc_ardf) == nrow(future_data))
+  expect_true(all(c(".estimate", ".error") %in% names(mortality_fc_ardf)))
+  expect_true(all(mortality_fc_ardf$.estimate > 0))  # Mortality rates should be positive
+})

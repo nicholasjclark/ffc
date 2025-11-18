@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/nicholasjclark/ffc/graph/badge.svg)](https://app.codecov.io/gh/nicholasjclark/ffc)
 
 
-The goal of the `ffc` 📦 is to forecast complex, time-changing functional relationships by integrating Dynamic Factor Generalized Additive Models. 
+The goal of the `ffc` 📦 is to forecast complex, time-changing functional relationships by integrating Generalized Additive Models with dynamic factor functional basis expansions. 
 
 **Key benefits:**
 
@@ -36,7 +36,7 @@ The goal of the `ffc` 📦 is to forecast complex, time-changing functional rela
 - Handle complex multivariate time series with functional structure  
 - Seamless integration with the powerful   [`mgcv`](https://cran.r-project.org/package=mgcv) and [`fable`](https://fable.tidyverts.org/) ecosystems
 
-The package introduces dynamic functional predictors using the new `fts()` term, which decomposes functional time series into time-varying basis coefficients that can be forecasted using independent time series models from the `fable` package or with efficient dynamic factor models using precompiled Stan models.
+The package introduces dynamic functional predictors using the new `fts()` term, which decomposes functional time series into time-varying basis coefficients that can be forecasted using either independent time series models from the `fable` package or with efficient dynamic factor models using precompiled Stan models.
 
 ## Installation
 

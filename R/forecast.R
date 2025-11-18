@@ -1,7 +1,13 @@
-#' Forecasting functional basis coefficients
+#' Forecasting functional basis coefficients (Internal)
+#'
+#' @description
+#' \strong{For internal use:} This function is primarily used internally by
+#' `forecast.ffc_gam()`. Most users should call `forecast()` directly on their
+#' `ffc_gam` object instead of using this function, which requires properly
+#' structured coefficient data and has specific format requirements.
 #'
 #' @param object An object of class `fts_ts` containing time-varying
-#' basis function coefficients extracted from an `ffc_gam` object
+#' basis function coefficients extracted from an `ffc_gam` object using [fts_coefs()]
 #' @param model A `character` string representing a valid univariate model definition
 #' from the \pkg{fable} package, ensemble methods, or one of the built-in Bayesian dynamic
 #' factor models. Note that if a \pkg{fable} model is used,
@@ -30,7 +36,6 @@
 #' @seealso [predict()], [fts()]
 #' @author Nicholas J Clark
 #' @examples
-#' \donttest{
 #' # Extract coefficients and generate forecasts
 #' mod <- ffc_gam(
 #'   deaths ~ offset(log(population)) + sex +
@@ -44,7 +49,6 @@
 #'
 #' # Generate ETS forecasts
 #' forecast(coefs, model = "ETS", h = 3)
-#' }
 #' @export
 forecast.fts_ts <- function(
     object,
@@ -490,7 +494,6 @@ fable_forecast <- function(
 #' `times` value will be ignored with a warning. For ARIMA models, `times` can be
 #' specified freely and controls the number of posterior draws.
 #' @examples
-#' \donttest{
 #' # Basic forecasting example with growth data
 #' data("growth_data")
 #' mod <- ffc_gam(
@@ -514,7 +517,6 @@ fable_forecast <- function(
 #'
 #' # Get raw forecast matrix without summary
 #' fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
-#' }
 #' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
 #' @return Predicted values on the appropriate scale.
 #' If `summary == FALSE`, the output is a matrix. If `summary == TRUE`, the output
@@ -776,8 +778,18 @@ forecast.ffc_gam <- function(
             dplyr::select(!!time_var, !!index_var) |>
             dplyr::distinct(),
           by = dplyr::join_by(!!index_var)
-        ) |>
-        dplyr::rename(.time = !!time_var)
+        )
+      
+      # Handle duplicate .time column
+      if (".time" %in% colnames(functional_fc)) {
+        # Remove duplicate time_var column since .time already exists
+        functional_fc <- functional_fc |>
+          dplyr::select(-!!time_var)
+      } else {
+        # Rename time_var to .time if .time doesn't exist
+        functional_fc <- functional_fc |>
+          dplyr::rename(.time = !!time_var)
+      }
 
     } else if (time_var %in% colnames(functional_fc)) {
       # Replace .time column with time_var if available

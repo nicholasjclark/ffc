@@ -28,6 +28,8 @@ utils::globalVariables(
     ".y",
     "max_time",
     "fc_horizon",
-    "times"
+    "times",
+    ".sim_rw",
+    "tail_mean"
   )
 )

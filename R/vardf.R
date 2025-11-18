@@ -21,7 +21,6 @@
 #'
 #' @return A model specification
 #' @examples
-#' \dontrun{
 #' # Fit a functional forecasting model, then use VARDF for forecasting
 #' library(dplyr)
 #' 
@@ -40,7 +39,6 @@
 #' # Step 2: Use VARDF for forecasting functional coefficients
 #' fc <- forecast(mod, newdata = test_data, model = "VARDF", 
 #'                chains = 1, iter = 300)
-#' }
 #' @export
 VARDF = function(formula,
                 family = gaussian(),

@@ -25,8 +25,8 @@
 #' appropriately incorporated into the model. It then passes the updated model and data
 #' objects to the specified `engine` for model fitting
 #' @return An object of class `ffc_gam`, which inherits from objects of class `gam` or
-#' `bam`
-#' @seealso [fts()], \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
+#' `bam`. Use `methods(class = "ffc_gam")` to see available methods.
+#' @seealso [fts()], [forecast.ffc_gam()], [fts_coefs()], \code{\link[mgcv]{gam}}, \code{\link[mgcv]{bam}}
 #' @author Nicholas J Clark
 #' @examples
 #' # Fit a dynamic function-on-function regression to the Queensland
@@ -37,8 +37,8 @@
 #'     offset(log(population)) +
 #'     sex +
 #'     fts(age,
-#'       k = 8, bs = "cr",
-#'       time_bs = "cr", time_k = 10
+#'       k = 8,
+#'       time_k = 10
 #'     ),
 #'   time = "year",
 #'   data = qld_mortality,
@@ -48,33 +48,25 @@
 #' class(mod)
 #' summary(mod)
 #'
-#' # Predictions work in the usual way
-#' head(predict(mod, type = "link"))
-#' head(predict(mod, type = "response"))
+#' # Extract and visualize time-varying coefficients
+#' coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+#' autoplot(coefs)
 #'
-#' # Extract basis coefficient time series
-#' (functional_ts <- fts_coefs(mod))
-#'
-#' # Binomial model with cbind() response for trials data
-#' data("qld_mortality")
-#' # Create binomial version of the data for demonstration
-#' qld_binomial <- qld_mortality
-#' qld_binomial$successes <- qld_binomial$deaths
-#' qld_binomial$failures <- qld_binomial$population - qld_binomial$deaths
-#' 
-#' mod_binomial <- ffc_gam(
-#'   cbind(successes, failures) ~
-#'     sex +
-#'     fts(age,
-#'       k = 6, bs = "cr",
-#'       time_bs = "cr", time_k = 8
-#'     ),
-#'   time = "year",
-#'   data = qld_binomial,
-#'   family = binomial(),
-#'   engine = "bam"
+#' # Forecast future mortality patterns
+#' future_data <- expand.grid(
+#'   age = unique(qld_mortality$age),
+#'   sex = unique(qld_mortality$sex),
+#'   year = 2021:2025,
+#'   population = 1  # Use rate scale (deaths per person)
 #' )
-#' summary(mod_binomial)
+#'
+#' # Generate forecasts using ETS model for coefficients
+#' mortality_fc <- forecast(mod, newdata = future_data, model = "ETS", 
+#'                          type = "expected")
+#' head(mortality_fc)
+#'
+#' # Integration with fabletools ecosystem
+#' # fc_fable <- as_fable(mod, newdata = future_data, model = "ETS")
 #'
 #' @export
 ffc_gam <- function(
@@ -100,17 +92,17 @@ ffc_gam <- function(
 
   # Validate data has no missing values
   validate_no_missing_values(data)
-  
-  # Convert character variables to factors for random effects  
+
+  # Convert character variables to factors for random effects
   data <- convert_re_to_factors(formula, data)
-  
+
   # Auto-detect grouping variables and validate time intervals
   exclude_vars <- time
   potential_keys <- setdiff(colnames(data), exclude_vars)
   group_vars <- potential_keys[sapply(potential_keys, function(var) {
     is.factor(data[[var]]) || is.character(data[[var]])
   })]
-  
+
   # Validate consistent time intervals within groups
   if (nrow(data) >= 2) {
     validate_time_intervals(data, time, group_vars)
@@ -167,7 +159,7 @@ update_mod_data <- function(
   # Use helper function to extract response variables robustly
   resp_terms <- extract_response_vars(gam_object$formula, return_all = TRUE)
   out_name <- resp_terms[1]
-  
+
   # Check that response terms are in the data using centralized validation
   validate_response_in_data(gam_object$formula, data)
 

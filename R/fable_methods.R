@@ -27,7 +27,6 @@
 #' @seealso [forecast.ffc_gam()]
 #' @author Nicholas J Clark
 #' @examples
-#' \donttest{
 #' # Basic usage with automatic detection
 #' library(fable)
 #' library(tsibble)
@@ -78,7 +77,6 @@
 #'   response = "Trips",
 #'   key_vars = c("Region", "State")
 #' )
-#' }
 #' @export
 as_fable.ffc_gam <- function(x, newdata, forecasts = NULL,
                              response = NULL, model = "ETS",
