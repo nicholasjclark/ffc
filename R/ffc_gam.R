@@ -11,6 +11,9 @@
 #' \code{\link[mgcv]{te}()} can be added to the right hand side to specify
 #' that the linear predictor depends on smooth functions of predictors
 #' (or linear functionals of these).
+#' @param data A `data.frame` containing the variables in the model. Unlike
+#' \code{\link[mgcv]{gam}}, `ffc_gam` requires data to be a data.frame and does
+#' not support list data structures.
 #' @param engine `character` string specifying which \pkg{mgcv} interface to use
 #' for fitting the model.
 #' @param time `character` specifying which variable in `data` represents the
@@ -165,8 +168,8 @@ update_mod_data <- function(
   resp_terms <- extract_response_vars(gam_object$formula, return_all = TRUE)
   out_name <- resp_terms[1]
   
-  # Check that response terms are in the data
-  validate_vars_in_data(resp_terms, data, "response variable")
+  # Check that response terms are in the data using centralized validation
+  validate_response_in_data(gam_object$formula, data)
 
   # Indices of missing responses in data
   resp_finites <- vector(mode = "list")

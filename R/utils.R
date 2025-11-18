@@ -99,8 +99,28 @@ all_tsbl_checks <- function(.data) {
 #' @return Character vector of response variable name(s)
 #' @noRd
 extract_response_vars <- function(formula, return_all = FALSE) {
-  # Identify response variable using robust approach
-  resp_terms <- as.character(rlang::f_lhs(formula))
+  # Get the left-hand side of formula
+  lhs <- rlang::f_lhs(formula)
+  
+  if (is.null(lhs)) {
+    stop(insight::format_error("Formula has no response variable"), 
+         call. = FALSE)
+  }
+  
+  # Handle different types of left-hand sides
+  if (typeof(lhs) == "language") {
+    # Check if it's cbind specifically
+    if (length(lhs) > 1 && as.character(lhs[[1]]) == "cbind") {
+      # For cbind, use as.character to get individual variable names
+      resp_terms <- as.character(lhs)
+    } else {
+      # For other transformations (sqrt, log, etc.), use deparse
+      resp_terms <- deparse(lhs)
+    }
+  } else {
+    # For simple symbols, use as.character
+    resp_terms <- as.character(lhs)
+  }
   
   if (length(resp_terms) == 1L) {
     response <- resp_terms
@@ -112,7 +132,7 @@ extract_response_vars <- function(formula, return_all = FALSE) {
         response <- resp_terms
       } else {
         # Reconstruct cbind() call as string
-        response <- paste0('cbind(', paste(resp_terms, collapse = ','), ')')
+        response <- paste0('cbind(', paste(resp_terms, collapse = ', '), ')')
       }
     } else {
       response <- resp_terms[1]
@@ -122,6 +142,67 @@ extract_response_vars <- function(formula, return_all = FALSE) {
   return(response)
 }
 
+#' Extract underlying variable names from transformed expressions
+#'
+#' Detects common transformations and extracts the underlying variable names
+#' for validation purposes. Optimized with early exit patterns.
+#'
+#' @param expr_vars Character vector of potentially transformed expressions
+#' @return Character vector of underlying variable names
+#' @noRd
+extract_base_variables <- function(expr_vars) {
+  checkmate::assert_character(expr_vars, min.len = 1, 
+                             any.missing = FALSE)
+  
+  # Validate no empty strings
+  if (any(trimws(expr_vars) == "")) {
+    stop(insight::format_error(
+      "Empty or whitespace-only expressions not allowed"
+    ), call. = FALSE)
+  }
+  
+  # Common transformation patterns (ordered by frequency of use)
+  patterns <- c(
+    "^sqrt\\s*\\(\\s*([^,)]+)\\s*\\)",
+    "^log\\s*\\(\\s*([^,)]+)\\s*(?:,.*)?\\)",
+    "^log10\\s*\\(\\s*([^,)]+)\\s*\\)",
+    "^log2\\s*\\(\\s*([^,)]+)\\s*\\)",
+    "^exp\\s*\\(\\s*([^,)]+)\\s*\\)",
+    "^abs\\s*\\(\\s*([^,)]+)\\s*\\)",
+    "^scale\\s*\\(\\s*([^,)]+)\\s*(?:,.*)?\\)",
+    "^sin\\s*\\(\\s*([^,)]+)\\s*\\)",
+    "^cos\\s*\\(\\s*([^,)]+)\\s*\\)",
+    "^tan\\s*\\(\\s*([^,)]+)\\s*\\)"
+  )
+  
+  base_vars <- character(length(expr_vars))
+  
+  for (i in seq_along(expr_vars)) {
+    expr <- trimws(expr_vars[i])
+    base_var <- expr  # Default to original
+    
+    # Check transformation patterns with early exit
+    for (pattern in patterns) {
+      match_result <- regexec(pattern, expr)
+      if (match_result[[1]][1] != -1) {
+        captured <- regmatches(expr, match_result)[[1]]
+        if (length(captured) >= 2) {
+          candidate <- trimws(gsub("^['\"]|['\"]$", "", captured[2]))
+          
+          # Validate simple variable name
+          if (grepl("^[a-zA-Z][a-zA-Z0-9_\\.]*$", candidate)) {
+            base_var <- candidate
+            break
+          }
+        }
+      }
+    }
+    
+    base_vars[i] <- base_var
+  }
+  
+  return(base_vars)
+}
 
 #' Optimized FC matrix reshaping
 #'

@@ -455,3 +455,55 @@ convert_re_to_factors <- function(formula, data) {
   return(data)
 }
 
+#' Validate response variables exist in data with type-aware checking
+#'
+#' Validates that underlying variables exist in data for both simple and 
+#' transformed response expressions using type-aware logic for all response types.
+#' This is the single source of truth for response validation across the package.
+#'
+#' @param formula A formula object potentially containing transformed responses
+#' @param data Data frame to check for variables  
+#' @return Invisible TRUE if all underlying variables exist, otherwise stops
+#' @noRd
+validate_response_in_data <- function(formula, data) {
+  checkmate::assert_class(formula, "formula")
+  checkmate::assert_data_frame(data)
+  
+  # Extract response expressions
+  resp_terms <- extract_response_vars(formula, return_all = TRUE)
+  
+  # Check that response terms are in the data
+  # Handle different response types appropriately
+  for (i in seq_along(resp_terms)) {
+    resp_term <- resp_terms[i]
+    
+    # For simple variable names (including cbind-extracted vars), validate directly  
+    if (grepl("^[a-zA-Z][a-zA-Z0-9_\\.]*$", resp_term)) {
+      validate_vars_in_data(resp_term, data, "response variable")
+    } 
+    # For I() expressions, extract variables from inside
+    else if (grepl("^I\\s*\\(", resp_term)) {
+      # Extract all variable names from inside I()
+      inner_expr <- gsub("^I\\s*\\((.*)\\)\\s*$", "\\1", resp_term)
+      # Find all variable-like patterns in the expression
+      vars_in_expr <- regmatches(inner_expr, 
+                                 gregexpr("\\b[a-zA-Z][a-zA-Z0-9_\\.]*\\b", inner_expr))[[1]]
+      # Filter out R keywords and functions
+      r_keywords <- c("c", "if", "else", "for", "in", "function", "TRUE", "FALSE", "NULL")
+      vars_to_check <- setdiff(vars_in_expr, r_keywords)
+      if (length(vars_to_check) > 0) {
+        validate_vars_in_data(vars_to_check, data, "response variable")
+      }
+    }
+    # For transformation functions (sqrt, log, etc.), extract base variables
+    else if (grepl("^(sqrt|log|log10|log2|exp|abs|scale|sin|cos|tan)\\s*\\(", resp_term)) {
+      underlying_vars <- extract_base_variables(resp_term)
+      validate_vars_in_data(underlying_vars, data, "response variable")
+    }
+    # For other complex expressions, skip validation (assume mgcv will handle)
+    # This covers edge cases we haven't anticipated
+  }
+  
+  invisible(TRUE)
+}
+

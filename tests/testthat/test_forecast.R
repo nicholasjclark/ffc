@@ -446,7 +446,7 @@ test_that("as_fable.ffc_gam() handles binomial cbind() responses", {
 
   # Should auto-detect cbind response
   expect_true(inherits(fc_fable, "fbl_ts"))
-  expected_response <- "cbind(successes,failures)"
+  expected_response <- "cbind(successes, failures)"
   expect_equal(attr(fc_fable, "response"), expected_response)
 
   # Should handle missing response variables properly
