@@ -41,10 +41,9 @@ ffc_gam(
 
 - data:
 
-  A data frame or list containing the model response variable and
-  covariates required by the formula. By default the variables are taken
-  from `environment(formula)`: typically the environment from which
-  `gam` is called.
+  A `data.frame` containing the variables in the model. Unlike
+  [`gam`](https://rdrr.io/pkg/mgcv/man/gam.html), `ffc_gam` requires
+  data to be a data.frame and does not support list data structures.
 
 - time:
 
@@ -64,7 +63,7 @@ ffc_gam(
 ## Value
 
 An object of class `ffc_gam`, which inherits from objects of class `gam`
-or `bam`
+or `bam`. Use `methods(class = "ffc_gam")` to see available methods.
 
 ## Details
 
@@ -78,6 +77,8 @@ specified `engine` for model fitting
 ## See also
 
 [`fts()`](https://nicholasjclark.github.io/ffc/reference/fts.md),
+[`forecast.ffc_gam()`](https://nicholasjclark.github.io/ffc/reference/forecast.ffc_gam.md),
+[`fts_coefs()`](https://nicholasjclark.github.io/ffc/reference/fts_coefs.ffc_gam.md),
 [`gam`](https://rdrr.io/pkg/mgcv/man/gam.html),
 [`bam`](https://rdrr.io/pkg/mgcv/man/bam.html)
 
@@ -96,8 +97,8 @@ mod <- ffc_gam(
     offset(log(population)) +
     sex +
     fts(age,
-      k = 8, bs = "cr",
-      time_bs = "cr", time_k = 10
+      k = 8,
+      time_k = 10
     ),
   time = "year",
   data = qld_mortality,
@@ -113,111 +114,60 @@ summary(mod)
 #> 
 #> Formula:
 #> deaths ~ sex + offset(log(population)) + s(year, by = fts_bs_s_age__1, 
-#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__2, 
-#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__3, 
-#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__4, 
-#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__5, 
-#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__6, 
-#>     bs = "cr", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__7, 
-#>     bs = "cr", k = 10, m = 2, id = 1)
+#>     bs = "ts", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__2, 
+#>     bs = "ts", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__3, 
+#>     bs = "ts", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__4, 
+#>     bs = "ts", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__5, 
+#>     bs = "ts", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__6, 
+#>     bs = "ts", k = 10, m = 2, id = 1) + s(year, by = fts_bs_s_age__7, 
+#>     bs = "ts", k = 10, m = 2, id = 1)
 #> 
 #> Parametric coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.560332   0.002416 -2301.4   <2e-16 ***
-#> sexmale      0.472635   0.002077   227.5   <2e-16 ***
+#> (Intercept) -5.553606   0.002381 -2332.6   <2e-16 ***
+#> sexmale      0.472665   0.002077   227.6   <2e-16 ***
 #> ---
 #> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 #> 
 #> Approximate significance of smooth terms:
 #>                           edf Ref.df Chi.sq p-value    
-#> s(year):fts_bs_s_age__1 5.546  6.517  62927  <2e-16 ***
-#> s(year):fts_bs_s_age__2 6.157  7.219  47283  <2e-16 ***
-#> s(year):fts_bs_s_age__3 6.547  7.634  26662  <2e-16 ***
-#> s(year):fts_bs_s_age__4 7.460  8.526  10047  <2e-16 ***
-#> s(year):fts_bs_s_age__5 8.158  9.096 196408  <2e-16 ***
-#> s(year):fts_bs_s_age__6 8.152  9.046 642373  <2e-16 ***
-#> s(year):fts_bs_s_age__7 6.170  7.233 639228  <2e-16 ***
+#> s(year):fts_bs_s_age__1 8.165     10  22396  <2e-16 ***
+#> s(year):fts_bs_s_age__2 6.829     10  15647  <2e-16 ***
+#> s(year):fts_bs_s_age__3 8.112     10   2883  <2e-16 ***
+#> s(year):fts_bs_s_age__4 7.085     10  14643  <2e-16 ***
+#> s(year):fts_bs_s_age__5 7.847     10    707  <2e-16 ***
+#> s(year):fts_bs_s_age__6 5.923     10  23037  <2e-16 ***
+#> s(year):fts_bs_s_age__7 6.259     10   8424  <2e-16 ***
 #> ---
 #> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 #> 
-#> R-sq.(adj) =  0.973   Deviance explained = 94.8%
-#> fREML =  47425  Scale est. = 1         n = 8282
+#> R-sq.(adj) =  0.972   Deviance explained = 94.7%
+#> fREML =  46558  Scale est. = 1         n = 8282
 
-# Predictions work in the usual way
-head(predict(mod, type = "link"))
-#>        1        2        3        4        5        6 
-#> 3.985387 4.010376 4.023095 3.998402 3.945344 3.902329 
-head(predict(mod, type = "response"))
-#>        1        2        3        4        5        6 
-#> 53.80613 55.16762 55.87379 54.51097 51.69412 49.51764 
+# Extract and visualize time-varying coefficients
+coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+autoplot(coefs)
 
-# Extract basis coefficient time series
-(functional_ts <- fts_coefs(mod))
-#> # A tibble: 287 × 5
-#>    .basis          .time .estimate     .se  year
-#>  * <chr>           <int>     <dbl>   <dbl> <int>
-#>  1 fts_bs_s_age__1  1980     -4.12 0.0113   1980
-#>  2 fts_bs_s_age__1  1981     -4.07 0.00896  1981
-#>  3 fts_bs_s_age__1  1982     -4.02 0.00700  1982
-#>  4 fts_bs_s_age__1  1983     -3.96 0.00569  1983
-#>  5 fts_bs_s_age__1  1984     -3.90 0.00500  1984
-#>  6 fts_bs_s_age__1  1985     -3.85 0.00458  1985
-#>  7 fts_bs_s_age__1  1986     -3.79 0.00414  1986
-#>  8 fts_bs_s_age__1  1987     -3.73 0.00372  1987
-#>  9 fts_bs_s_age__1  1988     -3.66 0.00342  1988
-#> 10 fts_bs_s_age__1  1989     -3.60 0.00331  1989
-#> # ℹ 277 more rows
 
-# Binomial model with cbind() response for trials data
-data("qld_mortality")
-# Create binomial version of the data for demonstration
-qld_binomial <- qld_mortality
-qld_binomial$successes <- qld_binomial$deaths
-qld_binomial$failures <- qld_binomial$population - qld_binomial$deaths
-
-mod_binomial <- ffc_gam(
-  cbind(successes, failures) ~
-    sex +
-    fts(age,
-      k = 6, bs = "cr",
-      time_bs = "cr", time_k = 8
-    ),
-  time = "year",
-  data = qld_binomial,
-  family = binomial(),
-  engine = "bam"
+# Forecast future mortality patterns
+future_data <- expand.grid(
+  age = unique(qld_mortality$age),
+  sex = unique(qld_mortality$sex),
+  year = 2021:2025,
+  population = 1  # Use rate scale (deaths per person)
 )
-#> Warning: non-integer counts in a binomial glm!
-summary(mod_binomial)
-#> 
-#> Family: binomial 
-#> Link function: logit 
-#> 
-#> Formula:
-#> cbind(successes, failures) ~ sex + s(year, by = fts_bs_s_age__1, 
-#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__2, 
-#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__3, 
-#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__4, 
-#>     bs = "cr", k = 8, m = 2, id = 1) + s(year, by = fts_bs_s_age__5, 
-#>     bs = "cr", k = 8, m = 2, id = 1)
-#> 
-#> Parametric coefficients:
-#>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.483768   0.002294 -2390.4   <2e-16 ***
-#> sexmale      0.508230   0.002166   234.6   <2e-16 ***
-#> ---
-#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-#> 
-#> Approximate significance of smooth terms:
-#>                           edf Ref.df Chi.sq p-value    
-#> s(year):fts_bs_s_age__1 6.631  7.333  54584  <2e-16 ***
-#> s(year):fts_bs_s_age__2 7.167  7.717  26231  <2e-16 ***
-#> s(year):fts_bs_s_age__3 7.499  7.836  32978  <2e-16 ***
-#> s(year):fts_bs_s_age__4 7.552  7.825 411279  <2e-16 ***
-#> s(year):fts_bs_s_age__5 6.938  7.597 871121  <2e-16 ***
-#> ---
-#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-#> 
-#> R-sq.(adj) =  0.982   Deviance explained = 97.7%
-#> fREML =  56736  Scale est. = 1         n = 8282
+
+# Generate forecasts using ETS model for coefficients
+mortality_fc <- forecast(mod, newdata = future_data, model = "ETS",
+                         type = "expected")
+head(mortality_fc)
+#> # A tibble: 6 × 6
+#>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
+#>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
+#> 1  0.00117  0.00116 0.00109  0.00112  0.00122  0.00125 
+#> 2  0.00104  0.00130 0.000979 0.000998 0.00108  0.00111 
+#> 3  0.000926 0.00137 0.000876 0.000892 0.000962 0.000983
+#> 4  0.000826 0.00148 0.000786 0.000798 0.000855 0.000874
+#> 5  0.000738 0.00153 0.000704 0.000716 0.000763 0.000780
+#> 6  0.000663 0.00165 0.000634 0.000644 0.000685 0.000698
 ```

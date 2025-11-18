@@ -15,6 +15,7 @@ ARDF(
   warmup = floor(iter/2),
   adapt_delta = get_stan_param("adapt_delta"),
   max_treedepth = get_stan_param("max_treedepth"),
+  silent = get_stan_param("silent"),
   ...
 )
 ```
@@ -61,6 +62,12 @@ ARDF(
 
   maximum tree depth per iteration
 
+- silent:
+
+  Logical indicating whether to suppress Stan sampling progress output.
+  Default is `TRUE`. When `FALSE`, shows progress approximately every
+  10% of iterations.
+
 - ...:
 
   other arguments to pass to
@@ -77,24 +84,34 @@ Nicholas J Clark
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 # Fit a functional forecasting model, then use ARDF for forecasting
 library(dplyr)
+#> 
+#> Attaching package: ‘dplyr’
+#> The following objects are masked from ‘package:stats’:
+#> 
+#>     filter, lag
+#> The following objects are masked from ‘package:base’:
+#> 
+#>     intersect, setdiff, setequal, union
 
 # Split growth data into training and test sets
-train_data <- growth_data |> filter(age_yr <= 16)
-test_data <- growth_data |> filter(age_yr > 16)
+train_data <- growth_data |> filter(age_yr <= 13)
+test_data <- growth_data |> filter(age_yr > 13)
 
 # Step 1: Fit ffc_gam model with time-varying coefficients
 mod <- ffc_gam(
-  height_cm ~ fts(age_yr, by = id, time_k = 5),
+  height_cm ~
+    s(id, bs = "re") +
+    fts(age_yr, time_k = 5),
   data = train_data,
   time = "age_yr",
   family = gaussian()
 )
 
 # Step 2: Use ARDF for forecasting functional coefficients
-fc <- forecast(mod, newdata = test_data, model = "ARDF", 
+fc <- forecast(mod, newdata = test_data, model = "ARDF",
                chains = 1, iter = 300)
-} # }
+#> Warning: For Stan models, setting times = 150 to match posterior samples. Requested times = 200 would cause dimension mismatch.
+#> This warning is displayed once per session.
 ```

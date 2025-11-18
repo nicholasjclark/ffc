@@ -140,6 +140,7 @@ mod <- ffc_gam(
   deaths ~
     offset(log(population)) +
     sex +
+    age +
     # Time-varying level: shared temporal trends
     fts(
       year,
@@ -173,7 +174,7 @@ summary(mod)
 #> Link function: log 
 #> 
 #> Formula:
-#> deaths ~ sex + offset(log(population)) + s(year, by = fts_year1_mean, 
+#> deaths ~ sex + age + offset(log(population)) + s(year, by = fts_year1_mean, 
 #>     bs = "ts", k = 35, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_1, 
 #>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_2, 
 #>     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_3, 
@@ -196,42 +197,44 @@ summary(mod)
 #> 
 #> Parametric coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)    
-#> (Intercept) -5.648082   0.004039 -1398.2   <2e-16 ***
-#> sexmale      0.574335   0.004986   115.2   <2e-16 ***
+#> (Intercept)  3.371181   2.488125   1.355 0.175447    
+#> sexmale      0.574306   0.004986 115.189  < 2e-16 ***
+#> age         -0.180386   0.049764  -3.625 0.000289 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
 #>                                       edf Ref.df   Chi.sq p-value    
-#> s(year):fts_year1_mean             32.047     34 10327.70  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_1 14.490     15 11927.82  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_2 12.657     15  9710.20  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_3 14.499     15    68.77  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_4 13.341     15  7608.17  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_5 14.526     15   497.34  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_6 13.188     15  7786.44  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_7 14.293     15   713.88  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_8  9.668     15 11099.21  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexfemale_9 12.388     15  6040.51  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_1   14.367     15  7376.91  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_2   12.789     15  9625.81  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_3   14.622     15   107.41  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_4   13.645     15  9830.07  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_5   14.617     15  1737.59  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_6   13.631     15  9939.09  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_7   14.458     15   307.97  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_8    9.796     15 12228.48  <2e-16 ***
-#> s(year):fts_bs_s_age_bysexmale_9   11.805     15  6728.91  <2e-16 ***
+#> s(year):fts_year1_mean             32.048     34 10329.34  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_1 14.470     15 11934.09  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_2 12.621     15  9711.83  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_3 14.477     15    68.77  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_4 13.307     15  7609.29  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_5 14.505     15   498.50  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_6 13.147     15  7787.91  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_7 14.265     15   712.25  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_8  9.615     15 11101.16  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexfemale_9 11.815     15    39.30  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_1   14.347     15  7385.09  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_2   12.758     15  9625.52  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_3   14.606     15   106.51  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_4   13.620     15  9829.84  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_5   14.601     15  1741.23  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_6   13.601     15  9939.09  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_7   14.438     15   308.23  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_8    9.738     15 12228.38  <2e-16 ***
+#> s(year):fts_bs_s_age_bysexmale_9   11.218     15    72.68  <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> R-sq.(adj) =  0.986   Deviance explained = 97.6%
-#> fREML =  22154  Scale est. = 1         n = 8282
+#> fREML =  22150  Scale est. = 1         n = 8282
 ```
 
 Key components:
 
-1.  Fixed effects: `sex` captures baseline male-female differences
+1.  Fixed effects: `sex` captures baseline male-female differences,
+    `age` captures baseline mortality rates per age
 2.  Time-varying level: `fts(year, mean_only = TRUE)` models shared
     temporal trends  
 3.  Time-varying functions: `fts(age, by = sex)` captures how age
@@ -381,16 +384,16 @@ functional_coefs
 #> # A tibble: 7,790 × 5
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.406            1  1980
-#>  2 fts_year1_mean  1981     0.389            1  1981
-#>  3 fts_year1_mean  1982     0.420            1  1982
-#>  4 fts_year1_mean  1983     0.320            1  1983
-#>  5 fts_year1_mean  1984     0.308            1  1984
-#>  6 fts_year1_mean  1985     0.330            1  1985
-#>  7 fts_year1_mean  1986     0.279            1  1986
-#>  8 fts_year1_mean  1987     0.249            1  1987
-#>  9 fts_year1_mean  1988     0.232            1  1988
-#> 10 fts_year1_mean  1989     0.260            1  1989
+#>  1 fts_year1_mean  1980     0.356            1  1980
+#>  2 fts_year1_mean  1981     0.368            1  1981
+#>  3 fts_year1_mean  1982     0.403            1  1982
+#>  4 fts_year1_mean  1983     0.319            1  1983
+#>  5 fts_year1_mean  1984     0.324            1  1984
+#>  6 fts_year1_mean  1985     0.318            1  1985
+#>  7 fts_year1_mean  1986     0.259            1  1986
+#>  8 fts_year1_mean  1987     0.247            1  1987
+#>  9 fts_year1_mean  1988     0.234            1  1988
+#> 10 fts_year1_mean  1989     0.265            1  1989
 #> # ℹ 7,780 more rows
 ```
 
@@ -435,16 +438,16 @@ functional_fc
 #> # Key:       .basis, .realisation, .model, .rep [1,900]
 #>    .basis                     .realisation .model  year .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      1.96
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      1.95
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      1.95
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      2.00
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      2.09
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      1.99
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      2.01
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      2.05
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      2.10
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      2.14
 #>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 10     1.96
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     1.98
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     2.01
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     2.08
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     2.15
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     1.92
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     1.85
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     1.80
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     1.79
 #> # ℹ 9,490 more rows
 ```
 
@@ -455,7 +458,10 @@ intervals.
 ### Future mortality patterns
 
 Let’s demonstrate how to generate complete mortality curve forecasts by
-combining the forecasted coefficients with the model structure:
+combining the forecasted coefficients with the model structure. Here we
+will use the ensemble model (“ENS”) to forecast the time-varying mean,
+which tends to give more robust forecasts than any of the mdoels on
+their own:
 
 ``` r
 # Create forecast data for future years
@@ -473,18 +479,19 @@ mortality_forecasts <- forecast(
   object = mod,
   newdata = newdata_forecast,
   model = "ARIMA",
+  mean_model = "ENS",
   type = "expected"
 )
 head(mortality_forecasts)
 #> # A tibble: 6 × 6
 #>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
 #>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-#> 1  0.00178  0.00166 0.00153  0.00162  0.00197  0.00206 
-#> 2  0.00114  0.00111 0.000987 0.00103  0.00124  0.00129 
-#> 3  0.000723 0.00134 0.000637 0.000660 0.000796 0.000817
-#> 4  0.000469 0.00197 0.000411 0.000426 0.000514 0.000529
-#> 5  0.000308 0.00194 0.000269 0.000279 0.000336 0.000348
-#> 6  0.000207 0.00152 0.000180 0.000187 0.000228 0.000235
+#> 1  0.00177  0.00168 0.00153  0.00160  0.00197  0.00205 
+#> 2  0.00113  0.00111 0.000974 0.00103  0.00124  0.00129 
+#> 3  0.000723 0.00139 0.000623 0.000663 0.000791 0.000821
+#> 4  0.000465 0.00200 0.000404 0.000428 0.000510 0.000529
+#> 5  0.000304 0.00187 0.000267 0.000281 0.000336 0.000347
+#> 6  0.000206 0.00153 0.000179 0.000189 0.000227 0.000238
 
 # Plot forecasted mortality rates, together with uncertainties
 ggplot(mortality_forecasts |>

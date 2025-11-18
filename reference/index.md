@@ -27,7 +27,7 @@ Methods for working with fitted models
   Forecasting `ffc_gam` models
 
 - [`forecast(`*`<fts_ts>`*`)`](https://nicholasjclark.github.io/ffc/reference/forecast.fts_ts.md)
-  : Forecasting functional basis coefficients
+  : Forecasting functional basis coefficients (Internal)
 
 - [`model.frame(`*`<ffc_gam>`*`)`](https://nicholasjclark.github.io/ffc/reference/model.frame.ffc_gam.md)
   :

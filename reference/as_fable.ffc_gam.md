@@ -77,7 +77,6 @@ Nicholas J Clark
 ## Examples
 
 ``` r
-# \donttest{
 # Basic usage with automatic detection
 library(fable)
 #> Loading required package: fabletools
@@ -88,14 +87,6 @@ library(tsibble)
 #> 
 #>     intersect, setdiff, union
 library(dplyr)
-#> 
-#> Attaching package: ‘dplyr’
-#> The following objects are masked from ‘package:stats’:
-#> 
-#>     filter, lag
-#> The following objects are masked from ‘package:base’:
-#> 
-#>     intersect, setdiff, setequal, union
 
 # Prepare tourism data
 tourism_melb <- tourism |>
@@ -124,18 +115,18 @@ accuracy(fc_fable, test)   # Accuracy metrics
 #> # A tibble: 1 × 13
 #>   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
 #>   <chr>   <chr>    <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ETS Melbour… Vict… Visiti… Test   15.7  78.9  62.1 0.792  7.61   NaN   NaN
+#> 1 FFC_ETS Melbour… Vict… Visiti… Test   20.9  82.4  63.6  1.42  7.74   NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 hilo(fc_fable, level = c(80, 95))  # Prediction intervals
 #> # A tsibble: 5 x 12 [1Q]
 #> # Key:       Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <dbl> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  808. FFC_E…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  747. FFC_E…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  769. FFC_E…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  759. FFC_E…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  855. FFC_E…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  806. FFC_E…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  742. FFC_E…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  767. FFC_E…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  750. FFC_E…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  847. FFC_E…
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
@@ -148,11 +139,11 @@ fc_fable |>
 #> # A tsibble: 5 x 4 [1Q]
 #>   Quarter mean_forecast   q25   q75
 #>     <qtr>         <dbl> <dbl> <dbl>
-#> 1 2016 Q4          808.  757.  853.
-#> 2 2017 Q1          747.  696.  789.
-#> 3 2017 Q2          769.  722.  811.
-#> 4 2017 Q3          759.  711.  809.
-#> 5 2017 Q4          855.  804.  909.
+#> 1 2016 Q4          806.  749.  854.
+#> 2 2017 Q1          742.  700.  783.
+#> 3 2017 Q2          767.  725.  808.
+#> 4 2017 Q3          750.  705.  795.
+#> 5 2017 Q4          847.  787.  900.
 
 # With pre-computed forecasts
 forecasts <- forecast(mod, newdata = test, model = "ETS", summary = FALSE)
@@ -166,5 +157,4 @@ fc_fable3 <- as_fable(
   response = "Trips",
   key_vars = c("Region", "State")
 )
-# }
 ```

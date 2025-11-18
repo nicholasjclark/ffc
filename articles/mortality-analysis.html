@@ -212,6 +212,7 @@ relationship changes:</p>
 <span>  <span class="va">deaths</span> <span class="op">~</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">population</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="va">sex</span> <span class="op">+</span></span>
+<span>    <span class="va">age</span> <span class="op">+</span></span>
 <span>    <span class="co"># Time-varying level: shared temporal trends</span></span>
 <span>    <span class="fu"><a href="../reference/fts.html">fts</a></span><span class="op">(</span></span>
 <span>      <span class="va">year</span>,</span>
@@ -245,7 +246,7 @@ relationship changes:</p>
 <span><span class="co">#&gt; Link function: log </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Formula:</span></span>
-<span><span class="co">#&gt; deaths ~ sex + offset(log(population)) + s(year, by = fts_year1_mean, </span></span>
+<span><span class="co">#&gt; deaths ~ sex + age + offset(log(population)) + s(year, by = fts_year1_mean, </span></span>
 <span><span class="co">#&gt;     bs = "ts", k = 35, m = 1, id = 1) + s(year, by = fts_bs_s_age_bysexfemale_1, </span></span>
 <span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_2, </span></span>
 <span><span class="co">#&gt;     bs = "ts", k = 15, m = 1, id = 2) + s(year, by = fts_bs_s_age_bysexfemale_3, </span></span>
@@ -268,41 +269,43 @@ relationship changes:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric coefficients:</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span><span class="co">#&gt; (Intercept) -5.648082   0.004039 -1398.2   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; sexmale      0.574335   0.004986   115.2   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  3.371181   2.488125   1.355 0.175447    </span></span>
+<span><span class="co">#&gt; sexmale      0.574306   0.004986 115.189  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; age         -0.180386   0.049764  -3.625 0.000289 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Approximate significance of smooth terms:</span></span>
 <span><span class="co">#&gt;                                       edf Ref.df   Chi.sq p-value    </span></span>
-<span><span class="co">#&gt; s(year):fts_year1_mean             32.047     34 10327.70  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1 14.490     15 11927.82  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2 12.657     15  9710.20  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3 14.499     15    68.77  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4 13.341     15  7608.17  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5 14.526     15   497.34  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6 13.188     15  7786.44  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7 14.293     15   713.88  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8  9.668     15 11099.21  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9 12.388     15  6040.51  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1   14.367     15  7376.91  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2   12.789     15  9625.81  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3   14.622     15   107.41  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4   13.645     15  9830.07  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5   14.617     15  1737.59  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6   13.631     15  9939.09  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   14.458     15   307.97  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8    9.796     15 12228.48  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9   11.805     15  6728.91  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_year1_mean             32.048     34 10329.34  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_1 14.470     15 11934.09  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_2 12.621     15  9711.83  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_3 14.477     15    68.77  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_4 13.307     15  7609.29  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_5 14.505     15   498.50  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_6 13.147     15  7787.91  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_7 14.265     15   712.25  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_8  9.615     15 11101.16  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexfemale_9 11.815     15    39.30  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_1   14.347     15  7385.09  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_2   12.758     15  9625.52  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_3   14.606     15   106.51  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_4   13.620     15  9829.84  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_5   14.601     15  1741.23  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_6   13.601     15  9939.09  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_7   14.438     15   308.23  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_8    9.738     15 12228.38  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_age_bysexmale_9   11.218     15    72.68  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; R-sq.(adj) =  0.986   Deviance explained = 97.6%</span></span>
-<span><span class="co">#&gt; fREML =  22154  Scale est. = 1         n = 8282</span></span></code></pre></div>
+<span><span class="co">#&gt; fREML =  22150  Scale est. = 1         n = 8282</span></span></code></pre></div>
 <p>Key components:</p>
 <ol style="list-style-type: decimal">
 <li>Fixed effects: <code>sex</code> captures baseline male-female
-differences</li>
+differences, <code>age</code> captures baseline mortality rates per
+age</li>
 <li>Time-varying level: <code>fts(year, mean_only = TRUE)</code> models
 shared temporal trends<br>
 </li>
@@ -449,16 +452,16 @@ coefficients as time series that can be forecasted:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7,790 × 5</span></span></span>
 <span><span class="co">#&gt;    .basis         .time .estimate .realisation  year</span></span>
 <span><span class="co">#&gt;  <span style="color: #BCBCBC;">*</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>980     0.406            1  <span style="text-decoration: underline;">1</span>980</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>981     0.389            1  <span style="text-decoration: underline;">1</span>981</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>982     0.420            1  <span style="text-decoration: underline;">1</span>982</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>983     0.320            1  <span style="text-decoration: underline;">1</span>983</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>984     0.308            1  <span style="text-decoration: underline;">1</span>984</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>985     0.330            1  <span style="text-decoration: underline;">1</span>985</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>986     0.279            1  <span style="text-decoration: underline;">1</span>986</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>987     0.249            1  <span style="text-decoration: underline;">1</span>987</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>988     0.232            1  <span style="text-decoration: underline;">1</span>988</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>989     0.260            1  <span style="text-decoration: underline;">1</span>989</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>980     0.356            1  <span style="text-decoration: underline;">1</span>980</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>981     0.368            1  <span style="text-decoration: underline;">1</span>981</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>982     0.403            1  <span style="text-decoration: underline;">1</span>982</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>983     0.319            1  <span style="text-decoration: underline;">1</span>983</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>984     0.324            1  <span style="text-decoration: underline;">1</span>984</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>985     0.318            1  <span style="text-decoration: underline;">1</span>985</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>986     0.259            1  <span style="text-decoration: underline;">1</span>986</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>987     0.247            1  <span style="text-decoration: underline;">1</span>987</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>988     0.234            1  <span style="text-decoration: underline;">1</span>988</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>989     0.265            1  <span style="text-decoration: underline;">1</span>989</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 7,780 more rows</span></span></span></code></pre></div>
 <div class="section level3">
 <h3 id="visualizing-coefficient-evolution">Visualizing coefficient evolution<a class="anchor" aria-label="anchor" href="#visualizing-coefficient-evolution"></a>
@@ -502,16 +505,16 @@ functional evolution</li>
 <span><span class="co">#&gt; <span style="color: #949494;"># Key:       .basis, .realisation, .model, .rep [1,900]</span></span></span>
 <span><span class="co">#&gt;    .basis                     .realisation .model  year .rep   .sim</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 1      1.96</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 1      1.95</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 1      1.95</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 1      2.00</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 1      2.09</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 1      1.99</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 1      2.01</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 1      2.05</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 1      2.10</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 1      2.14</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>021 10     1.96</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 10     1.98</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 10     2.01</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 10     2.08</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 10     2.15</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>022 10     1.92</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>023 10     1.85</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>024 10     1.80</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_bs_s_age_bysexfemale_1            1 ARIMA   <span style="text-decoration: underline;">2</span>025 10     1.79</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 9,490 more rows</span></span></span></code></pre></div>
 <p>The forecast includes uncertainty in both the time series models and
 the original coefficient estimation, providing realistic prediction
@@ -521,7 +524,10 @@ intervals.</p>
 <h3 id="future-mortality-patterns">Future mortality patterns<a class="anchor" aria-label="anchor" href="#future-mortality-patterns"></a>
 </h3>
 <p>Let’s demonstrate how to generate complete mortality curve forecasts
-by combining the forecasted coefficients with the model structure:</p>
+by combining the forecasted coefficients with the model structure. Here
+we will use the ensemble model (“ENS”) to forecast the time-varying
+mean, which tends to give more robust forecasts than any of the mdoels
+on their own:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create forecast data for future years</span></span>
 <span><span class="va">future_years</span> <span class="op">&lt;-</span> <span class="fl">2021</span><span class="op">:</span><span class="fl">2025</span></span>
@@ -538,18 +544,19 @@ by combining the forecasted coefficients with the model structure:</p>
 <span>  object <span class="op">=</span> <span class="va">mod</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="va">newdata_forecast</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"ARIMA"</span>,</span>
+<span>  mean_model <span class="op">=</span> <span class="st">"ENS"</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"expected"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mortality_forecasts</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">#&gt;   .estimate  .error    .q2.5     .q10     .q90   .q97.5</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  0.001<span style="text-decoration: underline;">78</span>  0.001<span style="text-decoration: underline;">66</span> 0.001<span style="text-decoration: underline;">53</span>  0.001<span style="text-decoration: underline;">62</span>  0.001<span style="text-decoration: underline;">97</span>  0.002<span style="text-decoration: underline;">06</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>  0.001<span style="text-decoration: underline;">14</span>  0.001<span style="text-decoration: underline;">11</span> 0.000<span style="text-decoration: underline;">987</span> 0.001<span style="text-decoration: underline;">03</span>  0.001<span style="text-decoration: underline;">24</span>  0.001<span style="text-decoration: underline;">29</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>  0.000<span style="text-decoration: underline;">723</span> 0.001<span style="text-decoration: underline;">34</span> 0.000<span style="text-decoration: underline;">637</span> 0.000<span style="text-decoration: underline;">660</span> 0.000<span style="text-decoration: underline;">796</span> 0.000<span style="text-decoration: underline;">817</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>  0.000<span style="text-decoration: underline;">469</span> 0.001<span style="text-decoration: underline;">97</span> 0.000<span style="text-decoration: underline;">411</span> 0.000<span style="text-decoration: underline;">426</span> 0.000<span style="text-decoration: underline;">514</span> 0.000<span style="text-decoration: underline;">529</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">308</span> 0.001<span style="text-decoration: underline;">94</span> 0.000<span style="text-decoration: underline;">269</span> 0.000<span style="text-decoration: underline;">279</span> 0.000<span style="text-decoration: underline;">336</span> 0.000<span style="text-decoration: underline;">348</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>  0.000<span style="text-decoration: underline;">207</span> 0.001<span style="text-decoration: underline;">52</span> 0.000<span style="text-decoration: underline;">180</span> 0.000<span style="text-decoration: underline;">187</span> 0.000<span style="text-decoration: underline;">228</span> 0.000<span style="text-decoration: underline;">235</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  0.001<span style="text-decoration: underline;">77</span>  0.001<span style="text-decoration: underline;">68</span> 0.001<span style="text-decoration: underline;">53</span>  0.001<span style="text-decoration: underline;">60</span>  0.001<span style="text-decoration: underline;">97</span>  0.002<span style="text-decoration: underline;">05</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>  0.001<span style="text-decoration: underline;">13</span>  0.001<span style="text-decoration: underline;">11</span> 0.000<span style="text-decoration: underline;">974</span> 0.001<span style="text-decoration: underline;">03</span>  0.001<span style="text-decoration: underline;">24</span>  0.001<span style="text-decoration: underline;">29</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>  0.000<span style="text-decoration: underline;">723</span> 0.001<span style="text-decoration: underline;">39</span> 0.000<span style="text-decoration: underline;">623</span> 0.000<span style="text-decoration: underline;">663</span> 0.000<span style="text-decoration: underline;">791</span> 0.000<span style="text-decoration: underline;">821</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>  0.000<span style="text-decoration: underline;">465</span> 0.002<span style="text-decoration: underline;">00</span> 0.000<span style="text-decoration: underline;">404</span> 0.000<span style="text-decoration: underline;">428</span> 0.000<span style="text-decoration: underline;">510</span> 0.000<span style="text-decoration: underline;">529</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">304</span> 0.001<span style="text-decoration: underline;">87</span> 0.000<span style="text-decoration: underline;">267</span> 0.000<span style="text-decoration: underline;">281</span> 0.000<span style="text-decoration: underline;">336</span> 0.000<span style="text-decoration: underline;">347</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>  0.000<span style="text-decoration: underline;">206</span> 0.001<span style="text-decoration: underline;">53</span> 0.000<span style="text-decoration: underline;">179</span> 0.000<span style="text-decoration: underline;">189</span> 0.000<span style="text-decoration: underline;">227</span> 0.000<span style="text-decoration: underline;">238</span></span></span>
 <span></span>
 <span><span class="co"># Plot forecasted mortality rates, together with uncertainties</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mortality_forecasts</span> <span class="op">|&gt;</span></span>

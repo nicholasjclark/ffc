@@ -91,47 +91,10 @@ forecast(
 - ...:
 
   Additional arguments for Stan dynamic factor models (ARDF, VARDF,
-  GPDF):
-
-  K
-
-  :   Number of latent factors (default: 2). Must be positive.
-
-  lag
-
-  :   Number of time lags for autoregressive terms (default: 1). Must be
-      positive.
-
-  chains
-
-  :   Number of MCMC chains (default: 4)
-
-  iter
-
-  :   Total iterations per chain (default: 500)
-
-  warmup
-
-  :   Warmup iterations per chain (default: iter/2)
-
-  cores
-
-  :   Number of CPU cores to use (default: min(chains, available cores))
-
-  adapt_delta
-
-  :   Target acceptance rate (default: 0.75)
-
-  max_treedepth
-
-  :   Maximum tree depth (default: 9)
-
-  times
-
-  :   Number of posterior samples to draw for coefficient forecasting.
-      For Stan models, this is automatically set to (iter - warmup) \*
-      chains to ensure dimension consistency. Minimum 100 total
-      posterior samples required.
+  GPDF). Key arguments include: K (number of factors, default: 2), lag
+  (AR order, default: 1), chains (MCMC chains, default: 4), iter
+  (iterations, default: 500), silent (suppress progress, default: TRUE),
+  cores, adapt_delta, max_treedepth.
 
 ## Value
 
@@ -224,7 +187,6 @@ Nicholas J Clark
 ## Examples
 
 ``` r
-# \donttest{
 # Basic forecasting example with growth data
 data("growth_data")
 mod <- ffc_gam(
@@ -248,5 +210,4 @@ fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 
 # Get raw forecast matrix without summary
 fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
-# }
 ```

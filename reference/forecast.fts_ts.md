@@ -1,6 +1,12 @@
-# Forecasting functional basis coefficients
+# Forecasting functional basis coefficients (Internal)
 
-Forecasting functional basis coefficients
+**For internal use:** This function is primarily used internally by
+[`forecast.ffc_gam()`](https://nicholasjclark.github.io/ffc/reference/forecast.ffc_gam.md).
+Most users should call
+[`forecast()`](https://generics.r-lib.org/reference/forecast.html)
+directly on their `ffc_gam` object instead of using this function, which
+requires properly structured coefficient data and has specific format
+requirements.
 
 ## Usage
 
@@ -21,7 +27,8 @@ forecast(
 - object:
 
   An object of class `fts_ts` containing time-varying basis function
-  coefficients extracted from an `ffc_gam` object
+  coefficients extracted from an `ffc_gam` object using
+  [`fts_coefs()`](https://nicholasjclark.github.io/ffc/reference/fts_coefs.ffc_gam.md)
 
 - model:
 
@@ -82,7 +89,6 @@ Nicholas J Clark
 ## Examples
 
 ``` r
-# \donttest{
 # Extract coefficients and generate forecasts
 mod <- ffc_gam(
   deaths ~ offset(log(population)) + sex +
@@ -100,16 +106,15 @@ forecast(coefs, model = "ETS", h = 3)
 #> # Key:       .basis, .realisation, .model, .rep [875]
 #>    .basis          .realisation .model  year .rep   .sim
 #>    <chr>                  <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.93
-#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.89
-#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.85
-#>  4 fts_bs_s_age__1            1 ETS     2021 10    -1.92
-#>  5 fts_bs_s_age__1            1 ETS     2022 10    -1.88
-#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.83
-#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.93
-#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.88
-#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.82
-#> 10 fts_bs_s_age__1            1 ETS     2021 12    -1.93
+#>  1 fts_bs_s_age__1            1 ETS     2021 1     -1.90
+#>  2 fts_bs_s_age__1            1 ETS     2022 1     -1.85
+#>  3 fts_bs_s_age__1            1 ETS     2023 1     -1.79
+#>  4 fts_bs_s_age__1            1 ETS     2021 10    -1.91
+#>  5 fts_bs_s_age__1            1 ETS     2022 10    -1.86
+#>  6 fts_bs_s_age__1            1 ETS     2023 10    -1.81
+#>  7 fts_bs_s_age__1            1 ETS     2021 11    -1.90
+#>  8 fts_bs_s_age__1            1 ETS     2022 11    -1.84
+#>  9 fts_bs_s_age__1            1 ETS     2023 11    -1.77
+#> 10 fts_bs_s_age__1            1 ETS     2021 12    -1.91
 #> # ℹ 2,615 more rows
-# }
 ```

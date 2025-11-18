@@ -123,37 +123,10 @@ Stan factor models.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF):</p><dl><dt>K</dt>
-<dd><p>Number of latent factors (default: 2). Must be positive.</p></dd>
-
-<dt>lag</dt>
-<dd><p>Number of time lags for autoregressive terms (default: 1). Must be positive.</p></dd>
-
-<dt>chains</dt>
-<dd><p>Number of MCMC chains (default: 4)</p></dd>
-
-<dt>iter</dt>
-<dd><p>Total iterations per chain (default: 500)</p></dd>
-
-<dt>warmup</dt>
-<dd><p>Warmup iterations per chain (default: iter/2)</p></dd>
-
-<dt>cores</dt>
-<dd><p>Number of CPU cores to use (default: min(chains, available cores))</p></dd>
-
-<dt>adapt_delta</dt>
-<dd><p>Target acceptance rate (default: 0.75)</p></dd>
-
-<dt>max_treedepth</dt>
-<dd><p>Maximum tree depth (default: 9)</p></dd>
-
-<dt>times</dt>
-<dd><p>Number of posterior samples to draw for coefficient forecasting.
-For Stan models, this is automatically set to (iter - warmup) * chains
-to ensure dimension consistency. Minimum 100 total posterior samples required.</p></dd>
-
-
-</dl></dd>
+<dd><p>Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF).
+Key arguments include: K (number of factors, default: 2), lag (AR order, default: 1),
+chains (MCMC chains, default: 4), iter (iterations, default: 500),
+silent (suppress progress, default: TRUE), cores, adapt_delta, max_treedepth.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -214,8 +187,7 @@ specified freely and controls the number of posterior draws.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="co"># Basic forecasting example with growth data</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Basic forecasting example with growth data</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"growth_data"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="ffc_gam.html">ffc_gam</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">height_cm</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/s.html" class="external-link">s</a></span><span class="op">(</span><span class="va">id</span>, bs <span class="op">=</span> <span class="st">"re"</span><span class="op">)</span> <span class="op">+</span></span></span>
@@ -238,7 +210,6 @@ specified freely and controls the number of posterior draws.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get raw forecast matrix without summary</span></span></span>
 <span class="r-in"><span><span class="va">fc_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
