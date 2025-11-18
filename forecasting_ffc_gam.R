@@ -1,5 +1,7 @@
 # Forecasting from a ffc_gam object
-library(ffc)
+devtools::document()
+devtools::load_all()
+
 library(fable)
 library(ggplot2); theme_set(theme_classic())
 
@@ -29,8 +31,8 @@ binary = function(x) {
 }
 
 # Simulation setup
-# transform <- posreal; gam_fam <- tw()
- transform <- count; gam_fam <- nb()
+ transform <- posreal; gam_fam <- tw()
+# transform <- count; gam_fam <- nb()
 # transform <- proportional; gam_fam <- betar()
 # transform <- binary; gam_fam <- binomial()
 
@@ -133,7 +135,8 @@ fcar <- forecast(
   model = 'ARDF',
   K = 2,
   lag = 4, # AR order
-  summary = FALSE
+  summary = FALSE,
+  silent = TRUE
 )
 newdata[['value']] <- fcar
 fc_ffcar <- fabletools:::build_fable(
