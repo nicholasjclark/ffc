@@ -18,7 +18,8 @@ Oscillation (ENSO) events. Traditional time series methods often
 struggle to capture both the cyclic seasonal structure and the
 inter-annual variability that characterizes these ocean-atmosphere
 interactions. This vignette demonstrates how functional forecasting with
-the `ffc` package addresses these challenges through:
+the [`ffc`](https://github.com/njtierney/ffc) package addresses these
+challenges through:
 
 1.  Cyclic cubic splines that naturally handle periodic seasonal
     patterns  
@@ -37,8 +38,10 @@ time series of functional coefficients
 ### Our approach: functional coefficients meet dynamic factors
 
 The `ffc` package treats seasonal patterns as smooth functions whose
-shapes evolve over time. By combining GAM-based functional regression
-with Stan-powered dynamic factor models, we can:  
+shapes evolve over time. By combining
+[`mgcv`](https://cran.r-project.org/package=mgcv) GAM-based functional
+regression with [`Stan`](https://mc-stan.org/)-powered dynamic factor
+models, we can:  
 - Preserve seasonal continuity while allowing flexible evolution  
 - Capture shared trends across multiple coefficient series  
 - Generate probabilistic forecasts with proper uncertainty
@@ -141,8 +144,12 @@ We’ll use data through 2014 for training and reserve 2015-2018 for
 validation—a period that includes the major 2015-2016 El Niño:
 
 ``` r
-train_data <- elnino_sst |> filter(year <= 2014)
-test_data <- elnino_sst |> filter(year > 2014)
+train_data <- elnino_sst |> 
+  filter(year <= 2014) |>
+  arrange(year, month)
+test_data <- elnino_sst |> 
+  filter(year > 2014) |>
+  arrange(year, month)
 ```
 
 ### The functional model specification
@@ -238,9 +245,9 @@ for seasonal forecasting.
 
 We can use
 [`plot_predictions()`](https://marginaleffects.com/man/r/plot_predictions.html)
-from `marginaleffects` for quick and effortless effect plots on the
-outcome scale. For example, the below plot shows how our model’s fitted
-seasonal shapes vary over time:
+from [`marginaleffects`](https://marginaleffects.com/) for quick and
+effortless effect plots on the outcome scale. For example, the below
+plot shows how our model’s fitted seasonal shapes vary over time:
 
 ``` r
 plot_predictions(mod_elnino, condition = c("month", "year")) +
@@ -541,6 +548,64 @@ bands.](elnino-forecasting_files/figure-html/spectral-validation-1.png)
 Spectral density comparison with uncertainties. The forecast preserves
 the key frequency components with quantified uncertainty bands.
 
+## Integration with fable ecosystem
+
+The `ffc` package provides seamless integration with the
+[`fable`](https://fable.tidyverts.org/) ecosystem through the
+[`as_fable()`](https://fabletools.tidyverts.org/reference/as-fable.html)
+function. This allows ffc forecasts to be converted to fable objects,
+enabling use of fable’s accuracy metrics and visualization tools:
+
+``` r
+# Convert ffc forecasts to fable format
+fable_forecasts <- as_fable(
+  mod_elnino,
+  newdata = test_data,
+  model = "ENS",
+  mean_model = "ETS",
+  type = "response",
+  chains = 1
+)
+
+# Evaluate forecast accuracy using fable metrics
+accuracy(fable_forecasts, test_data)
+#> # A tibble: 12 × 11
+#>    .model  month .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE      ACF1
+#>    <chr>   <int> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>     <dbl>
+#>  1 FFC_ENS     1 Test  0.360 1.04  0.963 1.30   3.82   NaN   NaN -0.237   
+#>  2 FFC_ENS     2 Test  0.122 0.947 0.845 0.339  3.17   NaN   NaN -0.302   
+#>  3 FFC_ENS     3 Test  0.449 1.07  0.904 1.52   3.28   NaN   NaN -0.327   
+#>  4 FFC_ENS     4 Test  0.262 0.980 0.880 0.881  3.40   NaN   NaN -0.316   
+#>  5 FFC_ENS     5 Test  0.467 1.19  0.884 1.69   3.44   NaN   NaN -0.152   
+#>  6 FFC_ENS     6 Test  0.207 1.21  0.902 0.638  3.73   NaN   NaN  0.0180  
+#>  7 FFC_ENS     7 Test  0.557 1.44  0.880 2.19   3.69   NaN   NaN  0.000356
+#>  8 FFC_ENS     8 Test  0.369 1.03  0.716 1.53   3.24   NaN   NaN  0.0931  
+#>  9 FFC_ENS     9 Test  0.523 1.31  0.920 2.18   4.20   NaN   NaN  0.111   
+#> 10 FFC_ENS    10 Test  0.643 1.39  1.14  2.66   5.20   NaN   NaN  0.00159 
+#> 11 FFC_ENS    11 Test  0.699 1.44  1.17  2.87   5.18   NaN   NaN -0.0954  
+#> 12 FFC_ENS    12 Test  0.709 1.51  1.39  2.73   5.89   NaN   NaN -0.135
+
+# Create publication-ready plots using fable's autoplot
+fable_forecasts |>
+  autoplot(data = train_data, show_gap = FALSE, fill = "darkred") +
+  labs(
+    x = "Year",
+    y = "Temperature (C)",
+    title = "Forecasts broken down by month"
+  )
+```
+
+![El Niño SST forecasts using ensemble model with fable integration. Red
+ribbons show prediction intervals, black lines show observed
+values.](elnino-forecasting_files/figure-html/fable-integration-1.png)
+
+El Niño SST forecasts using ensemble model with fable integration. Red
+ribbons show prediction intervals, black lines show observed values.
+
+This integration provides access to `fable`’s comprehensive suite of
+forecast evaluation tools while maintaining the flexibility and power of
+functional forecasting methods.
+
 ## Key insights and best practices
 
 ### When to use cyclic splines
@@ -582,11 +647,16 @@ The `ffc` package integrates these methods in a unified framework,
 enabling: - Flexible specification of functional relationships  
 - State-of-the-art time series forecasting of coefficients  
 - Proper uncertainty quantification throughout  
-- Seamless integration with `tidyverse` and `fable` ecosystems
+- Seamless integration with [`tidyverse`](https://www.tidyverse.org/)
+and `fable` ecosystems
 
 ### Further reading
 
-- Hyndman & Athanasopoulos (2021): Forecasting: Principles and Practice
-- Wood (2017): Generalized Additive Models: An Introduction with R
-- Ramsay & Silverman (2005): Functional Data Analysis
-- NOAA Climate Prediction Center: ENSO diagnostics and forecasting
+- Hyndman & Athanasopoulos (2021): [Forecasting: Principles and
+  Practice](https://otexts.com/fpp3/)
+- Wood (2017): [Generalized Additive Models: An Introduction with
+  R](https://www.routledge.com/Generalized-Additive-Models-An-Introduction-with-R-Second-Edition/Wood/p/book/9781498728331)
+- Ramsay & Silverman (2005): [Functional Data
+  Analysis](https://link.springer.com/book/10.1007/b98888)
+- [NOAA Climate Prediction Center: ENSO diagnostics and
+  forecasting](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ensoyears.shtml)

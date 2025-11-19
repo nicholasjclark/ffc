@@ -84,7 +84,8 @@ Niño-Southern Oscillation (ENSO) events. Traditional time series methods
 often struggle to capture both the cyclic seasonal structure and the
 inter-annual variability that characterizes these ocean-atmosphere
 interactions. This vignette demonstrates how functional forecasting with
-the <code>ffc</code> package addresses these challenges through:</p>
+the <a href="https://github.com/njtierney/ffc" class="external-link"><code>ffc</code></a>
+package addresses these challenges through:</p>
 <ol style="list-style-type: decimal">
 <li>Cyclic cubic splines that naturally handle periodic seasonal
 patterns<br>
@@ -107,9 +108,9 @@ time series of functional coefficients</p>
 <h3 id="our-approach-functional-coefficients-meet-dynamic-factors">Our approach: functional coefficients meet dynamic factors<a class="anchor" aria-label="anchor" href="#our-approach-functional-coefficients-meet-dynamic-factors"></a>
 </h3>
 <p>The <code>ffc</code> package treats seasonal patterns as smooth
-functions whose shapes evolve over time. By combining GAM-based
-functional regression with Stan-powered dynamic factor models, we
-can:<br>
+functions whose shapes evolve over time. By combining <a href="https://cran.r-project.org/package=mgcv" class="external-link"><code>mgcv</code></a>
+GAM-based functional regression with <a href="https://mc-stan.org/" class="external-link"><code>Stan</code></a>-powered dynamic factor
+models, we can:<br>
 - Preserve seasonal continuity while allowing flexible evolution<br>
 - Capture shared trends across multiple coefficient series<br>
 - Generate probabilistic forecasts with proper uncertainty
@@ -213,8 +214,12 @@ and 2015-2016 El Niño events stand out as extreme warm phases.
 <p>We’ll use data through 2014 for training and reserve 2015-2018 for
 validation—a period that includes the major 2015-2016 El Niño:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">train_data</span> <span class="op">&lt;-</span> <span class="va">elnino_sst</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">year</span> <span class="op">&lt;=</span> <span class="fl">2014</span><span class="op">)</span></span>
-<span><span class="va">test_data</span> <span class="op">&lt;-</span> <span class="va">elnino_sst</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">year</span> <span class="op">&gt;</span> <span class="fl">2014</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">train_data</span> <span class="op">&lt;-</span> <span class="va">elnino_sst</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">year</span> <span class="op">&lt;=</span> <span class="fl">2014</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">month</span><span class="op">)</span></span>
+<span><span class="va">test_data</span> <span class="op">&lt;-</span> <span class="va">elnino_sst</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">year</span> <span class="op">&gt;</span> <span class="fl">2014</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">month</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="the-functional-model-specification">The functional model specification<a class="anchor" aria-label="anchor" href="#the-functional-model-specification"></a>
@@ -307,10 +312,10 @@ critical for seasonal forecasting.</p>
 <div class="section level3">
 <h3 id="visualizing-fitted-seasonal-cycles">Visualizing fitted seasonal cycles<a class="anchor" aria-label="anchor" href="#visualizing-fitted-seasonal-cycles"></a>
 </h3>
-<p>We can use <code><a href="https://marginaleffects.com/man/r/plot_predictions.html" class="external-link">plot_predictions()</a></code> from
-<code>marginaleffects</code> for quick and effortless effect plots on
-the outcome scale. For example, the below plot shows how our model’s
-fitted seasonal shapes vary over time:</p>
+<p>We can use <code><a href="https://marginaleffects.com/man/r/plot_predictions.html" class="external-link">plot_predictions()</a></code> from <a href="https://marginaleffects.com/" class="external-link"><code>marginaleffects</code></a> for
+quick and effortless effect plots on the outcome scale. For example, the
+below plot shows how our model’s fitted seasonal shapes vary over
+time:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://marginaleffects.com/man/r/plot_predictions.html" class="external-link">plot_predictions</a></span><span class="op">(</span><span class="va">mod_elnino</span>, condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"month"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
@@ -605,6 +610,61 @@ the key frequency components with quantified uncertainty bands.
 </div>
 </div>
 <div class="section level2">
+<h2 id="integration-with-fable-ecosystem">Integration with fable ecosystem<a class="anchor" aria-label="anchor" href="#integration-with-fable-ecosystem"></a>
+</h2>
+<p>The <code>ffc</code> package provides seamless integration with the
+<a href="https://fable.tidyverts.org/" class="external-link"><code>fable</code></a> ecosystem
+through the <code><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable()</a></code> function. This allows ffc forecasts
+to be converted to fable objects, enabling use of fable’s accuracy
+metrics and visualization tools:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Convert ffc forecasts to fable format</span></span>
+<span><span class="va">fable_forecasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://fabletools.tidyverts.org/reference/as-fable.html" class="external-link">as_fable</a></span><span class="op">(</span></span>
+<span>  <span class="va">mod_elnino</span>,</span>
+<span>  newdata <span class="op">=</span> <span class="va">test_data</span>,</span>
+<span>  model <span class="op">=</span> <span class="st">"ENS"</span>,</span>
+<span>  mean_model <span class="op">=</span> <span class="st">"ETS"</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"response"</span>,</span>
+<span>  chains <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Evaluate forecast accuracy using fable metrics</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/accuracy.html" class="external-link">accuracy</a></span><span class="op">(</span><span class="va">fable_forecasts</span>, <span class="va">test_data</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 12 × 11</span></span></span>
+<span><span class="co">#&gt;    .model  month .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE      ACF1</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> FFC_ENS     1 Test  0.360 1.04  0.963 1.30   3.82   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span> -<span style="color: #BB0000;">0.237</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> FFC_ENS     2 Test  0.122 0.947 0.845 0.339  3.17   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span> -<span style="color: #BB0000;">0.302</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> FFC_ENS     3 Test  0.449 1.07  0.904 1.52   3.28   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span> -<span style="color: #BB0000;">0.327</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> FFC_ENS     4 Test  0.262 0.980 0.880 0.881  3.40   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span> -<span style="color: #BB0000;">0.316</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> FFC_ENS     5 Test  0.467 1.19  0.884 1.69   3.44   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span> -<span style="color: #BB0000;">0.152</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> FFC_ENS     6 Test  0.207 1.21  0.902 0.638  3.73   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span>  0.018<span style="text-decoration: underline;">0</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> FFC_ENS     7 Test  0.557 1.44  0.880 2.19   3.69   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span>  0.000<span style="text-decoration: underline;">356</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> FFC_ENS     8 Test  0.369 1.03  0.716 1.53   3.24   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span>  0.093<span style="text-decoration: underline;">1</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> FFC_ENS     9 Test  0.523 1.31  0.920 2.18   4.20   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span>  0.111   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> FFC_ENS    10 Test  0.643 1.39  1.14  2.66   5.20   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span>  0.001<span style="text-decoration: underline;">59</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> FFC_ENS    11 Test  0.699 1.44  1.17  2.87   5.18   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span> -<span style="color: #BB0000;">0.095</span><span style="color: #BB0000; text-decoration: underline;">4</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> FFC_ENS    12 Test  0.709 1.51  1.39  2.73   5.89   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span> -<span style="color: #BB0000;">0.135</span></span></span>
+<span></span>
+<span><span class="co"># Create publication-ready plots using fable's autoplot</span></span>
+<span><span class="va">fable_forecasts</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">train_data</span>, show_gap <span class="op">=</span> <span class="cn">FALSE</span>, fill <span class="op">=</span> <span class="st">"darkred"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    x <span class="op">=</span> <span class="st">"Year"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"Temperature (C)"</span>,</span>
+<span>    title <span class="op">=</span> <span class="st">"Forecasts broken down by month"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="elnino-forecasting_files/figure-html/fable-integration-1.png" class="r-plt" alt="El Niño SST forecasts using ensemble model with fable integration. Red ribbons show prediction intervals, black lines show observed values." width="672"><p class="caption">
+El Niño SST forecasts using ensemble model with fable integration. Red
+ribbons show prediction intervals, black lines show observed values.
+</p>
+</div>
+<p>This integration provides access to <code>fable</code>’s
+comprehensive suite of forecast evaluation tools while maintaining the
+flexibility and power of functional forecasting methods.</p>
+</div>
+<div class="section level2">
 <h2 id="key-insights-and-best-practices">Key insights and best practices<a class="anchor" aria-label="anchor" href="#key-insights-and-best-practices"></a>
 </h2>
 <div class="section level3">
@@ -652,19 +712,23 @@ framework, enabling: - Flexible specification of functional
 relationships<br>
 - State-of-the-art time series forecasting of coefficients<br>
 - Proper uncertainty quantification throughout<br>
-- Seamless integration with <code>tidyverse</code> and
+- Seamless integration with <a href="https://www.tidyverse.org/" class="external-link"><code>tidyverse</code></a> and
 <code>fable</code> ecosystems</p>
 <div class="section level3">
 <h3 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h3>
 <ul>
-<li>Hyndman &amp; Athanasopoulos (2021): Forecasting: Principles and
-Practice</li>
-<li>Wood (2017): Generalized Additive Models: An Introduction with
-R</li>
-<li>Ramsay &amp; Silverman (2005): Functional Data Analysis</li>
-<li>NOAA Climate Prediction Center: ENSO diagnostics and
-forecasting</li>
+<li>Hyndman &amp; Athanasopoulos (2021): <a href="https://otexts.com/fpp3/" class="external-link">Forecasting: Principles and
+Practice</a>
+</li>
+<li>Wood (2017): <a href="https://www.routledge.com/Generalized-Additive-Models-An-Introduction-with-R-Second-Edition/Wood/p/book/9781498728331" class="external-link">Generalized
+Additive Models: An Introduction with R</a>
+</li>
+<li>Ramsay &amp; Silverman (2005): <a href="https://link.springer.com/book/10.1007/b98888" class="external-link">Functional Data
+Analysis</a>
+</li>
+<li><a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ensoyears.shtml" class="external-link">NOAA
+Climate Prediction Center: ENSO diagnostics and forecasting</a></li>
 </ul>
 </div>
 </div>
