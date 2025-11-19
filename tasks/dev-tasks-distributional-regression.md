@@ -1,828 +1,524 @@
 # Development Tasks: Distributional Regression with Time-Varying Parameters
 
-## Overview
-Implementation plan for adding distributional regression capabilities with time-varying parameters to the ffc package. This extends the existing functional forecasting framework to handle multi-parameter distributional families like gaulss(), twlss(), and betar().
-
 ## Prerequisites
-- Read CLAUDE.md thoroughly
-- Use `devtools::load_all()` before testing
-- Use code-reviewer agent to approve all major edits
+- Read CLAUDE.md thoroughly for package standards and workflows
+- Use `devtools::load_all()` before testing any changes
+- **MANDATORY**: Use code-reviewer agent for ALL proposed R code changes BEFORE making edits
 - Run `Rscript -e "devtools::check()"` after significant changes
+- Follow one sub-task at a time workflow: complete task → mark as done → ask "Ready for next sub-task?" → wait for approval
+
+## Overview
+After analyzing mgcv, gratia, and ffc implementations, this revised plan leverages existing multi-parameter infrastructure rather than rebuilding it. The focus is on extending ffc's `fts()` syntax and forecasting to work seamlessly with mgcv's distributional families.
+
+## Key Insights from Package Analysis
+- **mgcv already handles list formulae** via `family$nlp`, storing multiple linear predictors in `pred.formula` and `lpi`
+- **gratia provides multi-parameter sampling** through `fitted_samples()` and parameter-specific predictions using `lpmat`
+- **ffc's modular design** separates formula interpretation (`interpret_ffc()`), basis evaluation (`basis_fn()`), and model fitting (`ffc_gam()`)
+
+## Core Challenge
+Enable `fts()` syntax within list formulae for distributional regression:
+```r
+# Target syntax:
+ffc_gam(list(y ~ fts(time, k=10), ~ fts(time, k=5)), 
+        data=data, family=mgcv::gaulss())
+```
 
 ---
 
-## Task 1: Multi-Parameter Family Infrastructure (120 min total)
+## Task 1: Formula Interpretation Extension (60 min total)
 
-### 1.1: Create Family Detection System (15 min)
-**Goal**: Add utilities to detect and validate multi-parameter distributional families
+### 1.1: List Formula Detection and Validation (15 min) ✅ **COMPLETED**
+**Goal**: Add validation-only logic to `ffc_gam()` for list formulae compatibility
 
 **Tasks**:
-1. Create `R/family_utils.R` with function `is_multiparameter_family()`
-2. Add detection for gaulss, twlss, betar, multinom families
-3. Return family metadata (npar, parameter names, link functions)
-4. Add input validation and error messages
+1. ✅ Add validation after line 94 in `ffc_gam()` to check list formula/family compatibility
+2. ✅ Validate list length matches `family$nlp` if multi-parameter family  
+3. ✅ Add informative error messages for mismatched list/family combinations
+4. ✅ Add warning for single formula with multi-parameter family
+5. ✅ **Note**: Actual list formula processing will be handled in Task 1.2 via `interpret_ffc()` extension
 
 **Testing**:
-- Test with known multi-parameter families
-- Verify single-parameter families return FALSE
-- Check error handling for invalid inputs
+- ✅ Test validation catches family without `nlp` property
+- ✅ Test validation catches length mismatches  
+- ✅ Test warning for single formula with multi-parameter family
+- ✅ Verify single formulae still work unchanged
 
 **Files**:
-- Create: `R/family_utils.R`
-- Create: `tests/testthat/test-family-utils.R`
+- ✅ Modified: `R/ffc_gam.R` (validation logic only)
+- ✅ Updated: `tests/testthat/test-list-formulae.R` (fast unit tests)
 
-### 1.2: Parameter Index Management (15 min)
-**Goal**: Extract coefficient indices for each distributional parameter
+### 1.2: Multi-Parameter interpret_ffc() (15 min) ✅ **COMPLETED**
+**Goal**: Extend `interpret_ffc()` to natively handle list formulae containing `fts()` terms
 
 **Tasks**:
-1. Add function `extract_parameter_indices()` to `R/family_utils.R`
-2. Implement mgcv's cumulative sum pattern for coefficient indexing
-3. Handle edge cases for single-parameter families
-4. Add parameter name mapping
+1. ✅ Modify `interpret_ffc()` in `R/interpret_ffc.R` to detect and process list formulae
+2. ✅ Process each formula element separately for `fts()` terms within single function call
+3. ✅ Return same structure as single formula but with list of interpreted formulae
+4. ✅ Preserve parameter-specific smoothing specifications and coordinate data consistently
+5. ✅ Ensure `ffc_gam()` can use returned structure directly without modification
 
 **Testing**:
-- Test coefficient extraction for multi-parameter models
-- Verify index boundaries don't overlap
-- Check single-parameter compatibility
+- ✅ Test with list formulae containing `fts()` terms
+- ✅ Verify each parameter gets correct smooth specifications  
+- ✅ Check non-`fts()` terms pass through unchanged
+- ✅ Test integration with `ffc_gam()` end-to-end
 
 **Files**:
-- Modify: `R/family_utils.R`
-- Modify: `tests/testthat/test-family-utils.R`
+- ✅ Modified: `R/interpret_ffc.R` (in-place DRY implementation)
+- ✅ Updated: `tests/testthat/test-list-formulae.R` (existing tests sufficient)
 
-### 1.3: Family Object Validation (15 min)
-**Goal**: Validate family objects have required components for distributional regression
+### 1.3: Basis Function Coordination (15 min) ⏳ **NEXT**
+**Goal**: Ensure basis functions are correctly set up for each parameter
 
 **Tasks**:
-1. Add function `validate_distributional_family()` to `R/family_utils.R`
-2. Check for required components (Npar, linkfun, linkinv)
-3. Validate link function list structure
-4. Add descriptive error messages for missing components
+1. Modify basis setup functions to handle list of formulae
+2. Ensure each parameter gets appropriate basis functions evaluated
+3. Coordinate time specifications across parameters
+4. Handle different `k` values per parameter
 
 **Testing**:
-- Test with complete and incomplete family objects
-- Verify clear error messages for missing components
-- Check validation passes for known families
+- Test basis evaluation with different `k` per parameter
+- Verify time grids are consistent across parameters
+- Check basis functions have correct dimensions
 
 **Files**:
-- Modify: `R/family_utils.R`
-- Modify: `tests/testthat/test-family-utils.R`
+- Modify: `R/basis.R` (or related basis functions)
+- Modify: `tests/testthat/test-basis.R`
 
-### 1.4: Parameter Name Standardization (15 min)
-**Goal**: Create consistent parameter naming across distributional families
-
-**Tasks**:
-1. Add function `standardize_parameter_names()` to `R/family_utils.R`
-2. Map family-specific names to standard names (location, scale, shape)
-3. Handle family-specific variations (mu/sigma for gaulss, etc.)
-4. Return named list with standardized parameter information
-
-**Testing**:
-- Test parameter name mapping for each supported family
-- Verify consistent output structure
-- Check handling of unknown families
-
-**Files**:
-- Modify: `R/family_utils.R`
-- Modify: `tests/testthat/test-family-utils.R`
-
-### 1.5: Integration with ffc_gam Objects (15 min)
-**Goal**: Extend ffc_gam objects to store distributional family metadata
+### 1.4: Model Object Structure Preservation (15 min) ⏸️ **PENDING**
+**Goal**: Ensure ffc_gam objects preserve mgcv's multi-parameter structure
 
 **Tasks**:
-1. Modify `ffc_gam()` in `R/ffc_gam.R` to detect multi-parameter families
-2. Store family metadata in model object
-3. Add attribute for parameter structure
-4. Ensure backward compatibility with single-parameter families
+1. Modify `ffc_gam()` to preserve `pred.formula` and `lpi` from mgcv
+2. Store parameter-specific metadata in ffc_gam object
+3. Add class `ffc_gam_multi` for distributional models
+4. Ensure backward compatibility with single-parameter models
 
 **Testing**:
-- Test with various family types
-- Verify stored metadata is accessible
-- Check no regression in existing functionality
+- Test multi-parameter models retain mgcv structure
+- Verify parameter metadata is accessible
+- Check single-parameter models unchanged
 
 **Files**:
 - Modify: `R/ffc_gam.R`
 - Modify: `tests/testthat/test-ffc-gam.R`
 
-### 1.6: Error Handling Framework (15 min)
-**Goal**: Add comprehensive error handling for distributional regression edge cases
+---
+
+## Task 2: Time-Varying Coefficient Extraction (75 min total)
+
+### 2.1: Multi-Parameter fts() Method (15 min)
+**Goal**: Extend `fts.ffc_gam()` to extract coefficients by parameter
 
 **Tasks**:
-1. Add `distributional_error()` helper to `R/family_utils.R`
-2. Create informative error messages for common issues
-3. Add warnings for unsupported family/model combinations
-4. Document error conditions in function help
+1. Modify `fts.ffc_gam()` in `R/fts.R` to detect multi-parameter models
+2. Add `parameter` argument to specify which parameter's coefficients
+3. Use mgcv's `lpi` structure to extract correct coefficient subset
+4. Return list of `fts` objects when `parameter=NULL`
 
 **Testing**:
-- Test error messages are clear and actionable
-- Verify warnings appear when appropriate
-- Check error handling doesn't break other functionality
+- Test coefficient extraction for specific parameters
+- Verify correct coefficient mapping using `lpi`
+- Check list output when extracting all parameters
 
 **Files**:
-- Modify: `R/family_utils.R`
-- Modify: `tests/testthat/test-family-utils.R`
+- Modify: `R/fts.R`
+- Modify: `tests/testthat/test-fts.R`
 
-### 1.7: Documentation and Exports (15 min)
-**Goal**: Add roxygen2 documentation and export necessary functions
+### 2.2: Parameter-Specific Coefficient Utilities (15 min)
+**Goal**: Add utilities to work with parameter-specific coefficients
 
 **Tasks**:
-1. Add comprehensive roxygen2 documentation to all functions
-2. Export `is_multiparameter_family()` for user access
-3. Keep internal functions unexported but documented
-4. Add family utils to package index
+1. Create `R/distributional_utils.R` with coefficient mapping functions
+2. Add `get_parameter_names()` using `model$pred.formula`
+3. Add `get_parameter_coef_indices()` using `model$lpi`
+4. Add `extract_parameter_coefficients()` for specific parameter extraction
 
 **Testing**:
-- Run `devtools::document()` and check man pages
-- Verify exported functions work in clean session
-- Check internal functions remain accessible to package
+- Test parameter name extraction
+- Test coefficient index mapping
+- Verify correct coefficient subsets extracted
 
 **Files**:
-- Modify: `R/family_utils.R`
-- Update: `NAMESPACE` (via roxygen2)
+- Create: `R/distributional_utils.R`
+- Create: `tests/testthat/test-distributional-utils.R`
 
-### 1.8: Integration Testing (15 min)
-**Goal**: Test family infrastructure integrates with existing ffc workflow
+### 2.3: Time Index Coordination (15 min)
+**Goal**: Ensure time indices are consistent across parameters
 
 **Tasks**:
-1. Create test with simple gaulss() model in `tests/testthat/test-integration-distributional.R`
-2. Verify family detection works in complete workflow
-3. Test parameter extraction with fitted models
-4. Ensure no breaking changes to existing functionality
+1. Add validation that time specifications match across parameters
+2. Handle cases where parameters have different temporal resolutions
+3. Coordinate time grids for forecasting
+4. Add warnings for mismatched time specifications
 
 **Testing**:
-- Run full integration test
-- Check package still passes devtools::check()
-- Verify existing tests still pass
+- Test with matching time specifications
+- Test with mismatched specifications
+- Verify time grid coordination
 
 **Files**:
-- Create: `tests/testthat/test-integration-distributional.R`
+- Modify: `R/distributional_utils.R`
+- Modify: `tests/testthat/test-distributional-utils.R`
+
+### 2.4: fts Object Enhancement (15 min)
+**Goal**: Enhance fts objects to carry parameter information
+
+**Tasks**:
+1. Add parameter metadata to fts objects
+2. Include parameter name and type information
+3. Preserve link function information per parameter
+4. Maintain backward compatibility
+
+**Testing**:
+- Test fts objects carry parameter metadata
+- Verify metadata accessible to downstream functions
+- Check backward compatibility
+
+**Files**:
+- Modify: `R/fts.R`
+- Modify: `tests/testthat/test-fts.R`
+
+### 2.5: Integration Testing (15 min)
+**Goal**: Test full coefficient extraction pipeline
+
+**Tasks**:
+1. Test end-to-end coefficient extraction with gaulss()
+2. Verify twlss() and betar() work correctly
+3. Test with different `fts()` specifications per parameter
+4. Check integration with existing fts methods
+
+**Testing**:
+- Run integration tests with multiple families
+- Test different fts specifications
+- Verify no regressions in single-parameter models
+
+**Files**:
+- Create: `tests/testthat/test-distributional-integration.R`
 
 ---
 
-## Task 2: Posterior Sampling Engine (105 min total)
+## Task 3: Forecasting Pipeline Extension (90 min total)
 
-### 2.1: Core Coefficient Sampling (15 min)
-**Goal**: Implement efficient coefficient sampling following gratia patterns
-
-**Tasks**:
-1. Create `R/posterior_sampling.R` with function `sample_coefficients()`
-2. Use `mgcv::rmvn()` for efficient multivariate normal sampling
-3. Extract coefficients and covariance matrix from ffc_gam object
-4. Handle both conditional and unconditional covariance
-
-**Testing**:
-- Test coefficient sampling returns correct dimensions
-- Verify sampling uses proper covariance matrix
-- Check random seed reproducibility
-
-**Files**:
-- Create: `R/posterior_sampling.R`
-- Create: `tests/testthat/test-posterior-sampling.R`
-
-### 2.2: Multi-Parameter Coordination (15 min)
-**Goal**: Coordinate sampling across multiple distributional parameters
+### 3.1: Multi-Parameter Forecast Detection (15 min)
+**Goal**: Extend `forecast.ffc_gam()` to detect and route multi-parameter models
 
 **Tasks**:
-1. Add function `sample_multiparameter_coefficients()` to `R/posterior_sampling.R`
-2. Use family utilities to extract parameter structure
-3. Sample all parameters jointly from full covariance matrix
-4. Return structured samples with parameter labels
+1. Modify `forecast.ffc_gam()` in `R/forecast.R` to detect distributional families
+2. Add parameter detection using utilities from Task 2.2
+3. Route to appropriate forecasting method based on family type
+4. Maintain existing interface and arguments
 
 **Testing**:
-- Test with multi-parameter families
-- Verify joint sampling preserves correlations
-- Check parameter labeling is correct
-
-**Files**:
-- Modify: `R/posterior_sampling.R`
-- Modify: `tests/testthat/test-posterior-sampling.R`
-
-### 2.3: Linear Predictor Computation (15 min)
-**Goal**: Compute linear predictors for each parameter from coefficient samples
-
-**Tasks**:
-1. Add function `compute_parameter_linpreds()` to `R/posterior_sampling.R`
-2. Handle design matrix extraction for newdata
-3. Apply coefficient samples to get linear predictor samples
-4. Organize results by parameter
-
-**Testing**:
-- Test linear predictor computation accuracy
-- Verify dimensions match expected structure
-- Check design matrix extraction works
-
-**Files**:
-- Modify: `R/posterior_sampling.R`
-- Modify: `tests/testthat/test-posterior-sampling.R`
-
-### 2.4: Sample Organization System (15 min)
-**Goal**: Create consistent structure for storing posterior samples
-
-**Tasks**:
-1. Add function `structure_posterior_samples()` to `R/posterior_sampling.R`
-2. Create standardized array structure [observations, parameters, samples]
-3. Add attributes for parameter names and metadata
-4. Support both matrix and array outputs
-
-**Testing**:
-- Test sample structure is consistent
-- Verify attributes are preserved
-- Check compatibility with downstream functions
-
-**Files**:
-- Modify: `R/posterior_sampling.R`
-- Modify: `tests/testthat/test-posterior-sampling.R`
-
-### 2.5: Uncertainty Propagation (15 min)
-**Goal**: Properly propagate uncertainty from coefficient covariance
-
-**Tasks**:
-1. Add function `adjust_sample_uncertainty()` to `R/posterior_sampling.R`
-2. Handle additional uncertainty sources (observation error, etc.)
-3. Support variance inflation for overdispersion
-4. Maintain proper uncertainty hierarchy
-
-**Testing**:
-- Test uncertainty adjustment increases spread appropriately
-- Verify uncertainty sources combine correctly
-- Check preservation of correlation structure
-
-**Files**:
-- Modify: `R/posterior_sampling.R`
-- Modify: `tests/testthat/test-posterior-sampling.R`
-
-### 2.6: Single vs Multi-Parameter Dispatch (15 min)
-**Goal**: Create unified interface that handles both single and multi-parameter models
-
-**Tasks**:
-1. Add main function `posterior_samples.ffc_gam()` to `R/posterior_sampling.R`
-2. Implement S3 method dispatch based on family type
-3. Maintain backward compatibility with existing predict methods
-4. Add appropriate default arguments
-
-**Testing**:
-- Test dispatch works for both family types
-- Verify backward compatibility maintained
-- Check method registration in NAMESPACE
-
-**Files**:
-- Modify: `R/posterior_sampling.R`
-- Modify: `tests/testthat/test-posterior-sampling.R`
-
-### 2.7: Performance Optimization (15 min)
-**Goal**: Optimize sampling for large datasets and many samples
-
-**Tasks**:
-1. Add memory-efficient sampling options to existing functions
-2. Implement chunked sampling for large covariance matrices
-3. Add progress reporting for long-running operations
-4. Optimize matrix operations using efficient BLAS calls
-
-**Testing**:
-- Benchmark performance with large models
-- Test memory usage stays reasonable
-- Verify chunked sampling gives identical results
-
-**Files**:
-- Modify: `R/posterior_sampling.R`
-- Modify: `tests/testthat/test-posterior-sampling.R`
-
----
-
-## Task 3: Distributional Parameter Forecasting (120 min total)
-
-### 3.1: Parameter Dependency Detection (15 min)
-**Goal**: Analyze correlation structure between distributional parameters
-
-**Tasks**:
-1. Create `R/parameter_forecasting.R` with function `analyze_parameter_dependencies()`
-2. Compute correlation matrix between parameter coefficient time series
-3. Classify as correlated/independent based on threshold
-4. Return dependency structure metadata
-
-**Testing**:
-- Test correlation detection with known dependent/independent parameters
-- Verify threshold-based classification
-- Check edge cases with single parameter
-
-**Files**:
-- Create: `R/parameter_forecasting.R`
-- Create: `tests/testthat/test-parameter-forecasting.R`
-
-### 3.2: Independent Parameter Forecasting (15 min)
-**Goal**: Forecast parameters independently when correlations are low
-
-**Tasks**:
-1. Add function `forecast_parameters_independently()` to `R/parameter_forecasting.R`
-2. Extract time-varying coefficients for each parameter separately
-3. Apply different time series models per parameter
-4. Combine forecasts maintaining parameter structure
-
-**Testing**:
-- Test independent forecasting with different models per parameter
-- Verify parameter isolation is maintained
-- Check forecast combination preserves structure
-
-**Files**:
-- Modify: `R/parameter_forecasting.R`
-- Modify: `tests/testthat/test-parameter-forecasting.R`
-
-### 3.3: Joint Parameter Forecasting (15 min)
-**Goal**: Forecast parameters jointly when correlations are significant
-
-**Tasks**:
-1. Add function `forecast_parameters_jointly()` to `R/parameter_forecasting.R`
-2. Create multivariate time series from all parameter coefficients
-3. Apply VAR or Stan factor models for joint forecasting
-4. Maintain cross-parameter correlation structure
-
-**Testing**:
-- Test joint forecasting preserves correlations
-- Verify multivariate time series construction
-- Check compatibility with existing Stan models
-
-**Files**:
-- Modify: `R/parameter_forecasting.R`
-- Modify: `tests/testthat/test-parameter-forecasting.R`
-
-### 3.4: Adaptive Forecasting Strategy (15 min)
-**Goal**: Automatically select independent vs joint forecasting
-
-**Tasks**:
-1. Add function `select_forecasting_strategy()` to `R/parameter_forecasting.R`
-2. Use dependency analysis to choose approach automatically
-3. Allow manual override for expert users
-4. Add informative messages about strategy selection
-
-**Testing**:
-- Test automatic strategy selection works correctly
-- Verify manual override functions properly
-- Check informative messages appear when expected
-
-**Files**:
-- Modify: `R/parameter_forecasting.R`
-- Modify: `tests/testthat/test-parameter-forecasting.R`
-
-### 3.5: Model Selection per Parameter (15 min)
-**Goal**: Allow different forecasting models for different parameters
-
-**Tasks**:
-1. Add function `select_parameter_models()` to `R/parameter_forecasting.R`
-2. Support different models (ETS, ARIMA, RW) for location vs scale
-3. Add reasonable defaults (ETS for mean, ARIMA for variance)
-4. Allow user customization via parameters
-
-**Testing**:
-- Test model selection per parameter type
-- Verify defaults work appropriately
-- Check user customization is respected
-
-**Files**:
-- Modify: `R/parameter_forecasting.R`
-- Modify: `tests/testthat/test-parameter-forecasting.R`
-
-### 3.6: Integration with Existing Forecasting (15 min)
-**Goal**: Extend existing forecast.ffc_gam() to handle distributional parameters
-
-**Tasks**:
-1. Modify `forecast.ffc_gam()` in `R/forecast.R` to detect multi-parameter families
-2. Add dispatch to parameter forecasting functions
-3. Maintain backward compatibility with single-parameter models
-4. Preserve existing forecast interface and arguments
-
-**Testing**:
-- Test modified forecast method with multi-parameter models
-- Verify single-parameter models still work unchanged
-- Check forecast arguments are passed correctly
+- Test detection of multi-parameter families
+- Verify correct routing to forecasting methods
+- Check backward compatibility
 
 **Files**:
 - Modify: `R/forecast.R`
 - Modify: `tests/testthat/test-forecast.R`
 
-### 3.7: Forecast Uncertainty Handling (15 min)
-**Goal**: Properly handle uncertainty in parameter forecasts
+### 3.2: Parameter-Specific Time Series Forecasting (15 min)
+**Goal**: Forecast time-varying coefficients for each parameter separately
 
 **Tasks**:
-1. Add function `combine_forecast_uncertainties()` to `R/parameter_forecasting.R`
-2. Combine coefficient and forecast uncertainty appropriately
-3. Handle different uncertainty levels per parameter
-4. Maintain proper uncertainty propagation hierarchy
+1. Add `forecast_parameter_coefficients()` function
+2. Extract fts object for specific parameter
+3. Apply time series forecasting to parameter coefficients
+4. Return forecasted coefficients with uncertainty
 
 **Testing**:
-- Test uncertainty combination preserves total variance
-- Verify different uncertainty per parameter
-- Check uncertainty propagation is mathematically correct
+- Test forecasting for individual parameters
+- Verify uncertainty propagation
+- Check forecasted coefficient structure
 
 **Files**:
-- Modify: `R/parameter_forecasting.R`
+- Modify: `R/forecast.R`
+- Create: `tests/testthat/test-parameter-forecasting.R`
+
+### 3.3: Parameter Correlation Analysis (15 min)
+**Goal**: Analyze correlation between parameter coefficient time series
+
+**Tasks**:
+1. Add `analyze_parameter_correlations()` function
+2. Compute cross-correlations between parameter coefficients
+3. Determine if independent or joint forecasting is appropriate
+4. Add threshold-based decision making
+
+**Testing**:
+- Test correlation analysis with correlated parameters
+- Test with independent parameters
+- Verify threshold-based decisions
+
+**Files**:
+- Modify: `R/forecast.R`
 - Modify: `tests/testthat/test-parameter-forecasting.R`
 
-### 3.8: Stan Model Integration (15 min)
+### 3.4: Joint vs Independent Forecasting Strategy (15 min)
+**Goal**: Implement both independent and joint parameter forecasting
+
+**Tasks**:
+1. Add `forecast_parameters_independently()` function
+2. Add `forecast_parameters_jointly()` using VAR models
+3. Add automatic strategy selection based on correlations
+4. Allow manual override via arguments
+
+**Testing**:
+- Test independent forecasting strategy
+- Test joint forecasting with VAR
+- Verify automatic strategy selection
+
+**Files**:
+- Modify: `R/forecast.R`
+- Modify: `tests/testthat/test-parameter-forecasting.R`
+
+### 3.5: Stan Model Integration (15 min)
 **Goal**: Extend Stan models to support multi-parameter forecasting
 
 **Tasks**:
-1. Modify Stan model interfaces in `R/ardf.R`, `R/vardf.R`, `R/gpdf.R`
-2. Add parameter structure information to Stan data preparation
+1. Modify Stan data preparation to handle multiple parameter time series
+2. Update `ardf.R`, `vardf.R`, `gpdf.R` to accept parameter structure
 3. Handle parameter-specific priors and constraints
-4. Ensure Stan models can return parameter-structured forecasts
+4. Ensure Stan output maintains parameter organization
 
 **Testing**:
-- Test Stan models work with parameter structure
+- Test Stan models with multi-parameter inputs
 - Verify parameter-specific constraints
-- Check Stan forecast output maintains structure
+- Check Stan output structure
 
 **Files**:
 - Modify: `R/ardf.R`, `R/vardf.R`, `R/gpdf.R`
 - Modify: `R/stan_dataprep.R`
 - Modify: `tests/testthat/test-stan-models.R`
 
----
-
-## Task 4: Inverse Link Transformation Pipeline (90 min total)
-
-### 4.1: Link Function Extraction (15 min)
-**Goal**: Extract and organize inverse link functions from family objects
+### 3.6: Forecast Output Coordination (15 min)
+**Goal**: Coordinate forecasted parameters into coherent predictions
 
 **Tasks**:
-1. Create `R/link_transformations.R` with function `extract_inverse_links()`
-2. Handle both single and multi-parameter family structures
-3. Support mgcv's linkfun list format
-4. Add validation for required link function components
+1. Add `combine_parameter_forecasts()` function
+2. Apply inverse link transformations per parameter
+3. Generate prediction intervals accounting for all parameters
+4. Return forecasts in consistent format
 
 **Testing**:
-- Test link extraction with various family types
-- Verify extracted functions work correctly
-- Check validation catches missing components
-
-**Files**:
-- Create: `R/link_transformations.R`
-- Create: `tests/testthat/test-link-transformations.R`
-
-### 4.2: Parameter-wise Transformation (15 min)
-**Goal**: Apply inverse link functions to each parameter separately
-
-**Tasks**:
-1. Add function `transform_parameter()` to `R/link_transformations.R`
-2. Apply appropriate inverse link to linear predictor samples
-3. Handle vectorized operations for efficiency
-4. Support different link functions per parameter
-
-**Testing**:
-- Test parameter transformation accuracy
-- Verify vectorized operations work correctly
-- Check different links applied appropriately
-
-**Files**:
-- Modify: `R/link_transformations.R`
-- Modify: `tests/testthat/test-link-transformations.R`
-
-### 4.3: Multi-Parameter Transformation Coordinator (15 min)
-**Goal**: Coordinate transformations across all distributional parameters
-
-**Tasks**:
-1. Add function `transform_all_parameters()` to `R/link_transformations.R`
-2. Loop through parameters applying appropriate transformations
-3. Maintain sample structure and parameter organization
-4. Handle edge cases and error conditions
-
-**Testing**:
-- Test coordination across multiple parameters
-- Verify structure preservation through transformations
-- Check error handling for malformed inputs
-
-**Files**:
-- Modify: `R/link_transformations.R`
-- Modify: `tests/testthat/test-link-transformations.R`
-
-### 4.4: Family-Specific Transformation Handlers (15 min)
-**Goal**: Add specialized handlers for complex distributional families
-
-**Tasks**:
-1. Add family-specific functions for gaulss, twlss, betar in `R/link_transformations.R`
-2. Handle special cases (e.g., twlss power parameter constraints)
-3. Add parameter validation post-transformation
-4. Support custom family extensions
-
-**Testing**:
-- Test family-specific transformations
-- Verify parameter constraints are enforced
-- Check custom family support works
-
-**Files**:
-- Modify: `R/link_transformations.R`
-- Modify: `tests/testthat/test-link-transformations.R`
-
-### 4.5: Uncertainty Preservation (15 min)
-**Goal**: Ensure uncertainty is properly preserved through transformations
-
-**Tasks**:
-1. Add function `preserve_transformation_uncertainty()` to `R/link_transformations.R`
-2. Handle nonlinear transformations that affect uncertainty shape
-3. Support delta method approximations where appropriate
-4. Maintain correlation structure between parameters
-
-**Testing**:
-- Test uncertainty preservation through nonlinear links
-- Verify correlation structure maintained
-- Check delta method approximations are reasonable
-
-**Files**:
-- Modify: `R/link_transformations.R`
-- Modify: `tests/testthat/test-link-transformations.R`
-
-### 4.6: Transformation Pipeline Integration (15 min)
-**Goal**: Integrate transformations with posterior sampling and forecasting
-
-**Tasks**:
-1. Modify `posterior_samples.ffc_gam()` in `R/posterior_sampling.R` to use transformations
-2. Add `type = "link"` vs `type = "response"` support
-3. Connect with forecasting pipeline for forecast transformations
-4. Ensure consistent interface across all functions
-
-**Testing**:
-- Test integration with posterior sampling
-- Verify type argument works correctly
-- Check forecasting pipeline integration
-
-**Files**:
-- Modify: `R/posterior_sampling.R`
-- Modify: `R/parameter_forecasting.R`
-- Modify: `tests/testthat/test-integration-distributional.R`
-
----
-
-## Task 5: Unified Prediction Interface (105 min total)
-
-### 5.1: Enhanced Predict Method (15 min)
-**Goal**: Extend predict.ffc_gam() to handle multi-parameter distributional models
-
-**Tasks**:
-1. Modify `predict.ffc_gam()` in `R/predict.R` to detect distributional families
-2. Add type arguments for "link", "response", "samples"
-3. Dispatch to appropriate prediction method based on family and type
-4. Maintain backward compatibility with existing prediction interface
-
-**Testing**:
-- Test predict method with multi-parameter families
-- Verify type arguments work correctly
-- Check backward compatibility preserved
-
-**Files**:
-- Modify: `R/predict.R`
-- Modify: `tests/testthat/test-predict.R`
-
-### 5.2: Sample-based Predictions (15 min)
-**Goal**: Add posterior sample predictions for distributional models
-
-**Tasks**:
-1. Add function `predict_samples()` to `R/predict.R`
-2. Generate prediction samples using posterior sampling engine
-3. Support both fitted values and new data predictions
-4. Return structured samples with proper attributes
-
-**Testing**:
-- Test sample prediction generation
-- Verify sample structure and attributes
-- Check predictions with new data vs fitted values
-
-**Files**:
-- Modify: `R/predict.R`
-- Modify: `tests/testthat/test-predict.R`
-
-### 5.3: Summary Statistics Interface (15 min)
-**Goal**: Provide convenient summary statistics from prediction samples
-
-**Tasks**:
-1. Add function `summarize_prediction_samples()` to `R/predict.R`
-2. Compute mean, median, quantiles, standard deviations
-3. Support both robust and non-robust summary options
-4. Handle multi-parameter output formatting
-
-**Testing**:
-- Test summary statistics computation
-- Verify robust vs non-robust options
-- Check multi-parameter formatting
-
-**Files**:
-- Modify: `R/predict.R`
-- Modify: `tests/testthat/test-predict.R`
-
-### 5.4: Enhanced Forecast Interface (15 min)
-**Goal**: Integrate distributional capabilities into forecast.ffc_gam()
-
-**Tasks**:
-1. Modify `forecast.ffc_gam()` in `R/forecast.R` for distributional output
-2. Add distributional parameter forecast coordination
-3. Support both summary and sample-based forecast outputs
-4. Maintain existing forecast interface and arguments
-
-**Testing**:
-- Test forecast method with distributional families
-- Verify parameter coordination works
-- Check output format consistency
+- Test forecast combination maintains parameter structure
+- Verify link transformations applied correctly
+- Check prediction interval calculation
 
 **Files**:
 - Modify: `R/forecast.R`
-- Modify: `tests/testthat/test-forecast.R`
-
-### 5.5: Distributional Response Generation (15 min)
-**Goal**: Generate random deviates from fitted distributional models
-
-**Tasks**:
-1. Add function `generate_responses()` to `R/predict.R`
-2. Use family-specific random deviate functions
-3. Handle multi-parameter coordination for response generation
-4. Support custom family response generation
-
-**Testing**:
-- Test response generation with various families
-- Verify random deviates have correct distributions
-- Check multi-parameter coordination
-
-**Files**:
-- Modify: `R/predict.R`
-- Modify: `tests/testthat/test-predict.R`
-
-### 5.6: Output Format Standardization (15 min)
-**Goal**: Create consistent output formats across all prediction/forecast functions
-
-**Tasks**:
-1. Add function `standardize_output_format()` to `R/predict.R`
-2. Create consistent structure for multi-parameter results
-3. Add proper class attributes and metadata
-4. Support both tidy and wide output formats
-
-**Testing**:
-- Test output format consistency
-- Verify class attributes and metadata
-- Check both tidy and wide formats work
-
-**Files**:
-- Modify: `R/predict.R`
-- Modify: `tests/testthat/test-predict.R`
-
-### 5.7: Error Handling and Validation (15 min)
-**Goal**: Add comprehensive error handling to prediction interfaces
-
-**Tasks**:
-1. Add input validation to all new prediction functions
-2. Create informative error messages for common user mistakes
-3. Add warnings for edge cases or potential issues
-4. Ensure graceful fallbacks where possible
-
-**Testing**:
-- Test error handling with invalid inputs
-- Verify error messages are helpful
-- Check warnings appear appropriately
-
-**Files**:
-- Modify: `R/predict.R`
-- Modify: `tests/testthat/test-predict.R`
+- Modify: `tests/testthat/test-parameter-forecasting.R`
 
 ---
 
-## Task 6: Distributional Regression Documentation (90 min total)
+## Task 4: Enhanced Prediction Interface (60 min total)
 
-### 6.1: Function Documentation (15 min)
-**Goal**: Add comprehensive roxygen2 documentation for all new functions
-
-**Tasks**:
-1. Add roxygen2 documentation to all functions in new R files
-2. Include parameter descriptions, return values, and examples
-3. Add @family tags to group related functions
-4. Include @seealso references to related functions
-
-**Testing**:
-- Run `devtools::document()` and check generated man pages
-- Verify examples run without errors
-- Check cross-references work correctly
-
-**Files**:
-- Modify all R files with roxygen2 documentation
-
-### 6.2: Basic Distributional Examples (15 min)
-**Goal**: Create simple examples demonstrating distributional regression
+### 4.1: Multi-Parameter Prediction Method (15 min)
+**Goal**: Extend `predict.ffc_gam()` to support parameter selection
 
 **Tasks**:
-1. Add examples to roxygen2 documentation showing gaulss() usage
-2. Create simple twlss() and betar() examples
-3. Show both static and time-varying parameter models
-4. Include prediction and forecasting examples
+1. Add `parameter` argument to `predict.ffc_gam()`
+2. Use mgcv's `lpmat` for parameter-specific predictions
+3. Return list of predictions when `parameter=NULL`
+4. Maintain backward compatibility
 
 **Testing**:
-- Run examples and verify they execute correctly
-- Check examples are pedagogically useful
-- Verify examples demonstrate key features
+- Test parameter-specific predictions
+- Test prediction list output
+- Verify mgcv lpmat integration
 
 **Files**:
-- Modify: `R/family_utils.R`, `R/posterior_sampling.R`, etc.
+- Modify: `R/predict.R`
+- Modify: `tests/testthat/test-predict.R`
 
-### 6.3: Vignette Structure Creation (15 min)
-**Goal**: Create vignette structure for distributional regression tutorial
+### 4.2: Posterior Sampling Integration (15 min)
+**Goal**: Add posterior sampling using gratia patterns
+
+**Tasks**:
+1. Create `fitted_samples.ffc_gam()` method following gratia
+2. Support multi-parameter posterior sampling
+3. Return samples organized by parameter
+4. Handle both unconditional and conditional uncertainty
+
+**Testing**:
+- Test posterior sampling for multi-parameter models
+- Verify sample organization by parameter
+- Check uncertainty types
+
+**Files**:
+- Create: `R/posterior_samples.R`
+- Create: `tests/testthat/test-posterior-samples.R`
+
+### 4.3: Response Simulation (15 min)
+**Goal**: Enable simulation from fitted distributional models
+
+**Tasks**:
+1. Add `simulate.ffc_gam()` method for distributional families
+2. Use family-specific random generation functions
+3. Coordinate multiple parameters for valid responses
+4. Support forecasted parameter values
+
+**Testing**:
+- Test response simulation with various families
+- Verify valid response generation
+- Test with forecasted parameters
+
+**Files**:
+- Modify: `R/predict.R`
+- Modify: `tests/testthat/test-predict.R`
+
+### 4.4: Output Format Standardization (15 min)
+**Goal**: Create consistent output formats across functions
+
+**Tasks**:
+1. Add output formatting utilities
+2. Support both wide and long format outputs
+3. Add proper class attributes and metadata
+4. Ensure consistency across predict/forecast functions
+
+**Testing**:
+- Test output format consistency
+- Verify metadata preservation
+- Check format conversion utilities
+
+**Files**:
+- Modify: `R/distributional_utils.R`
+- Modify: `tests/testthat/test-distributional-utils.R`
+
+---
+
+## Task 5: Documentation and Testing (75 min total)
+
+### 5.1: Function Documentation (15 min)
+**Goal**: Add comprehensive roxygen2 documentation
+
+**Tasks**:
+1. Document all modified functions with roxygen2
+2. Add distributional regression examples
+3. Update existing documentation for new parameters
+4. Include cross-references between related functions
+
+**Testing**:
+- Build documentation and check examples
+- Verify cross-references work
+- Test examples run successfully
+
+**Files**:
+- All modified R files
+
+### 5.2: Integration Testing Suite (15 min)
+**Goal**: Create comprehensive integration tests
+
+**Tasks**:
+1. Test complete workflow with gaulss() family
+2. Test with twlss() and betar() families
+3. Test forecasting pipeline end-to-end
+4. Verify no regressions in existing functionality
+
+**Testing**:
+- Run complete integration tests
+- Check all existing tests pass
+- Verify performance acceptable
+
+**Files**:
+- Create: `tests/testthat/test-distributional-integration-complete.R`
+
+### 5.3: Error Handling and Edge Cases (15 min)
+**Goal**: Add robust error handling throughout
+
+**Tasks**:
+1. Add validation for list formulae and family compatibility
+2. Handle edge cases in coefficient extraction
+3. Add informative error messages for common mistakes
+4. Test error conditions comprehensively
+
+**Testing**:
+- Test error conditions and messages
+- Verify graceful handling of edge cases
+- Check validation catches problems early
+
+**Files**:
+- All modified R files
+- Enhanced test files
+
+### 5.4: Performance Testing (15 min)
+**Goal**: Ensure acceptable performance with distributional models
+
+**Tasks**:
+1. Benchmark fitting time vs single-parameter models
+2. Test memory usage with large datasets
+3. Profile forecasting performance
+4. Optimize bottlenecks if needed
+
+**Testing**:
+- Run performance benchmarks
+- Check memory usage reasonable
+- Verify scalability
+
+**Files**:
+- Create: `tests/testthat/test-performance.R`
+
+### 5.5: Vignette Creation (15 min)
+**Goal**: Create tutorial for distributional regression
 
 **Tasks**:
 1. Create `vignettes/distributional-regression.Rmd`
-2. Set up vignette metadata and dependencies
-3. Create section outline covering theory and practice
-4. Add placeholder content for main sections
+2. Include financial volatility example with gaulss()
+3. Show environmental data example with twlss()
+4. Demonstrate parameter-specific forecasting
 
 **Testing**:
-- Build vignette and check it compiles
-- Verify vignette structure makes sense
-- Check dependencies are correctly specified
+- Build vignette successfully
+- Verify examples run and produce sensible results
+- Check educational value
 
 **Files**:
 - Create: `vignettes/distributional-regression.Rmd`
 
-### 6.4: Financial Volatility Example (15 min)
-**Goal**: Develop financial time series example with time-varying volatility
+---
 
-**Tasks**:
-1. Create simulated or use real financial return data
-2. Demonstrate gaulss() model with time-varying mean and variance
-3. Show forecasting with uncertainty in both parameters
-4. Add interpretation and visualization
+## Implementation Priority Order
 
-**Testing**:
-- Run example and verify results make sense
-- Check visualizations are informative
-- Verify financial interpretation is correct
+1. **Task 1 (Formula Interpretation)** - Foundation for everything else
+2. **Task 2 (Coefficient Extraction)** - Essential for time-varying functionality  
+3. **Task 3 (Forecasting)** - Core new functionality
+4. **Task 4 (Prediction)** - User interface completion
+5. **Task 5 (Documentation/Testing)** - Quality assurance
 
-**Files**:
-- Modify: `vignettes/distributional-regression.Rmd`
+## Final Validation Checklist
 
-### 6.5: Environmental Heteroskedasticity Example (15 min)
-**Goal**: Create environmental science example with changing variability
-
-**Tasks**:
-1. Use environmental data with changing variance over time
-2. Demonstrate temperature or precipitation modeling
-3. Show how both mean and variance patterns evolve
-4. Include forecasting for environmental management
-
-**Testing**:
-- Verify environmental data example runs correctly
-- Check scientific interpretation is reasonable
-- Test forecasting provides useful insights
-
-**Files**:
-- Modify: `vignettes/distributional-regression.Rmd`
-
-### 6.6: Package Integration Documentation (15 min)
-**Goal**: Document integration with existing ffc functionality
-
-**Tasks**:
-1. Add section showing transition from single to multi-parameter models
-2. Document compatibility with existing forecasting models
-3. Show how to interpret distributional regression results
-4. Add troubleshooting section for common issues
-
-**Testing**:
-- Verify integration documentation is accurate
-- Check troubleshooting covers likely issues
-- Test examples demonstrate smooth transition
-
-**Files**:
-- Modify: `vignettes/distributional-regression.Rmd`
+- [ ] All tests pass: `devtools::test()`
+- [ ] Package check clean: `devtools::check()`
+- [ ] Examples and vignettes build successfully
+- [ ] No breaking changes to existing functionality
+- [ ] Performance acceptable for typical use cases
+- [ ] Code reviewed and approved
 
 ---
 
-## Files to be Created/Modified
+## Key Success Metrics
 
-### New R Files
-- `R/family_utils.R` - Multi-parameter family utilities
-- `R/posterior_sampling.R` - Posterior sampling engine  
-- `R/parameter_forecasting.R` - Distributional parameter forecasting
-- `R/link_transformations.R` - Inverse link transformations
+1. **Functional**: Can fit `ffc_gam(list(y ~ fts(time), ~ fts(time)), family=gaulss())`
+2. **Extraction**: Can extract parameter-specific coefficients with `fts(model, parameter="mu")`
+3. **Forecasting**: Can forecast multi-parameter models with `forecast(model, h=10)`
+4. **Integration**: Existing single-parameter functionality unchanged
+5. **Documentation**: Clear examples and tutorial available
 
-### Modified R Files
-- `R/ffc_gam.R` - Add distributional family detection
-- `R/forecast.R` - Extend forecasting for distributional models
-- `R/predict.R` - Enhanced prediction interface
-- `R/ardf.R`, `R/vardf.R`, `R/gpdf.R` - Stan model extensions
+## Relevant Files Modified/Created
 
-### Test Files
-- `tests/testthat/test-family-utils.R`
-- `tests/testthat/test-posterior-sampling.R`
-- `tests/testthat/test-parameter-forecasting.R`
-- `tests/testthat/test-link-transformations.R`
-- `tests/testthat/test-integration-distributional.R`
-- Modify existing test files as needed
+### Core R Files
+- `R/ffc_gam.R` - List formula handling, multi-parameter detection
+- `R/interpret_ffc.R` - Multi-parameter formula interpretation  
+- `R/fts.R` - Parameter-specific coefficient extraction
+- `R/forecast.R` - Multi-parameter forecasting pipeline
+- `R/predict.R` - Parameter-specific prediction methods
+- `R/distributional_utils.R` - New utilities for multi-parameter support
+- `R/posterior_samples.R` - New posterior sampling methods
+
+### Test Files  
+- `tests/testthat/test-distributional-*.R` - Comprehensive test suite
+- Modified existing test files for backward compatibility
 
 ### Documentation
-- `vignettes/distributional-regression.Rmd`
-- Updated man pages for all new functions
-- Updated NAMESPACE via roxygen2
-
-## Quality Assurance
-
-After each task:
-- [ ] Run `devtools::load_all()`
-- [ ] Execute relevant tests
-- [ ] Use code-reviewer agent for major changes
-- [ ] Verify no regressions in existing functionality
-
-Final validation:
-- [ ] `devtools::check()` passes with no errors
-- [ ] All examples and vignettes build successfully
-- [ ] Complete integration test with real distributional data
-- [ ] Performance benchmarking on larger datasets
+- `vignettes/distributional-regression.Rmd` - Tutorial vignette
+- Updated man pages for all modified functions

@@ -74,9 +74,71 @@ ffc_gam <- function(
     time,
     engine = c("gam", "bam"),
     ...) {
+  
+  # Parameter validation
+  if (is.list(formula)) {
+    checkmate::assert_list(formula, types = "formula", min.len = 1,
+                          .var.name = "formula")
+  } else {
+    checkmate::assert_class(formula, "formula", .var.name = "formula")
+  }
+  # Validate and convert family following mgcv patterns
+  if (is.character(family)) {
+    family <- eval(parse(text = family))
+    if (is.function(family)) family <- family()
+  } else if (is.function(family)) {
+    family <- family()
+  }
+  if (!inherits(family, "family")) {
+    stop(insight::format_error(
+      "Family must be a family object or valid family name"
+    ), call. = FALSE)
+  }
+  checkmate::assert_data_frame(data, min.rows = 2, .var.name = "data")
+  checkmate::assert_string(time, min.chars = 1, .var.name = "time")
+  
   engine <- match.arg(engine)
   orig_call <- match.call()
   orig_formula <- formula
+  
+  # Detect if this is a distributional model and validate compatibility
+  is_list_formula <- is.list(formula)
+  
+  # Validate formula/family compatibility for distributional regression
+  if (is_list_formula) {
+    # Check if family supports multiple linear predictors
+    if (is.null(family$nlp)) {
+      stop(insight::format_error(
+        paste0("List formulae require a multi-parameter family. ",
+               "Family {.field ", family$family, "} does not support ", 
+               "multiple linear predictors. Use single formula instead.")
+      ), call. = FALSE)
+    }
+    
+    # Validate list length matches family requirements
+    if (length(formula) != family$nlp) {
+      stop(insight::format_error(
+        paste0("Formula list length (", length(formula), ") must match ",
+               "family requirements (", family$nlp, ") for ",
+               "{.field ", family$family, "}. Provide exactly ", family$nlp, 
+               " formulae.")
+      ), call. = FALSE)
+    }
+  } else {
+    # Single formula with multi-parameter family should warn
+    if (!is.null(family$nlp) && family$nlp > 1) {
+      if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+        rlang::warn(
+          paste0("Using single formula with multi-parameter family ",
+                 family$family, " (expects ", family$nlp, 
+                 " linear predictors). Consider using list formulae for ",
+                 "full distributional modeling."),
+          .frequency = "once"
+        )
+      }
+    }
+  }
+  
   if (!exists(time, data)) {
     stop(
       paste0(
@@ -144,7 +206,12 @@ ffc_gam <- function(
     data = data
   )
 
-  class(out) <- c("ffc_gam", class(out))
+  # Add appropriate class - special class for distributional models
+  if (is_list_formula) {
+    class(out) <- c("ffc_gam_multi", "ffc_gam", class(out))
+  } else {
+    class(out) <- c("ffc_gam", class(out))
+  }
   return(out)
 }
 

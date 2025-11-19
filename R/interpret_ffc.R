@@ -9,8 +9,20 @@ interpret_ffc <- function(
     gam_init = list(),
     newdata = NULL,
     knots = NULL) {
-  # Tibbles often get rearranged by mgcv in very strange ways; grouping?
-  # best to convert to plain-Jane data.frames first
+  # Input validation
+  if (is.list(formula)) {
+    checkmate::assert_list(formula, types = "formula", min.len = 1,
+                          .var.name = "formula")
+  } else {
+    checkmate::assert_class(formula, "formula", .var.name = "formula")
+  }
+  checkmate::assert_string(time_var, min.chars = 1, .var.name = "time_var")
+  checkmate::assert_data_frame(data, min.rows = 1, .var.name = "data")
+  checkmate::assert_list(gam_init, null.ok = TRUE, .var.name = "gam_init")
+  if (!is.null(newdata)) {
+    checkmate::assert_data_frame(newdata, .var.name = "newdata")
+  }
+  # Knots validation deferred to downstream ffc_gam_setup() following mgcv patterns
   
   # Save original data before adding row identifiers
   orig_data <- data
@@ -20,7 +32,133 @@ interpret_ffc <- function(
   if (inherits(data, "tbl_df")) {
     data <- as.data.frame(data)
   }
+  
+  # Handle list formulae by processing each element
+  if (is.list(formula)) {
+    processed_formulae <- vector("list", length = length(formula))
+    all_fts_smooths <- list()
+    combined_gam_init <- list()
+    
+    # Ensure gam_init is properly structured for multiple formulae
+    if (length(gam_init) == 0) {
+      gam_init <- vector("list", length = length(formula))
+    }
+    
+    # Process each formula element
+    for (i in seq_along(formula)) {
+      current_formula <- formula[[i]]
+      current_gam_init <- if (length(gam_init) >= i) gam_init[[i]] else list()
+      
+      # Process this formula element inline
+      # Check if formula has an intercept
+      keep_intercept <- attr(terms(current_formula), "intercept") == 1
 
+      # Extract term labels
+      termlabs <- attr(terms.formula(current_formula, keep.order = TRUE), 
+                      "term.labels")
+
+      # Check for offsets as well
+      off_names <- grep(
+        "offset",
+        rownames(attr(terms.formula(current_formula), "factors")),
+        value = TRUE
+      )
+      if (length(off_names) > 0L) {
+        termlabs <- c(termlabs, off_names)
+      }
+
+      # Check if any terms use the fts() wrapper
+      which_dynamics <- grep("fts(", termlabs, fixed = TRUE)
+
+      # Update the formula to the correct time-varying coefficient implementation
+      fts_smooths <- list()
+      if (length(which_dynamics) != 0L) {
+        fts_smooths <- vector(length = length(which_dynamics), mode = "list")
+
+        # Evaluate the fts() terms and update the formula appropriately
+        for (j in seq_along(which_dynamics)) {
+          fts_smooths[[j]] <- eval(parse(text = termlabs[which_dynamics[j]]))
+        }
+
+        # Replace dynamic terms with the correct specification
+        fts_labs <- c()
+        for (j in seq_along(which_dynamics)) {
+          fts_forms <- dyn_to_spline(
+            fts_smooths[[j]],
+            term_id = j,
+            data = data,
+            formula = current_formula,
+            time_var = time_var,
+            gam_init = if (length(current_gam_init) >= j) {
+              current_gam_init[[j]]
+            } else {
+              NULL
+            },
+            newdata = newdata,
+            knots = knots
+          )
+          current_gam_init[[j]] <- fts_forms$gam_init
+
+          # Update formula
+          fts_labs <- c(fts_labs, unlist(fts_forms$newform))
+
+          # Update data
+          if (inherits(data, "list")) {
+            data <- append(data, as.list(fts_forms$X))
+          } else {
+            data <- cbind(data, fts_forms$X)
+          }
+        }
+
+        # Return the updated formula for passing to mgcv
+        updated_formula <- reformulate(
+          c(termlabs[-which_dynamics], fts_labs),
+          rlang::f_lhs(current_formula)
+        )
+        attr(updated_formula, ".Environment") <- attr(current_formula, 
+                                                     ".Environment")
+      } else {
+        updated_formula <- current_formula
+      }
+
+      single_result <- list(
+        formula = updated_formula,
+        data = data,
+        fts_smooths = fts_smooths,
+        gam_init = current_gam_init
+      )
+      
+      # Store results
+      processed_formulae[[i]] <- single_result$formula
+      data <- single_result$data
+      
+      # Collect fts smooths with parameter indices
+      if (length(single_result$fts_smooths) > 0) {
+        param_smooths <- lapply(single_result$fts_smooths, function(smooth) {
+          smooth$parameter <- i
+          smooth
+        })
+        all_fts_smooths <- c(all_fts_smooths, param_smooths)
+      }
+      
+      # Collect gam_init objects
+      if (length(single_result$gam_init) > 0) {
+        combined_gam_init <- c(combined_gam_init, single_result$gam_init)
+      }
+    }
+    
+    return(
+      list(
+        formula = processed_formulae,
+        data = data,
+        orig_data = orig_data,
+        fts_smooths = all_fts_smooths,
+        gam_init = combined_gam_init
+      )
+    )
+  }
+
+  # Process single formula (fallback for non-list case)
   # Check if formula has an intercept
   keep_intercept <- attr(terms(formula), "intercept") == 1
 
@@ -59,7 +197,7 @@ interpret_ffc <- function(
         data = data,
         formula = formula,
         time_var = time_var,
-        gam_init = gam_init[[i]],
+        gam_init = if (length(gam_init) >= i) gam_init[[i]] else NULL,
         newdata = newdata,
         knots = knots
       )
