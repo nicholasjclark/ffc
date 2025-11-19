@@ -92,6 +92,8 @@ Example datasets included with the package
   : Berkeley growth study data
 - [`qld_mortality`](https://nicholasjclark.github.io/ffc/reference/qld_mortality.md)
   : Queensland mortality data
+- [`elnino_sst`](https://nicholasjclark.github.io/ffc/reference/elnino_sst.md)
+  : El Niño Sea Surface Temperature Data
 
 ## Re-exported Functions
 

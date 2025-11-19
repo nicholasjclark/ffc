@@ -18,6 +18,7 @@
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/mortality-analysis.html">Modeling Mortality Trends with Functional Forecasting</a></li>
+    <li><a class="dropdown-item" href="articles/elnino-forecasting.html">Forecasting El Niño Patterns with Cyclic Splines and Dynamic Factor Models</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -77,6 +78,34 @@
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># Build pkgdown site</span></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"pkgdown::build_site()"</span></span></code></pre></div>
 </div>
+<div class="section level3">
+<h3 id="pkgdown-reference-management">pkgdown Reference Management<a class="anchor" aria-label="anchor" href="#pkgdown-reference-management"></a></h3>
+<ul><li>
+<strong>ALL exported functions must be assigned to a reference section</strong> in <code>_pkgdown.yml</code>
+</li>
+<li>Add new functions to appropriate existing sections:
+<ul><li>Core Functions: main modeling functions (ffc_gam, fts)</li>
+<li>Model Methods: predict, forecast, model.frame methods</li>
+<li>Coefficient Extraction: coefficient-related functions</li>
+<li>Forecasting Models: ARDF, GPDF, VARDF</li>
+<li>Integration with fabletools: fable conversion functions</li>
+<li>Data: datasets (growth_data, qld_mortality, elnino_sst)</li>
+<li>Re-exported Functions: functions from other packages</li>
+</ul></li>
+<li>If function doesn’t fit existing sections, create new appropriate section</li>
+<li>Functions not in reference index will cause pkgdown build errors</li>
+</ul></div>
+<div class="section level3">
+<h3 id="pkgdown-articles-management">pkgdown Articles Management<a class="anchor" aria-label="anchor" href="#pkgdown-articles-management"></a></h3>
+<ul><li>
+<strong>ALL vignettes must be listed in articles section</strong> in <code>_pkgdown.yml</code>
+</li>
+<li>Add vignettes to articles:contents using either:
+<ul><li>Individual vignette name without .Rmd extension (e.g., <code>elnino-forecasting</code>)</li>
+<li>Pattern matching with <code>starts_with()</code> for grouped vignettes</li>
+</ul></li>
+<li>Missing vignettes from index will cause pkgdown build errors</li>
+</ul></div>
 <div class="section level3">
 <h3 id="package-checking">Package Checking<a class="anchor" aria-label="anchor" href="#package-checking"></a></h3>
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Check package for errors, warnings, and notes</span></span>
