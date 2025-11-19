@@ -57,7 +57,8 @@
 #'   age = unique(qld_mortality$age),
 #'   sex = unique(qld_mortality$sex),
 #'   year = 2021:2025,
-#'   population = 1  # Use rate scale (deaths per person)
+#'   # Use rate scale (to predict deaths per person)
+#'   population = 1
 #' )
 #'
 #' # Generate forecasts using ETS model for coefficients
@@ -112,8 +113,10 @@ ffc_gam <- function(
   if (length(interpreted$fts_smooths) > 0 && nrow(data) >= 2) {
     fts_by_vars <- extract_fts_by_variables(interpreted$fts_smooths)
     if (length(fts_by_vars) > 0) {
+
       # Validate that by variables exist in data
       validate_vars_in_data(fts_by_vars, data, "fts() by variable")
+
       # Validate time intervals only for variables used in fts() terms
       validate_time_intervals(data, time, fts_by_vars)
     }

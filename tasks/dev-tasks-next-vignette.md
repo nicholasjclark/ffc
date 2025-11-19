@@ -10,7 +10,7 @@ Create a vignette demonstrating `ffc` package capabilities using El Niño sea su
 - Integration with `fable` ecosystem for forecast visualization
 - Seasonal pattern analysis across multiple years
 
-## Data Source
+## Original Data Source
 - **Package**: `rainbow::ElNino_OISST_region_1and2`
 - **Structure**: Monthly SST data (12 months × 37 years)
 - **Time Coverage**: 1982-2018
@@ -33,10 +33,12 @@ mod_elnino <- ffc_gam(
 ## Key Implementation Points
 
 ### Data Preparation
+Create standalone R script to load data, process and save as .rda in data/
 1. Convert matrix format to long-form tibble suitable for `ffc_gam`
 2. Create proper time indexing for temporal dependencies
 3. Split into training (≤2014) and test (>2014) sets
 4. Convert to `tsibble` for `fable` integration
+5. Save as .rda in data/ and add appropriate script in R/ to describe in roxygen2 documentation (vignette will work directly with the pre-loaded dataset)
 
 ### Model Features
 - **Year effects**: `fts(year, mean_only = TRUE)` - captures inter-annual variability
@@ -54,11 +56,11 @@ mod_elnino <- ffc_gam(
 ### 1. Seasonal Trend Analysis
 - Monthly time series by year
 - Color-coded by month to show seasonal patterns
-- Comparison of actual vs forecast trajectories
+- Comparison of actual vs forecast trajectories, showing forecast means and uncertainties
 
 ### 2. Annual Curve Comparison
 - Seasonal curves grouped by year periods
-- Overlay of actual and forecast annual patterns
+- Overlay of actual and forecast annual patterns, showing means and uncertainties
 - Assessment of forecast accuracy across different years
 
 ### 3. Model Diagnostics

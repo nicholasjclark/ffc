@@ -82,7 +82,8 @@ future_data <- expand.grid(
   age = unique(qld_mortality$age),
   sex = unique(qld_mortality$sex),
   year = 2021:2025,
-  population = 1  # Use rate scale (deaths per person)
+  # Use rate scale (to predict deaths per person)
+  population = 1
 )
 
 # Generate forecasts using ETS model for coefficients
