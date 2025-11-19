@@ -73,6 +73,7 @@ reference:
   contents:
   - growth_data
   - qld_mortality
+  - elnino_sst
 
 - title: Re-exported Functions
   desc: Functions re-exported from mgcv and other packages for convenience

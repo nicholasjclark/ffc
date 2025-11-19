@@ -38,6 +38,19 @@ Rscript -e "devtools::document()"
 Rscript -e "pkgdown::build_site()"
 ```
 
+### pkgdown Reference Management
+- **ALL exported functions must be assigned to a reference section** in `_pkgdown.yml`
+- Add new functions to appropriate existing sections:
+  - Core Functions: main modeling functions (ffc_gam, fts)
+  - Model Methods: predict, forecast, model.frame methods
+  - Coefficient Extraction: coefficient-related functions
+  - Forecasting Models: ARDF, GPDF, VARDF
+  - Integration with fabletools: fable conversion functions
+  - Data: datasets (growth_data, qld_mortality, elnino_sst)
+  - Re-exported Functions: functions from other packages
+- If function doesn't fit existing sections, create new appropriate section
+- Functions not in reference index will cause pkgdown build errors
+
 ### Package Checking
 ```bash
 # Check package for errors, warnings, and notes
