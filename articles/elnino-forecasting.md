@@ -84,18 +84,13 @@ ggplot(elnino_sst, aes(x = month, y = temperature, group = year, color = year)) 
     x = "Month", 
     y = "Temperature (°C)",
     title = "El Niño SST: Evolving seasonal patterns",
-    subtitle = "Each line represents one year's seasonal cycle"
   )
 ```
 
-![Monthly SST patterns across years. The seasonal cycle shows clear
-evolution, with warmer years (red) during strong El Niño events like
-1997-1998 and
-2015-2016.](elnino-forecasting_files/figure-html/seasonal-patterns-1.png)
+![Monthly SST patterns across
+years.](elnino-forecasting_files/figure-html/seasonal-patterns-1.png)
 
-Monthly SST patterns across years. The seasonal cycle shows clear
-evolution, with warmer years (red) during strong El Niño events like
-1997-1998 and 2015-2016.
+Monthly SST patterns across years.
 
 ### Identifying ENSO events
 
@@ -162,7 +157,7 @@ mod_elnino <- ffc_gam(
     fts(
       year, 
       mean_only = TRUE,
-      time_k = 25
+      time_k = 15
     ) +
     
     # Time-varying seasonal pattern: cyclic splines ensure continuity
@@ -170,8 +165,7 @@ mod_elnino <- ffc_gam(
       month, 
       k = 12, 
       bs = "cc", 
-      time_k = 25, 
-      share_penalty = FALSE
+      time_k = 15
     ),
   data = train_data,
   
@@ -191,48 +185,49 @@ summary(mod_elnino)
 #> Link function: identity 
 #> 
 #> Formula:
-#> temperature ~ s(year, by = fts_year1_mean, bs = "ts", k = 25, 
+#> temperature ~ s(year, by = fts_year1_mean, bs = "ts", k = 15, 
 #>     m = 2, id = 1) + s(year, by = fts_bs_s_month__1, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__2, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__3, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__4, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__5, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__6, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__7, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__8, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__9, bs = "ts", 
-#>     k = 25, m = 2) + s(year, by = fts_bs_s_month__10, bs = "ts", 
-#>     k = 25, m = 2)
+#>     k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__2, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__3, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__4, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__5, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__6, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__7, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__8, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__9, 
+#>     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__10, 
+#>     bs = "ts", k = 15, m = 2, id = 2)
 #> 
 #> Parametric coefficients:
 #>             Estimate Std. Error t value Pr(>|t|)    
-#> (Intercept) 23.15273    0.04154   557.4   <2e-16 ***
+#> (Intercept) 23.15273    0.05393   429.3   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
-#>                                edf Ref.df      F  p-value    
-#> s(year):fts_year1_mean     23.5440     24 17.439  < 2e-16 ***
-#> s(year):fts_bs_s_month__1   1.8121     25  2.158  < 2e-16 ***
-#> s(year):fts_bs_s_month__2   2.8960     25 17.680  < 2e-16 ***
-#> s(year):fts_bs_s_month__3   9.8487     25 10.661  < 2e-16 ***
-#> s(year):fts_bs_s_month__4   1.9318     25  2.850  < 2e-16 ***
-#> s(year):fts_bs_s_month__5   0.4377     25  0.020 0.301258    
-#> s(year):fts_bs_s_month__6   2.3688     25  4.020  < 2e-16 ***
-#> s(year):fts_bs_s_month__7   2.1421     25 11.957  < 2e-16 ***
-#> s(year):fts_bs_s_month__8   2.0800     25  8.335  < 2e-16 ***
-#> s(year):fts_bs_s_month__9   2.0324     25  6.736  < 2e-16 ***
-#> s(year):fts_bs_s_month__10  1.6298     25  0.451 0.000567 ***
+#>                               edf Ref.df      F  p-value    
+#> s(year):fts_year1_mean     13.597     14  7.663  < 2e-16 ***
+#> s(year):fts_bs_s_month__1   1.893     15  1.619 1.01e-06 ***
+#> s(year):fts_bs_s_month__2   2.013     15 16.873  < 2e-16 ***
+#> s(year):fts_bs_s_month__3   1.954     15  7.713  < 2e-16 ***
+#> s(year):fts_bs_s_month__4   2.005     15  2.699  < 2e-16 ***
+#> s(year):fts_bs_s_month__5   1.994     15  0.097   0.4697    
+#> s(year):fts_bs_s_month__6   1.994     15  3.880  < 2e-16 ***
+#> s(year):fts_bs_s_month__7   2.005     15 11.273  < 2e-16 ***
+#> s(year):fts_bs_s_month__8   1.954     15  7.704  < 2e-16 ***
+#> s(year):fts_bs_s_month__9   2.013     15  6.652  < 2e-16 ***
+#> s(year):fts_bs_s_month__10  1.893     15  0.495   0.0122 *  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> R-sq.(adj) =  0.884   Deviance explained = 89.9%
-#> GCV = 0.78599  Scale est. = 0.68332   n = 396
+#> R-sq.(adj) =  0.804   Deviance explained =   82%
+#> GCV = 1.2609  Scale est. = 1.1516    n = 396
 ```
 
 The model decomposes SST into: 1. **Smooth inter-annual trend**:
-`fts(year, mean_only = TRUE)` 2. **Evolving seasonal cycle**:
-`fts(month, bs = "cc")` with cyclic boundaries
+`fts(year, mean_only = TRUE)`  
+2. **Evolving seasonal cycle**: `fts(month, bs = "cc")` with cyclic
+boundaries
 
 The cyclic spline ensures December flows smoothly into January, critical
 for seasonal forecasting.
@@ -241,9 +236,19 @@ for seasonal forecasting.
 
 ### Visualizing fitted seasonal cycles
 
+We can use
+[`plot_predictions()`](https://marginaleffects.com/man/r/plot_predictions.html)
+from `marginaleffects` for quick and effortless effect plots on the
+outcome scale. For example, the below plot shows how our model’s fitted
+seasonal shapes vary over time:
+
 ``` r
-# Generate predictions for specific years
-plot_predictions(mod_elnino, condition = c("month", "year"))
+plot_predictions(mod_elnino, condition = c("month", "year")) +
+  labs(
+    x = "Month",
+    y = "Temperature (°C)",
+    title = "Predicted training-period seasonal cycles"
+  )
 ```
 
 ![Fitted seasonal cycles for selected years. The model captures both the
@@ -255,7 +260,7 @@ mean seasonal pattern and year-specific deviations.
 
 ### Extracting time-varying coefficients
 
-The functional coefficients reveal the underlying dynamics:
+The functional coefficients reveal the underlying dynamics of the model:
 
 ``` r
 # Extract coefficients with their time series structure
@@ -264,29 +269,28 @@ print(func_coefs)
 #> # A tibble: 3,630 × 5
 #>    .basis         .time .estimate .realisation  year
 #>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1982    0.848             1  1982
-#>  2 fts_year1_mean  1983    2.46              1  1983
-#>  3 fts_year1_mean  1984    0.0211            1  1984
-#>  4 fts_year1_mean  1985   -1.28              1  1985
-#>  5 fts_year1_mean  1986    0.255             1  1986
-#>  6 fts_year1_mean  1987    0.309             1  1987
-#>  7 fts_year1_mean  1988   -0.546             1  1988
-#>  8 fts_year1_mean  1989   -0.485             1  1989
-#>  9 fts_year1_mean  1990   -0.383             1  1990
-#> 10 fts_year1_mean  1991    0.147             1  1991
+#>  1 fts_year1_mean  1982    0.991             1  1982
+#>  2 fts_year1_mean  1983    0.415             1  1983
+#>  3 fts_year1_mean  1984    0.0490            1  1984
+#>  4 fts_year1_mean  1985   -0.0420            1  1985
+#>  5 fts_year1_mean  1986   -0.0395            1  1986
+#>  6 fts_year1_mean  1987   -0.198             1  1987
+#>  7 fts_year1_mean  1988   -0.528             1  1988
+#>  8 fts_year1_mean  1989   -0.701             1  1989
+#>  9 fts_year1_mean  1990   -0.398             1  1990
+#> 10 fts_year1_mean  1991    0.235             1  1991
 #> # ℹ 3,620 more rows
 
 # Visualize coefficient evolution
 autoplot(func_coefs) +
   labs(
     title = "Time-varying basis coefficients",
-    subtitle = "Each panel shows a coefficient's evolution over training period"
   )
 ```
 
 ![](elnino-forecasting_files/figure-html/extract-coefficients-1.png)
 
-## Advanced forecasting with ensemble methods
+## Forecasting `ffc` models
 
 ### Exponential Smoothing forecasts of functional coefficients
 
@@ -372,7 +376,7 @@ factors that drive the dynamics of all coefficients jointly, leading to
 more coherent forecasts than independent modeling. The Gaussian process
 priors on the factors allow for flexible non-linear dynamics while
 maintaining smoothness. For theoretical background on Gaussian
-processes, see [Betanalpha’s case
+processes, see [Michael Betancourt’s case
 study](https://betanalpha.github.io/assets/case_studies/gaussian_processes.html).
 
 ``` r
@@ -393,8 +397,7 @@ temp_forecasts <- forecast(
   mean_model = "ETS",
   K = 3,
   type = "response",
-  chains = 1,
-  iter = 500
+  chains = 1
 )
 
 # Combine with actual test data for comparison
@@ -429,14 +432,14 @@ Forecasted seasonal cycles for 2015-2018 with uncertainty bands.
 
 ## Spectral validation
 
-Check if the model preserves the spectral characteristics of the
-original data. Spectral analysis decomposes time series into frequency
-components, revealing periodic patterns and their strengths. For El Niño
-data, we expect to see dominant annual cycles (frequency = 1) and
-potentially sub-annual harmonics. A good forecast should preserve these
-fundamental frequency characteristics, ensuring that the predicted
-seasonal patterns maintain the same spectral signature as the observed
-data. This validation is particularly important for functional
+We can also check if the model preserves the spectral characteristics of
+the original data. Spectral analysis decomposes time series into
+frequency components, revealing periodic patterns and their strengths.
+For El Niño data, we expect to see dominant annual cycles (frequency
+= 1) and potentially sub-annual harmonics. A good forecast should
+preserve these fundamental frequency characteristics, ensuring that the
+predicted seasonal patterns maintain the same spectral signature as the
+observed data. This validation is particularly important for functional
 forecasting where we want to ensure the cyclical nature of the data is
 maintained across the forecast horizon.
 
@@ -499,24 +502,24 @@ ggplot() +
   geom_ribbon(
     data = forecast_summary,
     aes(x = frequency, ymin = log(q05), ymax = log(q95)),
-    alpha = 0.2, fill = "steelblue"
+    alpha = 0.2, fill = "darkred"
   ) +
   geom_ribbon(
     data = forecast_summary, 
     aes(x = frequency, ymin = log(q10), ymax = log(q90)),
-    alpha = 0.3, fill = "steelblue"
+    alpha = 0.3, fill = "darkred"
   ) +
   # Forecast median
   geom_line(
     data = forecast_summary,
     aes(x = frequency, y = log(median)),
-    color = "steelblue", linewidth = 1.2
+    color = "darkred", linewidth = 1.2
   ) +
   # Observed spectrum
   geom_line(
     data = observed_df,
     aes(x = frequency, y = log(power)),
-    color = "darkred", linewidth = 1.2
+    color = "black", linewidth = 1.2
   ) +
   # Highlight annual frequency
   geom_vline(xintercept = 1, linetype = "dashed", alpha = 0.6) +
@@ -526,7 +529,7 @@ ggplot() +
     x = "Frequency (cycles per year)",
     y = "Log spectral density",
     title = "Spectral validation with forecast uncertainty",
-    subtitle = "Red: observed, Blue: forecast median with 80% and 90% bands"
+    subtitle = "Black: observed, Red: forecast median with 80% and 90% bands"
   ) +
   theme(legend.position = "none")
 ```
@@ -542,24 +545,27 @@ the key frequency components with quantified uncertainty bands.
 
 ### When to use cyclic splines
 
-Cyclic splines are essential when: - Data has natural periodicity
-(seasonal, diurnal, etc.) - Boundary continuity matters for
-interpretation - Forecasting requires smooth transitions across periods
+Cyclic splines are essential when:  
+- Data has natural periodicity (seasonal, diurnal, etc.)  
+- Boundary continuity matters for interpretation  
+- Forecasting requires smooth transitions across periods
 
-Key implementation tips: - Set knots just outside the data range:
-`c(0.5, 12.5)` for months 1-12 - Choose k (basis dimension) based on
-expected complexity - Use `bs = "cc"` for cyclic cubic regression
-splines
+Key implementation tips:  
+- Set knots just outside the data range: `c(0.5, 12.5)` for months
+1-12  
+- Choose k (basis dimension) based on expected complexity  
+- Use `bs = "cc"` for cyclic cubic regression splines
 
 For detailed guidance on modeling seasonal data with GAMs, see [Simpson
 (2014)](https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/).
 
 ### GPDF model advantages
 
-The Gaussian Process Dynamic Factor approach excels when: - Multiple
-related time series need joint forecasting - Dimension reduction helps
-identify shared patterns - Uncertainty quantification is critical -
-Non-linear dynamics are present
+The Gaussian Process Dynamic Factor approach excels when:  
+- Multiple related time series need joint forecasting  
+- Dimension reduction helps identify shared patterns  
+- Uncertainty quantification is critical  
+- Non-linear dynamics are present
 
 ## Conclusion
 
@@ -573,10 +579,10 @@ using El Niño SST data:
 - Comprehensive validation ensures reliable predictions
 
 The `ffc` package integrates these methods in a unified framework,
-enabling: - Flexible specification of functional relationships -
-State-of-the-art time series forecasting of coefficients - Proper
-uncertainty quantification throughout - Seamless integration with
-`tidyverse` and `fable` ecosystems
+enabling: - Flexible specification of functional relationships  
+- State-of-the-art time series forecasting of coefficients  
+- Proper uncertainty quantification throughout  
+- Seamless integration with `tidyverse` and `fable` ecosystems
 
 ### Further reading
 

@@ -156,13 +156,10 @@ metrics</p>
 <span>    x <span class="op">=</span> <span class="st">"Month"</span>, </span>
 <span>    y <span class="op">=</span> <span class="st">"Temperature (°C)"</span>,</span>
 <span>    title <span class="op">=</span> <span class="st">"El Niño SST: Evolving seasonal patterns"</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="st">"Each line represents one year's seasonal cycle"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="elnino-forecasting_files/figure-html/seasonal-patterns-1.png" class="r-plt" alt="Monthly SST patterns across years. The seasonal cycle shows clear evolution, with warmer years (red) during strong El Niño events like 1997-1998 and 2015-2016." width="672"><p class="caption">
-Monthly SST patterns across years. The seasonal cycle shows clear
-evolution, with warmer years (red) during strong El Niño events like
-1997-1998 and 2015-2016.
+<img src="elnino-forecasting_files/figure-html/seasonal-patterns-1.png" class="r-plt" alt="Monthly SST patterns across years." width="672"><p class="caption">
+Monthly SST patterns across years.
 </p>
 </div>
 </div>
@@ -231,7 +228,7 @@ pattern:</p>
 <span>    <span class="fu"><a href="../reference/fts.html">fts</a></span><span class="op">(</span></span>
 <span>      <span class="va">year</span>, </span>
 <span>      mean_only <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>      time_k <span class="op">=</span> <span class="fl">25</span></span>
+<span>      time_k <span class="op">=</span> <span class="fl">15</span></span>
 <span>    <span class="op">)</span> <span class="op">+</span></span>
 <span>    </span>
 <span>    <span class="co"># Time-varying seasonal pattern: cyclic splines ensure continuity</span></span>
@@ -239,8 +236,7 @@ pattern:</p>
 <span>      <span class="va">month</span>, </span>
 <span>      k <span class="op">=</span> <span class="fl">12</span>, </span>
 <span>      bs <span class="op">=</span> <span class="st">"cc"</span>, </span>
-<span>      time_k <span class="op">=</span> <span class="fl">25</span>, </span>
-<span>      share_penalty <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>      time_k <span class="op">=</span> <span class="fl">15</span></span>
 <span>    <span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">train_data</span>,</span>
 <span>  </span>
@@ -260,46 +256,46 @@ pattern:</p>
 <span><span class="co">#&gt; Link function: identity </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Formula:</span></span>
-<span><span class="co">#&gt; temperature ~ s(year, by = fts_year1_mean, bs = "ts", k = 25, </span></span>
+<span><span class="co">#&gt; temperature ~ s(year, by = fts_year1_mean, bs = "ts", k = 15, </span></span>
 <span><span class="co">#&gt;     m = 2, id = 1) + s(year, by = fts_bs_s_month__1, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__2, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__3, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__4, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__5, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__6, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__7, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__8, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__9, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2) + s(year, by = fts_bs_s_month__10, bs = "ts", </span></span>
-<span><span class="co">#&gt;     k = 25, m = 2)</span></span>
+<span><span class="co">#&gt;     k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__2, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__3, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__4, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__5, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__6, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__7, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__8, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__9, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2) + s(year, by = fts_bs_s_month__10, </span></span>
+<span><span class="co">#&gt;     bs = "ts", k = 15, m = 2, id = 2)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric coefficients:</span></span>
 <span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept) 23.15273    0.04154   557.4   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept) 23.15273    0.05393   429.3   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Approximate significance of smooth terms:</span></span>
-<span><span class="co">#&gt;                                edf Ref.df      F  p-value    </span></span>
-<span><span class="co">#&gt; s(year):fts_year1_mean     23.5440     24 17.439  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__1   1.8121     25  2.158  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__2   2.8960     25 17.680  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__3   9.8487     25 10.661  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__4   1.9318     25  2.850  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__5   0.4377     25  0.020 0.301258    </span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__6   2.3688     25  4.020  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__7   2.1421     25 11.957  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__8   2.0800     25  8.335  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__9   2.0324     25  6.736  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; s(year):fts_bs_s_month__10  1.6298     25  0.451 0.000567 ***</span></span>
+<span><span class="co">#&gt;                               edf Ref.df      F  p-value    </span></span>
+<span><span class="co">#&gt; s(year):fts_year1_mean     13.597     14  7.663  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__1   1.893     15  1.619 1.01e-06 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__2   2.013     15 16.873  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__3   1.954     15  7.713  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__4   2.005     15  2.699  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__5   1.994     15  0.097   0.4697    </span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__6   1.994     15  3.880  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__7   2.005     15 11.273  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__8   1.954     15  7.704  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__9   2.013     15  6.652  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; s(year):fts_bs_s_month__10  1.893     15  0.495   0.0122 *  </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; R-sq.(adj) =  0.884   Deviance explained = 89.9%</span></span>
-<span><span class="co">#&gt; GCV = 0.78599  Scale est. = 0.68332   n = 396</span></span></code></pre></div>
+<span><span class="co">#&gt; R-sq.(adj) =  0.804   Deviance explained =   82%</span></span>
+<span><span class="co">#&gt; GCV = 1.2609  Scale est. = 1.1516    n = 396</span></span></code></pre></div>
 <p>The model decomposes SST into: 1. <strong>Smooth inter-annual
-trend</strong>: <code>fts(year, mean_only = TRUE)</code> 2.
-<strong>Evolving seasonal cycle</strong>:
+trend</strong>: <code>fts(year, mean_only = TRUE)</code><br>
+2. <strong>Evolving seasonal cycle</strong>:
 <code>fts(month, bs = "cc")</code> with cyclic boundaries</p>
 <p>The cyclic spline ensures December flows smoothly into January,
 critical for seasonal forecasting.</p>
@@ -311,9 +307,17 @@ critical for seasonal forecasting.</p>
 <div class="section level3">
 <h3 id="visualizing-fitted-seasonal-cycles">Visualizing fitted seasonal cycles<a class="anchor" aria-label="anchor" href="#visualizing-fitted-seasonal-cycles"></a>
 </h3>
+<p>We can use <code><a href="https://marginaleffects.com/man/r/plot_predictions.html" class="external-link">plot_predictions()</a></code> from
+<code>marginaleffects</code> for quick and effortless effect plots on
+the outcome scale. For example, the below plot shows how our model’s
+fitted seasonal shapes vary over time:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Generate predictions for specific years</span></span>
-<span><span class="fu"><a href="https://marginaleffects.com/man/r/plot_predictions.html" class="external-link">plot_predictions</a></span><span class="op">(</span><span class="va">mod_elnino</span>, condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"month"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://marginaleffects.com/man/r/plot_predictions.html" class="external-link">plot_predictions</a></span><span class="op">(</span><span class="va">mod_elnino</span>, condition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"month"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    x <span class="op">=</span> <span class="st">"Month"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"Temperature (°C)"</span>,</span>
+<span>    title <span class="op">=</span> <span class="st">"Predicted training-period seasonal cycles"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="elnino-forecasting_files/figure-html/fitted-cycles-1.png" class="r-plt" alt="Fitted seasonal cycles for selected years. The model captures both the mean seasonal pattern and year-specific deviations." width="672"><p class="caption">
 Fitted seasonal cycles for selected years. The model captures both the
@@ -324,7 +328,8 @@ mean seasonal pattern and year-specific deviations.
 <div class="section level3">
 <h3 id="extracting-time-varying-coefficients">Extracting time-varying coefficients<a class="anchor" aria-label="anchor" href="#extracting-time-varying-coefficients"></a>
 </h3>
-<p>The functional coefficients reveal the underlying dynamics:</p>
+<p>The functional coefficients reveal the underlying dynamics of the
+model:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract coefficients with their time series structure</span></span>
 <span><span class="va">func_coefs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fts_coefs.ffc_gam.html">fts_coefs</a></span><span class="op">(</span><span class="va">mod_elnino</span>, summary <span class="op">=</span> <span class="cn">FALSE</span>, times <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
@@ -332,29 +337,28 @@ mean seasonal pattern and year-specific deviations.
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3,630 × 5</span></span></span>
 <span><span class="co">#&gt;    .basis         .time .estimate .realisation  year</span></span>
 <span><span class="co">#&gt;  <span style="color: #BCBCBC;">*</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>982    0.848             1  <span style="text-decoration: underline;">1</span>982</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>983    2.46              1  <span style="text-decoration: underline;">1</span>983</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>984    0.021<span style="text-decoration: underline;">1</span>            1  <span style="text-decoration: underline;">1</span>984</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>985   -<span style="color: #BB0000;">1.28</span>              1  <span style="text-decoration: underline;">1</span>985</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>986    0.255             1  <span style="text-decoration: underline;">1</span>986</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>987    0.309             1  <span style="text-decoration: underline;">1</span>987</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>988   -<span style="color: #BB0000;">0.546</span>             1  <span style="text-decoration: underline;">1</span>988</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>989   -<span style="color: #BB0000;">0.485</span>             1  <span style="text-decoration: underline;">1</span>989</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>990   -<span style="color: #BB0000;">0.383</span>             1  <span style="text-decoration: underline;">1</span>990</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>991    0.147             1  <span style="text-decoration: underline;">1</span>991</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>982    0.991             1  <span style="text-decoration: underline;">1</span>982</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>983    0.415             1  <span style="text-decoration: underline;">1</span>983</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>984    0.049<span style="text-decoration: underline;">0</span>            1  <span style="text-decoration: underline;">1</span>984</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>985   -<span style="color: #BB0000;">0.042</span><span style="color: #BB0000; text-decoration: underline;">0</span>            1  <span style="text-decoration: underline;">1</span>985</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>986   -<span style="color: #BB0000;">0.039</span><span style="color: #BB0000; text-decoration: underline;">5</span>            1  <span style="text-decoration: underline;">1</span>986</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>987   -<span style="color: #BB0000;">0.198</span>             1  <span style="text-decoration: underline;">1</span>987</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>988   -<span style="color: #BB0000;">0.528</span>             1  <span style="text-decoration: underline;">1</span>988</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>989   -<span style="color: #BB0000;">0.701</span>             1  <span style="text-decoration: underline;">1</span>989</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>990   -<span style="color: #BB0000;">0.398</span>             1  <span style="text-decoration: underline;">1</span>990</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fts_year1_mean  <span style="text-decoration: underline;">1</span>991    0.235             1  <span style="text-decoration: underline;">1</span>991</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3,620 more rows</span></span></span>
 <span></span>
 <span><span class="co"># Visualize coefficient evolution</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">func_coefs</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
 <span>    title <span class="op">=</span> <span class="st">"Time-varying basis coefficients"</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="st">"Each panel shows a coefficient's evolution over training period"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="elnino-forecasting_files/figure-html/extract-coefficients-1.png" class="r-plt" width="672"></p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="advanced-forecasting-with-ensemble-methods">Advanced forecasting with ensemble methods<a class="anchor" aria-label="anchor" href="#advanced-forecasting-with-ensemble-methods"></a>
+<h2 id="forecasting-ffc-models">Forecasting <code>ffc</code> models<a class="anchor" aria-label="anchor" href="#forecasting-ffc-models"></a>
 </h2>
 <div class="section level3">
 <h3 id="exponential-smoothing-forecasts-of-functional-coefficients">Exponential Smoothing forecasts of functional coefficients<a class="anchor" aria-label="anchor" href="#exponential-smoothing-forecasts-of-functional-coefficients"></a>
@@ -438,8 +442,8 @@ factors that drive the dynamics of all coefficients jointly, leading to
 more coherent forecasts than independent modeling. The Gaussian process
 priors on the factors allow for flexible non-linear dynamics while
 maintaining smoothness. For theoretical background on Gaussian
-processes, see <a href="https://betanalpha.github.io/assets/case_studies/gaussian_processes.html" class="external-link">Betanalpha’s
-case study</a>.</p>
+processes, see <a href="https://betanalpha.github.io/assets/case_studies/gaussian_processes.html" class="external-link">Michael
+Betancourt’s case study</a>.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create forecast data grid</span></span>
 <span><span class="va">forecast_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
@@ -458,8 +462,7 @@ case study</a>.</p>
 <span>  mean_model <span class="op">=</span> <span class="st">"ETS"</span>,</span>
 <span>  K <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"response"</span>,</span>
-<span>  chains <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  iter <span class="op">=</span> <span class="fl">500</span></span>
+<span>  chains <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Combine with actual test data for comparison</span></span>
@@ -495,12 +498,12 @@ Forecasted seasonal cycles for 2015-2018 with uncertainty bands.
 <div class="section level2">
 <h2 id="spectral-validation">Spectral validation<a class="anchor" aria-label="anchor" href="#spectral-validation"></a>
 </h2>
-<p>Check if the model preserves the spectral characteristics of the
-original data. Spectral analysis decomposes time series into frequency
-components, revealing periodic patterns and their strengths. For El Niño
-data, we expect to see dominant annual cycles (frequency = 1) and
-potentially sub-annual harmonics. A good forecast should preserve these
-fundamental frequency characteristics, ensuring that the predicted
+<p>We can also check if the model preserves the spectral characteristics
+of the original data. Spectral analysis decomposes time series into
+frequency components, revealing periodic patterns and their strengths.
+For El Niño data, we expect to see dominant annual cycles (frequency =
+1) and potentially sub-annual harmonics. A good forecast should preserve
+these fundamental frequency characteristics, ensuring that the predicted
 seasonal patterns maintain the same spectral signature as the observed
 data. This validation is particularly important for functional
 forecasting where we want to ensure the cyclical nature of the data is
@@ -564,24 +567,24 @@ maintained across the forecast horizon.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span></span>
 <span>    data <span class="op">=</span> <span class="va">forecast_summary</span>,</span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">frequency</span>, ymin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">q05</span><span class="op">)</span>, ymax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">q95</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    alpha <span class="op">=</span> <span class="fl">0.2</span>, fill <span class="op">=</span> <span class="st">"steelblue"</span></span>
+<span>    alpha <span class="op">=</span> <span class="fl">0.2</span>, fill <span class="op">=</span> <span class="st">"darkred"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span></span>
 <span>    data <span class="op">=</span> <span class="va">forecast_summary</span>, </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">frequency</span>, ymin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">q10</span><span class="op">)</span>, ymax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">q90</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    alpha <span class="op">=</span> <span class="fl">0.3</span>, fill <span class="op">=</span> <span class="st">"steelblue"</span></span>
+<span>    alpha <span class="op">=</span> <span class="fl">0.3</span>, fill <span class="op">=</span> <span class="st">"darkred"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="co"># Forecast median</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
 <span>    data <span class="op">=</span> <span class="va">forecast_summary</span>,</span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">frequency</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">median</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    color <span class="op">=</span> <span class="st">"steelblue"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span></span>
+<span>    color <span class="op">=</span> <span class="st">"darkred"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="co"># Observed spectrum</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
 <span>    data <span class="op">=</span> <span class="va">observed_df</span>,</span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">frequency</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">power</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    color <span class="op">=</span> <span class="st">"darkred"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span></span>
+<span>    color <span class="op">=</span> <span class="st">"black"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="co"># Highlight annual frequency</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, alpha <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">+</span></span>
@@ -591,7 +594,7 @@ maintained across the forecast horizon.</p>
 <span>    x <span class="op">=</span> <span class="st">"Frequency (cycles per year)"</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"Log spectral density"</span>,</span>
 <span>    title <span class="op">=</span> <span class="st">"Spectral validation with forecast uncertainty"</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="st">"Red: observed, Blue: forecast median with 80% and 90% bands"</span></span>
+<span>    subtitle <span class="op">=</span> <span class="st">"Black: observed, Red: forecast median with 80% and 90% bands"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -607,24 +610,26 @@ the key frequency components with quantified uncertainty bands.
 <div class="section level3">
 <h3 id="when-to-use-cyclic-splines">When to use cyclic splines<a class="anchor" aria-label="anchor" href="#when-to-use-cyclic-splines"></a>
 </h3>
-<p>Cyclic splines are essential when: - Data has natural periodicity
-(seasonal, diurnal, etc.) - Boundary continuity matters for
-interpretation - Forecasting requires smooth transitions across
-periods</p>
-<p>Key implementation tips: - Set knots just outside the data range:
-<code>c(0.5, 12.5)</code> for months 1-12 - Choose k (basis dimension)
-based on expected complexity - Use <code>bs = "cc"</code> for cyclic
-cubic regression splines</p>
+<p>Cyclic splines are essential when:<br>
+- Data has natural periodicity (seasonal, diurnal, etc.)<br>
+- Boundary continuity matters for interpretation<br>
+- Forecasting requires smooth transitions across periods</p>
+<p>Key implementation tips:<br>
+- Set knots just outside the data range: <code>c(0.5, 12.5)</code> for
+months 1-12<br>
+- Choose k (basis dimension) based on expected complexity<br>
+- Use <code>bs = "cc"</code> for cyclic cubic regression splines</p>
 <p>For detailed guidance on modeling seasonal data with GAMs, see <a href="https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/" class="external-link">Simpson
 (2014)</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="gpdf-model-advantages">GPDF model advantages<a class="anchor" aria-label="anchor" href="#gpdf-model-advantages"></a>
 </h3>
-<p>The Gaussian Process Dynamic Factor approach excels when: - Multiple
-related time series need joint forecasting - Dimension reduction helps
-identify shared patterns - Uncertainty quantification is critical -
-Non-linear dynamics are present</p>
+<p>The Gaussian Process Dynamic Factor approach excels when:<br>
+- Multiple related time series need joint forecasting<br>
+- Dimension reduction helps identify shared patterns<br>
+- Uncertainty quantification is critical<br>
+- Non-linear dynamics are present</p>
 </div>
 </div>
 <div class="section level2">
@@ -644,9 +649,11 @@ continuity<br>
 </ul>
 <p>The <code>ffc</code> package integrates these methods in a unified
 framework, enabling: - Flexible specification of functional
-relationships - State-of-the-art time series forecasting of coefficients
-- Proper uncertainty quantification throughout - Seamless integration
-with <code>tidyverse</code> and <code>fable</code> ecosystems</p>
+relationships<br>
+- State-of-the-art time series forecasting of coefficients<br>
+- Proper uncertainty quantification throughout<br>
+- Seamless integration with <code>tidyverse</code> and
+<code>fable</code> ecosystems</p>
 <div class="section level3">
 <h3 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h3>
