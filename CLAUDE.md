@@ -51,6 +51,13 @@ Rscript -e "pkgdown::build_site()"
 - If function doesn't fit existing sections, create new appropriate section
 - Functions not in reference index will cause pkgdown build errors
 
+### pkgdown Articles Management
+- **ALL vignettes must be listed in articles section** in `_pkgdown.yml`
+- Add vignettes to articles:contents using either:
+  - Individual vignette name without .Rmd extension (e.g., `elnino-forecasting`)
+  - Pattern matching with `starts_with()` for grouped vignettes
+- Missing vignettes from index will cause pkgdown build errors
+
 ### Package Checking
 ```bash
 # Check package for errors, warnings, and notes

@@ -9,6 +9,7 @@ articles:
   navbar: ~
   contents:
   - starts_with("mortality")
+  - elnino-forecasting
 
 template:
   bootstrap: 5
