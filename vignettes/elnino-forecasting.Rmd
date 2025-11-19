@@ -33,7 +33,7 @@ theme_set(theme_bw())
 
 ## Introduction
 
-Sea surface temperature (SST) in the tropical Pacific exhibits complex seasonal patterns that evolve dramatically during El Niño-Southern Oscillation (ENSO) events. Traditional time series methods often struggle to capture both the cyclic seasonal structure and the inter-annual variability that characterizes these ocean-atmosphere interactions. This vignette demonstrates how functional forecasting with the `ffc` package addresses these challenges through:
+Sea surface temperature (SST) in the tropical Pacific exhibits complex seasonal patterns that evolve dramatically during El Niño-Southern Oscillation (ENSO) events. Traditional time series methods often struggle to capture both the cyclic seasonal structure and the inter-annual variability that characterizes these ocean-atmosphere interactions. This vignette demonstrates how functional forecasting with the [`ffc`](https://github.com/njtierney/ffc) package addresses these challenges through:
 
 1. Cyclic cubic splines that naturally handle periodic seasonal patterns  
 2. Gaussian Process Dynamic Factor (GPDF) models for sophisticated multivariate forecasting  
@@ -49,7 +49,7 @@ El Niño SST data presents unique modeling challenges:
 
 ### Our approach: functional coefficients meet dynamic factors
 
-The `ffc` package treats seasonal patterns as smooth functions whose shapes evolve over time. By combining GAM-based functional regression with Stan-powered dynamic factor models, we can:  
+The `ffc` package treats seasonal patterns as smooth functions whose shapes evolve over time. By combining [`mgcv`](https://cran.r-project.org/package=mgcv) GAM-based functional regression with [`Stan`](https://mc-stan.org/)-powered dynamic factor models, we can:  
 - Preserve seasonal continuity while allowing flexible evolution  
 - Capture shared trends across multiple coefficient series  
 - Generate probabilistic forecasts with proper uncertainty quantification  
@@ -128,8 +128,12 @@ ggplot(annual_means, aes(x = year, y = anomaly, fill = phase)) +
 We'll use data through 2014 for training and reserve 2015-2018 for validation—a period that includes the major 2015-2016 El Niño:
 
 ```{r data-split}
-train_data <- elnino_sst |> filter(year <= 2014)
-test_data <- elnino_sst |> filter(year > 2014)
+train_data <- elnino_sst |> 
+  filter(year <= 2014) |>
+  arrange(year, month)
+test_data <- elnino_sst |> 
+  filter(year > 2014) |>
+  arrange(year, month)
 ```
 
 ### The functional model specification
@@ -178,7 +182,7 @@ The cyclic spline ensures December flows smoothly into January, critical for sea
 
 ### Visualizing fitted seasonal cycles
 
-We can use `plot_predictions()` from `marginaleffects` for quick and effortless effect plots on the outcome scale. For example, the below plot shows how our model's fitted seasonal shapes vary over time:
+We can use `plot_predictions()` from [`marginaleffects`](https://marginaleffects.com/) for quick and effortless effect plots on the outcome scale. For example, the below plot shows how our model's fitted seasonal shapes vary over time:
 
 ```{r fitted-cycles, fig.cap="Fitted seasonal cycles for selected years. The model captures both the mean seasonal pattern and year-specific deviations."}
 plot_predictions(mod_elnino, condition = c("month", "year")) +
@@ -412,6 +416,36 @@ ggplot() +
   theme(legend.position = "none")
 ```
 
+## Integration with fable ecosystem
+
+The `ffc` package provides seamless integration with the [`fable`](https://fable.tidyverts.org/) ecosystem through the `as_fable()` function. This allows ffc forecasts to be converted to fable objects, enabling use of fable's accuracy metrics and visualization tools:
+
+```{r fable-integration, fig.height=9, fig.cap="El Niño SST forecasts using ensemble model with fable integration. Red ribbons show prediction intervals, black lines show observed values."}
+# Convert ffc forecasts to fable format
+fable_forecasts <- as_fable(
+  mod_elnino,
+  newdata = test_data,
+  model = "ENS",
+  mean_model = "ETS",
+  type = "response",
+  chains = 1
+)
+
+# Evaluate forecast accuracy using fable metrics
+accuracy(fable_forecasts, test_data)
+
+# Create publication-ready plots using fable's autoplot
+fable_forecasts |>
+  autoplot(data = train_data, show_gap = FALSE, fill = "darkred") +
+  labs(
+    x = "Year",
+    y = "Temperature (C)",
+    title = "Forecasts broken down by month"
+  )
+```
+
+This integration provides access to `fable`'s comprehensive suite of forecast evaluation tools while maintaining the flexibility and power of functional forecasting methods.
+
 ## Key insights and best practices
 
 ### When to use cyclic splines
@@ -449,11 +483,11 @@ The `ffc` package integrates these methods in a unified framework, enabling:
 - Flexible specification of functional relationships  
 - State-of-the-art time series forecasting of coefficients  
 - Proper uncertainty quantification throughout  
-- Seamless integration with `tidyverse` and `fable` ecosystems
+- Seamless integration with [`tidyverse`](https://www.tidyverse.org/) and `fable` ecosystems
 
 ### Further reading
 
-- Hyndman & Athanasopoulos (2021): Forecasting: Principles and Practice
-- Wood (2017): Generalized Additive Models: An Introduction with R
-- Ramsay & Silverman (2005): Functional Data Analysis
-- NOAA Climate Prediction Center: ENSO diagnostics and forecasting
+- Hyndman & Athanasopoulos (2021): [Forecasting: Principles and Practice](https://otexts.com/fpp3/)
+- Wood (2017): [Generalized Additive Models: An Introduction with R](https://www.routledge.com/Generalized-Additive-Models-An-Introduction-with-R-Second-Edition/Wood/p/book/9781498728331)
+- Ramsay & Silverman (2005): [Functional Data Analysis](https://link.springer.com/book/10.1007/b98888)
+- [NOAA Climate Prediction Center: ENSO diagnostics and forecasting](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ensoyears.shtml)
