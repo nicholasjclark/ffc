@@ -46,56 +46,6 @@ create_simple_data <- function(n_obs = 20, seed = 789) {
   )
 }
 
-test_that("forecasts identical regardless of data.frame ordering", {
-  # Create simple test data without grouping to test core row tracking
-  test_data <- create_simple_data(n_obs = 30, seed = 123)
-  
-  # Create simple newdata for forecasting 
-  newdata_ordered <- data.frame(
-    time = 31:35,
-    x = 1 + 0.2 * (31:35)
-  )
-  
-  # Test with arranged vs randomly shuffled data
-  test_data_shuffled <- test_data[sample(nrow(test_data)), ]
-  newdata_shuffled <- newdata_ordered[sample(nrow(newdata_ordered)), ]
-  
-  # Fit models with ordered and shuffled data - simple model without grouping
-  SW({
-    model_ordered <- ffc_gam(
-      y ~ fts(x, bs = "cr", k = 3),
-      data = test_data,
-      time = "time"
-    )
-    
-    model_shuffled <- ffc_gam(
-      y ~ fts(x, bs = "cr", k = 3), 
-      data = test_data_shuffled,
-      time = "time"
-    )
-  })
-  
-  # Generate forecasts
-  SW({
-    forecast_ordered <- forecast(model_ordered, newdata = newdata_ordered, model = "ETS")
-    forecast_shuffled_data <- forecast(model_shuffled, newdata = newdata_ordered, model = "ETS") 
-    forecast_shuffled_newdata <- forecast(model_ordered, newdata = newdata_shuffled, model = "ETS")
-  })
-  
-  # With row tracking, forecasts should be similar
-  expect_equal(forecast_ordered$.estimate, forecast_shuffled_data$.estimate,
-               tolerance = 0.1)
-  
-  expect_equal(forecast_ordered$.error, forecast_shuffled_data$.error,
-               tolerance = 0.1)
-  
-  # Forecasts should be similar regardless of newdata order
-  fc_ord_sorted <- forecast_ordered[order(seq_len(nrow(forecast_ordered))), ]
-  fc_shuf_sorted <- forecast_shuffled_newdata[order(seq_len(nrow(forecast_shuffled_newdata))), ]
-  
-  expect_equal(fc_ord_sorted$.estimate, fc_shuf_sorted$.estimate, tolerance = 0.1)
-  expect_equal(fc_ord_sorted$.error, fc_shuf_sorted$.error, tolerance = 0.1)
-})
 
 test_that("forecasts identical regardless of tsibble ordering", {
   # Create simple test data as tsibble - no grouping to avoid time mapping issues

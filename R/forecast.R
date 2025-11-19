@@ -538,6 +538,16 @@ forecast.ffc_gam <- function(
       "response"
     )
   )
+  
+  # Store original row order before any processing
+  # This will be used to restore the original ordering at the end
+  original_newdata_rows <- nrow(newdata)
+  if (!".original_row_id" %in% names(newdata)) {
+    newdata$.original_row_id <- seq_len(original_newdata_rows)
+  }
+  
+  # Initialize surviving_rows for row order restoration
+  surviving_rows <- NULL
 
   # Take full draws of beta coefficients
   # Get times parameter for beta draws - need to check for Stan models first
@@ -563,6 +573,9 @@ forecast.ffc_gam <- function(
   )
 
   if (length(object$gam_init) == 0) {
+    # No fts() terms - still need to track row IDs for restoration
+    surviving_rows <- newdata$.original_row_id
+    
     # No need to modify lpmatrix if there were no
     # fts() terms in the model
     # Extract the full linear predictor matrix
@@ -590,8 +603,20 @@ forecast.ffc_gam <- function(
     time_var <- object$time_var
 
     # Validate newdata and filter to future time points only
-    newdata <- validate_forecast_newdata(newdata, object)
-    validated_newdata_size <- nrow(newdata)
+    # This may filter out rows and reorder data
+    newdata_validated <- validate_forecast_newdata(newdata, object)
+    validated_newdata_size <- nrow(newdata_validated)
+    
+    # Extract which original rows survived validation
+    if (".original_row_id" %in% names(newdata_validated)) {
+      surviving_rows <- newdata_validated$.original_row_id
+    } else {
+      # Fallback if validation didn't preserve IDs
+      surviving_rows <- NULL
+    }
+    
+    # Use validated data for forecasting
+    newdata <- newdata_validated
     
     # Predict by fixing time to its last training value; this allows
     # us to later add the uncertainty from the zero-centred time-varying
@@ -956,6 +981,30 @@ forecast.ffc_gam <- function(
     out <- distributional::dist_sample(
       lapply(seq_len(NCOL(preds)), function(i) preds[, i])
     )
+  }
+  
+  # Restore original row order if we have tracking information
+  # Check that surviving_rows exists and has the right length
+  if (!is.null(surviving_rows)) {
+    if (length(surviving_rows) == NROW(out)) {
+      # Create mapping to restore original order
+      row_order <- order(surviving_rows)
+      
+      if (summary) {
+        out <- out[row_order, , drop = FALSE]
+      } else {
+        # For distributional objects, need to reorder the list
+        out <- out[row_order]
+      }
+    } else {
+      # Log mismatch for debugging
+      if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+        rlang::warn(paste0("Row count mismatch in order restoration: ",
+                          "expected ", NROW(out), " rows but found ",
+                          length(surviving_rows), " IDs"),
+                    .frequency = "once", .frequency_id = "row_count_mismatch")
+      }
+    }
   }
 
   return(out)

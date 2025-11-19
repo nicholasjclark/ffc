@@ -75,7 +75,7 @@ cat("Monthly measurements per year:", elnino_sst |>
 
 ### Visualizing seasonal patterns
 
-```{r seasonal-patterns, fig.cap="Monthly SST patterns across years. The seasonal cycle shows clear evolution, with warmer years (red) during strong El Niño events like 1997-1998 and 2015-2016."}
+```{r seasonal-patterns, fig.cap="Monthly SST patterns across years."}
 ggplot(elnino_sst, aes(x = month, y = temperature, group = year, color = year)) +
   geom_line(alpha = 0.7, linewidth = 0.8) +
   scale_color_viridis_c(name = "Year") +
@@ -84,7 +84,6 @@ ggplot(elnino_sst, aes(x = month, y = temperature, group = year, color = year)) 
     x = "Month", 
     y = "Temperature (°C)",
     title = "El Niño SST: Evolving seasonal patterns",
-    subtitle = "Each line represents one year's seasonal cycle"
   )
 ```
 
@@ -144,7 +143,7 @@ mod_elnino <- ffc_gam(
     fts(
       year, 
       mean_only = TRUE,
-      time_k = 25
+      time_k = 15
     ) +
     
     # Time-varying seasonal pattern: cyclic splines ensure continuity
@@ -152,8 +151,7 @@ mod_elnino <- ffc_gam(
       month, 
       k = 12, 
       bs = "cc", 
-      time_k = 25, 
-      share_penalty = FALSE
+      time_k = 15
     ),
   data = train_data,
   
@@ -171,7 +169,7 @@ summary(mod_elnino)
 ```
 
 The model decomposes SST into:
-1. **Smooth inter-annual trend**: `fts(year, mean_only = TRUE)` 
+1. **Smooth inter-annual trend**: `fts(year, mean_only = TRUE)`   
 2. **Evolving seasonal cycle**: `fts(month, bs = "cc")` with cyclic boundaries
 
 The cyclic spline ensures December flows smoothly into January, critical for seasonal forecasting.
@@ -180,14 +178,20 @@ The cyclic spline ensures December flows smoothly into January, critical for sea
 
 ### Visualizing fitted seasonal cycles
 
+We can use `plot_predictions()` from `marginaleffects` for quick and effortless effect plots on the outcome scale. For example, the below plot shows how our model's fitted seasonal shapes vary over time:
+
 ```{r fitted-cycles, fig.cap="Fitted seasonal cycles for selected years. The model captures both the mean seasonal pattern and year-specific deviations."}
-# Generate predictions for specific years
-plot_predictions(mod_elnino, condition = c("month", "year"))
+plot_predictions(mod_elnino, condition = c("month", "year")) +
+  labs(
+    x = "Month",
+    y = "Temperature (°C)",
+    title = "Predicted training-period seasonal cycles"
+  )
 ```
 
 ### Extracting time-varying coefficients
 
-The functional coefficients reveal the underlying dynamics:
+The functional coefficients reveal the underlying dynamics of the model:
 
 ```{r extract-coefficients}
 # Extract coefficients with their time series structure
@@ -198,11 +202,10 @@ print(func_coefs)
 autoplot(func_coefs) +
   labs(
     title = "Time-varying basis coefficients",
-    subtitle = "Each panel shows a coefficient's evolution over training period"
   )
 ```
 
-## Advanced forecasting with ensemble methods
+## Forecasting `ffc` models
 
 ### Exponential Smoothing forecasts of functional coefficients
 
@@ -266,7 +269,7 @@ ggplot(forecast_summary, aes(x = year)) +
 
 ### Generating temperature forecasts with GPDF
 
-Transform coefficient forecasts back to temperature predictions using Gaussian Process Dynamic Factor (GPDF) models. The GPDF approach models the evolution of multiple time series through a lower-dimensional set of latent factors, each following a Gaussian process. This captures complex dependencies between the different basis coefficients while providing principled uncertainty quantification. The model estimates K latent factors that drive the dynamics of all coefficients jointly, leading to more coherent forecasts than independent modeling. The Gaussian process priors on the factors allow for flexible non-linear dynamics while maintaining smoothness. For theoretical background on Gaussian processes, see [Betanalpha's case study](https://betanalpha.github.io/assets/case_studies/gaussian_processes.html).
+Transform coefficient forecasts back to temperature predictions using Gaussian Process Dynamic Factor (GPDF) models. The GPDF approach models the evolution of multiple time series through a lower-dimensional set of latent factors, each following a Gaussian process. This captures complex dependencies between the different basis coefficients while providing principled uncertainty quantification. The model estimates K latent factors that drive the dynamics of all coefficients jointly, leading to more coherent forecasts than independent modeling. The Gaussian process priors on the factors allow for flexible non-linear dynamics while maintaining smoothness. For theoretical background on Gaussian processes, see [Michael Betancourt's case study](https://betanalpha.github.io/assets/case_studies/gaussian_processes.html).
 
 ```{r temperature-forecast, fig.cap="Forecasted seasonal cycles for 2015-2018 with uncertainty bands."}
 # Create forecast data grid
@@ -286,8 +289,7 @@ temp_forecasts <- forecast(
   mean_model = "ETS",
   K = 3,
   type = "response",
-  chains = 1,
-  iter = 500
+  chains = 1
 )
 
 # Combine with actual test data for comparison
@@ -317,7 +319,7 @@ ggplot(forecast_results, aes(x = month)) +
 
 ## Spectral validation
 
-Check if the model preserves the spectral characteristics of the original data. Spectral analysis decomposes time series into frequency components, revealing periodic patterns and their strengths. For El Niño data, we expect to see dominant annual cycles (frequency = 1) and potentially sub-annual harmonics. A good forecast should preserve these fundamental frequency characteristics, ensuring that the predicted seasonal patterns maintain the same spectral signature as the observed data. This validation is particularly important for functional forecasting where we want to ensure the cyclical nature of the data is maintained across the forecast horizon.
+We can also check if the model preserves the spectral characteristics of the original data. Spectral analysis decomposes time series into frequency components, revealing periodic patterns and their strengths. For El Niño data, we expect to see dominant annual cycles (frequency = 1) and potentially sub-annual harmonics. A good forecast should preserve these fundamental frequency characteristics, ensuring that the predicted seasonal patterns maintain the same spectral signature as the observed data. This validation is particularly important for functional forecasting where we want to ensure the cyclical nature of the data is maintained across the forecast horizon.
 
 ```{r spectral-validation, fig.cap="Spectral density comparison with uncertainties. The forecast preserves the key frequency components with quantified uncertainty bands."}
 # Spectral analysis with uncertainty quantification
@@ -378,24 +380,24 @@ ggplot() +
   geom_ribbon(
     data = forecast_summary,
     aes(x = frequency, ymin = log(q05), ymax = log(q95)),
-    alpha = 0.2, fill = "steelblue"
+    alpha = 0.2, fill = "darkred"
   ) +
   geom_ribbon(
     data = forecast_summary, 
     aes(x = frequency, ymin = log(q10), ymax = log(q90)),
-    alpha = 0.3, fill = "steelblue"
+    alpha = 0.3, fill = "darkred"
   ) +
   # Forecast median
   geom_line(
     data = forecast_summary,
     aes(x = frequency, y = log(median)),
-    color = "steelblue", linewidth = 1.2
+    color = "darkred", linewidth = 1.2
   ) +
   # Observed spectrum
   geom_line(
     data = observed_df,
     aes(x = frequency, y = log(power)),
-    color = "darkred", linewidth = 1.2
+    color = "black", linewidth = 1.2
   ) +
   # Highlight annual frequency
   geom_vline(xintercept = 1, linetype = "dashed", alpha = 0.6) +
@@ -405,7 +407,7 @@ ggplot() +
     x = "Frequency (cycles per year)",
     y = "Log spectral density",
     title = "Spectral validation with forecast uncertainty",
-    subtitle = "Red: observed, Blue: forecast median with 80% and 90% bands"
+    subtitle = "Black: observed, Red: forecast median with 80% and 90% bands"
   ) +
   theme(legend.position = "none")
 ```
@@ -414,25 +416,25 @@ ggplot() +
 
 ### When to use cyclic splines
 
-Cyclic splines are essential when:
-- Data has natural periodicity (seasonal, diurnal, etc.)
-- Boundary continuity matters for interpretation
-- Forecasting requires smooth transitions across periods
+Cyclic splines are essential when:  
+- Data has natural periodicity (seasonal, diurnal, etc.)  
+- Boundary continuity matters for interpretation  
+- Forecasting requires smooth transitions across periods  
 
-Key implementation tips:
-- Set knots just outside the data range: `c(0.5, 12.5)` for months 1-12
-- Choose k (basis dimension) based on expected complexity
-- Use `bs = "cc"` for cyclic cubic regression splines
+Key implementation tips:  
+- Set knots just outside the data range: `c(0.5, 12.5)` for months 1-12  
+- Choose k (basis dimension) based on expected complexity  
+- Use `bs = "cc"` for cyclic cubic regression splines  
 
 For detailed guidance on modeling seasonal data with GAMs, see [Simpson (2014)](https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/).
 
 ### GPDF model advantages
 
-The Gaussian Process Dynamic Factor approach excels when:
-- Multiple related time series need joint forecasting
-- Dimension reduction helps identify shared patterns
-- Uncertainty quantification is critical
-- Non-linear dynamics are present
+The Gaussian Process Dynamic Factor approach excels when:  
+- Multiple related time series need joint forecasting  
+- Dimension reduction helps identify shared patterns  
+- Uncertainty quantification is critical  
+- Non-linear dynamics are present  
 
 ## Conclusion
 
@@ -444,9 +446,9 @@ This vignette demonstrated advanced functional forecasting techniques using El N
 - Comprehensive validation ensures reliable predictions  
 
 The `ffc` package integrates these methods in a unified framework, enabling:
-- Flexible specification of functional relationships
-- State-of-the-art time series forecasting of coefficients
-- Proper uncertainty quantification throughout
+- Flexible specification of functional relationships  
+- State-of-the-art time series forecasting of coefficients  
+- Proper uncertainty quantification throughout  
 - Seamless integration with `tidyverse` and `fable` ecosystems
 
 ### Further reading
