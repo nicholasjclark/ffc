@@ -47,7 +47,11 @@ interpret_ffc <- function(
     # Process each formula element
     for (i in seq_along(formula)) {
       current_formula <- formula[[i]]
-      current_gam_init <- if (length(gam_init) >= i) gam_init[[i]] else list()
+      current_gam_init <- if (length(gam_init) >= i) {
+        normalize_gam_init_structure(gam_init[[i]])
+      } else {
+        list()
+      }
       
       # Process this formula element inline
       # Check if formula has an intercept
@@ -249,6 +253,26 @@ get_parameter_prefix <- function(parameter_id) {
     return(semantic_names[parameter_id])
   } else {
     return(paste0("param", parameter_id))
+  }
+}
+
+#' Normalize gam_init structure to ensure consistent list format
+#' @param obj Object that could be a gam object, list, or NULL
+#' @return List containing gam objects or empty list
+#' @noRd
+normalize_gam_init_structure <- function(obj) {
+  checkmate::assert(
+    checkmate::check_class(obj, "gam"),
+    checkmate::check_list(obj),
+    checkmate::check_null(obj)
+  )
+  
+  if (inherits(obj, "gam")) {
+    list(obj)
+  } else if (is.list(obj)) {
+    obj
+  } else {
+    list()
   }
 }
 

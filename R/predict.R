@@ -69,7 +69,7 @@ predict.ffc_gam <- function(
   }
 
   # Determine the prediction engine
-  if (class(object)[2] == "gam") {
+  if (inherits(object, "gam")) {
     pred_engine <- "predict.gam"
   } else {
     pred_engine <- "predict.bam"

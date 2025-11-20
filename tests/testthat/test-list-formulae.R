@@ -361,3 +361,46 @@ test_that("fts() method integration with distributional models", {
   expect_true(length(unique(location_coefs$.basis)) >= 3)  # k=4 minus constraints
   expect_true(length(unique(scale_coefs$.basis)) >= 2)     # k=3 minus constraints
 })
+
+test_that("gam_init structure normalization in distributional regression", {
+  # Test that gam_init objects are properly normalized for prediction calls
+  # Ensures consistent list structure across model fitting and prediction phases
+  
+  library(mgcv)
+  suppressWarnings({
+    
+    # Create test data for distributional model
+    set.seed(1234)
+    n <- 35
+    test_data <- data.frame(
+      time = 1:n,
+      x = rnorm(n),
+      y = rnorm(n, sd = 0.5)
+    )
+    
+    # Fit distributional model with multiple parameters
+    model <- ffc_gam(
+      list(y ~ fts(x, k = 4), ~ fts(x, k = 3)),
+      data = test_data,
+      family = gaulss(),
+      time = "time"
+    )
+    
+    # Verify model has correct gam_init structure
+    expect_s3_class(model, "ffc_gam_multi")
+    expect_length(model$gam_init, 2)
+    expect_true(all(sapply(model$gam_init, function(x) inherits(x, "gam"))))
+    
+    # Create newdata for prediction
+    newdata <- data.frame(
+      time = (n + 1):(n + 3),
+      x = rnorm(3)
+    )
+    
+    # Test prediction with newdata
+    pred_result <- predict(model, newdata = newdata, type = "response")
+    
+    # Verify prediction returns valid structure
+    expect_true(is.data.frame(pred_result) || is.matrix(pred_result) || is.numeric(pred_result))
+  })
+})
