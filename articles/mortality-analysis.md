@@ -381,19 +381,19 @@ functional_coefs <- fts_coefs(
   times = 10
 )
 functional_coefs
-#> # A tibble: 7,790 × 5
-#>    .basis         .time .estimate .realisation  year
-#>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1980     0.356            1  1980
-#>  2 fts_year1_mean  1981     0.368            1  1981
-#>  3 fts_year1_mean  1982     0.403            1  1982
-#>  4 fts_year1_mean  1983     0.319            1  1983
-#>  5 fts_year1_mean  1984     0.324            1  1984
-#>  6 fts_year1_mean  1985     0.318            1  1985
-#>  7 fts_year1_mean  1986     0.259            1  1986
-#>  8 fts_year1_mean  1987     0.247            1  1987
-#>  9 fts_year1_mean  1988     0.234            1  1988
-#> 10 fts_year1_mean  1989     0.265            1  1989
+#> # A tibble: 7,790 × 6
+#>    .basis         .parameter .time .estimate .realisation  year
+#>  * <chr>          <chr>      <int>     <dbl>        <int> <int>
+#>  1 fts_year1_mean location    1980     0.356            1  1980
+#>  2 fts_year1_mean location    1981     0.368            1  1981
+#>  3 fts_year1_mean location    1982     0.403            1  1982
+#>  4 fts_year1_mean location    1983     0.319            1  1983
+#>  5 fts_year1_mean location    1984     0.324            1  1984
+#>  6 fts_year1_mean location    1985     0.318            1  1985
+#>  7 fts_year1_mean location    1986     0.259            1  1986
+#>  8 fts_year1_mean location    1987     0.247            1  1987
+#>  9 fts_year1_mean location    1988     0.234            1  1988
+#> 10 fts_year1_mean location    1989     0.265            1  1989
 #> # ℹ 7,780 more rows
 ```
 

@@ -273,19 +273,19 @@ The functional coefficients reveal the underlying dynamics of the model:
 # Extract coefficients with their time series structure
 func_coefs <- fts_coefs(mod_elnino, summary = FALSE, times = 10)
 print(func_coefs)
-#> # A tibble: 3,630 × 5
-#>    .basis         .time .estimate .realisation  year
-#>  * <chr>          <int>     <dbl>        <int> <int>
-#>  1 fts_year1_mean  1982    0.991             1  1982
-#>  2 fts_year1_mean  1983    0.415             1  1983
-#>  3 fts_year1_mean  1984    0.0490            1  1984
-#>  4 fts_year1_mean  1985   -0.0420            1  1985
-#>  5 fts_year1_mean  1986   -0.0395            1  1986
-#>  6 fts_year1_mean  1987   -0.198             1  1987
-#>  7 fts_year1_mean  1988   -0.528             1  1988
-#>  8 fts_year1_mean  1989   -0.701             1  1989
-#>  9 fts_year1_mean  1990   -0.398             1  1990
-#> 10 fts_year1_mean  1991    0.235             1  1991
+#> # A tibble: 3,630 × 6
+#>    .basis         .parameter .time .estimate .realisation  year
+#>  * <chr>          <chr>      <int>     <dbl>        <int> <int>
+#>  1 fts_year1_mean location    1982    0.991             1  1982
+#>  2 fts_year1_mean location    1983    0.415             1  1983
+#>  3 fts_year1_mean location    1984    0.0490            1  1984
+#>  4 fts_year1_mean location    1985   -0.0420            1  1985
+#>  5 fts_year1_mean location    1986   -0.0395            1  1986
+#>  6 fts_year1_mean location    1987   -0.198             1  1987
+#>  7 fts_year1_mean location    1988   -0.528             1  1988
+#>  8 fts_year1_mean location    1989   -0.701             1  1989
+#>  9 fts_year1_mean location    1990   -0.398             1  1990
+#> 10 fts_year1_mean location    1991    0.235             1  1991
 #> # ℹ 3,620 more rows
 
 # Visualize coefficient evolution
