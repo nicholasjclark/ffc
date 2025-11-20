@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   elnino-forecasting: elnino-forecasting.html
   mortality-analysis: mortality-analysis.html
-last_built: 2025-11-20T04:19Z
+last_built: 2025-11-20T05:23Z
 urls:
   reference: https://nicholasjclark.github.io/ffc/reference
   article: https://nicholasjclark.github.io/ffc/articles
