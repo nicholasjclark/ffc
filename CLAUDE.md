@@ -109,6 +109,10 @@ R CMD INSTALL --preclean --no-multiarch .
 - Use sentence case, avoid ALL CAPS
 - Add `# Reason:` comments for complex logic
 - Keep professional and self-contained
+- **NEVER reference development process, discussions, existing code
+  plans, or implementation notes**
+- Comments should explain **what** and **why**, not development history
+  or meta-information
 
 ## Testing Strategy
 
