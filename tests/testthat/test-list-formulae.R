@@ -110,3 +110,105 @@ test_that("interpret_ffc maintains backward compatibility", {
   expect_true(is.data.frame(result$data))
   expect_identical(result$orig_data, test_data)
 })
+
+test_that("parameter-aware coefficient naming works for list formulae with fts", {
+  # Test data with functional terms
+  test_data <- data.frame(
+    y = rnorm(20), 
+    x = rnorm(20), 
+    time = 1:20
+  )
+  
+  # List formulae with fts terms
+  result <- interpret_ffc(
+    formula = list(y ~ fts(x, k = 3), ~ fts(x, k = 3)),
+    data = test_data,
+    time_var = "time"
+  )
+  
+  # Check that coefficient names include parameter prefixes
+  fts_cols <- grep("^param[0-9]_fts_", names(result$data), value = TRUE)
+  expect_true(length(fts_cols) > 0)
+  
+  # Should have coefficients for both parameters
+  param1_cols <- grep("^param1_", names(result$data), value = TRUE)
+  param2_cols <- grep("^param2_", names(result$data), value = TRUE)
+  
+  expect_true(length(param1_cols) > 0)
+  expect_true(length(param2_cols) > 0)
+  
+  # Parameter prefixes should be different
+  expect_false(any(param1_cols %in% param2_cols))
+})
+
+test_that("single formula fts terms have no parameter prefix", {
+  # Test data with functional terms
+  test_data <- data.frame(
+    y = rnorm(20), 
+    x = rnorm(20), 
+    time = 1:20
+  )
+  
+  # Single formula with fts term
+  result <- interpret_ffc(
+    formula = y ~ fts(x, k = 3),
+    data = test_data,
+    time_var = "time"
+  )
+  
+  # Check that coefficient names do NOT have parameter prefixes
+  fts_cols <- grep("^fts_", names(result$data), value = TRUE)
+  expect_true(length(fts_cols) > 0)
+  
+  # Should NOT have parameter prefixes
+  param_cols <- grep("^param[0-9]_", names(result$data), value = TRUE)
+  expect_equal(length(param_cols), 0)
+})
+
+test_that("mean_only fts terms get parameter prefixes correctly", {
+  # Test data with functional terms
+  test_data <- data.frame(
+    y = rnorm(20), 
+    x = rnorm(20), 
+    time = 1:20
+  )
+  
+  # List formulae with mean_only fts terms
+  result <- interpret_ffc(
+    formula = list(y ~ fts(x, k = 3, mean_only = TRUE), 
+                   ~ fts(x, k = 3, mean_only = TRUE)),
+    data = test_data,
+    time_var = "time"
+  )
+  
+  # Check for mean term parameter prefixes
+  mean_cols <- grep("_mean$", names(result$data), value = TRUE)
+  expect_true(length(mean_cols) > 0)
+  
+  # Mean terms should have parameter prefixes
+  param_mean_cols <- grep("^param[0-9]_.*_mean$", names(result$data), 
+                          value = TRUE)
+  expect_equal(length(param_mean_cols), length(mean_cols))
+})
+
+test_that("extract_parameter_from_basis works correctly", {
+  # Load mgcv for family objects
+  library(mgcv)
+  
+  # Test with distributional family (gaulss)
+  gaulss_family <- gaulss()
+  
+  # Test parameter extraction from prefixed names
+  expect_equal(extract_parameter_from_basis("param1_fts_bs_x", gaulss_family), "location")
+  expect_equal(extract_parameter_from_basis("param2_fts_bs_x", gaulss_family), "scale")
+  
+  # Test single-parameter model fallback
+  gauss_family <- gaussian()
+  expect_equal(extract_parameter_from_basis("fts_bs_x", gauss_family), "location")
+  
+  # Test single-parameter with distributional family
+  expect_equal(extract_parameter_from_basis("fts_bs_x", gaulss_family), "location")
+  
+  # Test fallback for invalid parameter numbers
+  expect_equal(extract_parameter_from_basis("param99_fts_bs_x", gaulss_family), "param99")
+})

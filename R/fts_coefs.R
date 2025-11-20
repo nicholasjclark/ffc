@@ -1,3 +1,33 @@
+#' Extract parameter name from basis variable name
+#'
+#' @param basis_var Character string. Name of the basis variable
+#' @param family mgcv family object to get semantic parameter names
+#' @return Character string with parameter name (mu, sigma, etc.)
+#' @noRd
+extract_parameter_from_basis <- function(basis_var, family) {
+  checkmate::assert_string(basis_var, min.chars = 1)
+  
+  # Standard parameter names: location, scale, shape
+  standard_param_names <- c("location", "scale", "shape")
+  
+  # Check if this has a parameter prefix (paramN_)
+  if (grepl("^param[0-9]+_", basis_var)) {
+    # Extract parameter number
+    param_num <- as.numeric(gsub("^param([0-9]+)_.*", "\\1", basis_var))
+    
+    # Use standard names based on parameter position
+    if (param_num <= length(standard_param_names)) {
+      return(standard_param_names[param_num])
+    }
+    
+    # Fallback for parameters beyond shape
+    return(paste0("param", param_num))
+  } else {
+    # Single-parameter model - always location
+    return("location")
+  }
+}
+
 #' Extract time-varying basis coefficients
 #'
 #' Extract time-varying basis coefficients a fitted \pkg{ffc_gam} model so they can
@@ -114,11 +144,15 @@ fts_coefs.ffc_gam <- function(
         preds[i, ] <- as.vector(lp %*% betas[i, beta_idx])
       }
 
+      # Extract parameter name from basis variable name
+      parameter_name <- extract_parameter_from_basis(by_var, object$family)
+      
       # If summary output is requested, compute mean and standard error
       # across simulations
       if (summary) {
         dat <- tibble::tibble(
           .basis = by_var,
+          .parameter = parameter_name,
           .time = unique_times,
           .estimate = apply(preds, 2, mean),
           .se = apply(preds, 2, function(x) sd(x) / sqrt(length(x))),
@@ -130,6 +164,7 @@ fts_coefs.ffc_gam <- function(
         dat <- purrr::map_dfr(1:times, function(x) {
           repdat <- tibble::tibble(
             .basis = by_var,
+            .parameter = parameter_name,
             .time = unique_times,
             .estimate = preds[x, ],
             .realisation = x,

@@ -95,7 +95,8 @@ interpret_ffc <- function(
               NULL
             },
             newdata = newdata,
-            knots = knots
+            knots = knots,
+            parameter_id = i
           )
           current_gam_init[[j]] <- fts_forms$gam_init
 
@@ -199,7 +200,8 @@ interpret_ffc <- function(
         time_var = time_var,
         gam_init = if (length(gam_init) >= i) gam_init[[i]] else NULL,
         newdata = newdata,
-        knots = knots
+        knots = knots,
+        parameter_id = NULL
       )
       gam_init[[i]] <- fts_forms$gam_init
 
@@ -246,7 +248,8 @@ dyn_to_spline <- function(
     time_var = "time",
     gam_init = NULL,
     newdata = newdata,
-    knots = NULL) {
+    knots = NULL,
+    parameter_id = NULL) {
   # Extract key basis information
   label <- term$label
   time_k <- term$time_k
@@ -316,10 +319,17 @@ dyn_to_spline <- function(
   }
 
   # Get indices of null space functions
-  colnames(X) <- paste0(
+  base_names <- paste0(
     "fts_bs_",
     clean_sm_names(names(coef(gam_init)))
   )
+  
+  # Add parameter prefix for distributional models
+  if (!is.null(parameter_id)) {
+    base_names <- paste0("param", parameter_id, "_", base_names)
+  }
+  
+  colnames(X) <- base_names
 
   if (mean_only) {
     # Ensure a constant basis is included to capture
@@ -330,14 +340,12 @@ dyn_to_spline <- function(
         X,
         matrix(1, nrow = NROW(X), ncol = 1)
       )
-      colnames(X) <- c(
-        orig_names,
-        paste0(
-          label,
-          term_id,
-          "_mean"
-        )
-      )
+      mean_name <- paste0(label, term_id, "_mean")
+      if (!is.null(parameter_id)) {
+        mean_name <- paste0("param", parameter_id, "_", mean_name)
+      }
+      
+      colnames(X) <- c(orig_names, mean_name)
     }
 
     X <- X[, grepl(paste0(
