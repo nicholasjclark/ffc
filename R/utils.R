@@ -98,7 +98,48 @@ all_tsbl_checks <- function(.data) {
 #'   cbind, if FALSE reconstructs cbind() call (default FALSE)
 #' @return Character vector of response variable name(s)
 #' @noRd
+#' Validate and normalize formula input for ffc functions
+#'
+#' Standardizes formula validation for both single and list formulae used
+#' throughout the ffc package. Ensures consistent error messages and validation.
+#'
+#' @param formula_or_list Either a single formula or list of formulae  
+#' @param .var.name Variable name for error messages (default "formula")
+#' @return Normalized input (unchanged if valid)
+#' @noRd
+validate_formula_input <- function(formula_or_list, .var.name = "formula") {
+  if (is.list(formula_or_list)) {
+    checkmate::assert_list(formula_or_list, types = "formula", min.len = 1,
+                          .var.name = .var.name)
+  } else {
+    checkmate::assert_class(formula_or_list, "formula", .var.name = .var.name)
+  }
+  
+  return(formula_or_list)
+}
+
+#' Get primary formula from single or list input
+#'
+#' Extracts the primary (first) formula from either a single formula
+#' or list of formulae. Used when only one formula is needed for processing.
+#'
+#' @param formula_or_list Either a single formula or list of formulae
+#' @return Single formula object
+#' @noRd  
+get_primary_formula <- function(formula_or_list) {
+  validate_formula_input(formula_or_list)
+  
+  if (is.list(formula_or_list)) {
+    return(formula_or_list[[1]])
+  }
+  
+  return(formula_or_list)
+}
+
 extract_response_vars <- function(formula, return_all = FALSE) {
+  # Get primary formula for response extraction
+  formula <- get_primary_formula(formula)
+  
   # Get the left-hand side of formula
   lhs <- rlang::f_lhs(formula)
   

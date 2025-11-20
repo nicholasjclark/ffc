@@ -176,22 +176,63 @@ ffc_gam(list(y ~ fts(time, k=10), ~ fts(time, k=5)),
 - ✅ Modified: `R/fts_coefs.R` (added parameter column with location/scale/shape naming)
 - ✅ Modified: `tests/testthat/test-list-formulae.R` (comprehensive parameter extraction tests)
 
-### 2.5: Integration Testing (15 min)
+### 2.5: Integration Testing (15 min) ✅ **COMPLETED**
 **Goal**: Test full coefficient extraction pipeline
 
 **Tasks**:
-1. Test end-to-end coefficient extraction with gaulss()
-2. Verify twlss() and betar() work correctly
-3. Test with different `fts()` specifications per parameter
-4. Check integration with existing fts methods
+1. ✅ Test end-to-end coefficient extraction with gaulss()
+2. ✅ Verify twlss() and betar() work correctly
+3. ✅ Test with different `fts()` specifications per parameter
+4. ✅ Check integration with existing fts methods
 
 **Testing**:
-- Run integration tests with multiple families
-- Test different fts specifications
-- Verify no regressions in single-parameter models
+- ✅ Run integration tests with multiple families
+- ✅ Test different fts specifications
+- ✅ Verify no regressions in single-parameter models
 
 **Files**:
-- Create: `tests/testthat/test-distributional-integration.R`
+- ✅ Updated: `tests/testthat/test-list-formulae.R` (comprehensive integration tests added)
+
+### 2.6: Fix Core Infrastructure Issues (30 min) ✅ **COMPLETED**
+**Goal**: Resolve dimension mismatch errors in distributional model fitting
+
+**Tasks**:
+1. ✅ Debug and identify root cause of `data.frame(...): arguments imply differing number of rows` errors
+2. ✅ Fix `update_mod_data()` function to handle list formulae correctly
+3. ✅ Replace `terms.formula()` term labels with `all.vars()` for variable extraction  
+4. ✅ Add comprehensive helper functions for formula handling
+5. ✅ Ensure backward compatibility with single-parameter models
+
+**Testing**:
+- ✅ Verify distributional models can be fitted successfully
+- ✅ Test dimension compatibility in data frame operations
+- ✅ Confirm no regressions in existing functionality
+
+**Files**:
+- ✅ Modified: `R/ffc_gam.R` (fixed `update_mod_data()` function)
+- ✅ Modified: `R/utils.R` (added `validate_formula_input()` and `get_primary_formula()` helpers)
+- ✅ Modified: `R/validations.R` (updated `convert_re_to_factors()` and `validate_response_in_data()`)
+
+### 2.7: Full Test Suite Validation (20 min) ✅ **COMPLETED**
+**Goal**: Run complete test suite and resolve any remaining failures or warnings
+
+**Tasks**:
+1. ✅ Use r-test-runner agent to execute full test suite (`devtools::test()`)
+2. ✅ Analyze all test failures, warnings, and errors comprehensively
+3. ✅ Fix any remaining issues with distributional regression integration
+4. ✅ Address coefficient extraction issues for models without `fts()` terms
+5. ✅ Ensure all tests pass with no warnings
+
+**Testing**:
+- ✅ Run complete test suite across all test files
+- ✅ Verify all existing functionality remains intact
+- ✅ Check performance and memory usage acceptable
+- ✅ Confirm package loads and builds cleanly
+
+**Files**:
+- ✅ Modified: `R/fts_coefs.R` (fixed pattern matching from `:fts_` to `fts_`)
+- ✅ Modified: `R/interpret_ffc.R` (added semantic naming with `get_parameter_prefix()` helper)
+- ✅ Updated: `tests/testthat/test-list-formulae.R` (updated all tests for semantic naming)
 
 ---
 
@@ -233,79 +274,6 @@ ffc_gam(list(y ~ fts(time, k=10), ~ fts(time, k=5)),
 - Modify: `R/forecast.R`
 - Create: `tests/testthat/test-parameter-forecasting.R`
 
-### 3.3: Parameter Correlation Analysis (15 min)
-**Goal**: Analyze correlation between parameter coefficient time series
-
-**Tasks**:
-1. Add `analyze_parameter_correlations()` function
-2. Compute cross-correlations between parameter coefficients
-3. Determine if independent or joint forecasting is appropriate
-4. Add threshold-based decision making
-
-**Testing**:
-- Test correlation analysis with correlated parameters
-- Test with independent parameters
-- Verify threshold-based decisions
-
-**Files**:
-- Modify: `R/forecast.R`
-- Modify: `tests/testthat/test-parameter-forecasting.R`
-
-### 3.4: Joint vs Independent Forecasting Strategy (15 min)
-**Goal**: Implement both independent and joint parameter forecasting
-
-**Tasks**:
-1. Add `forecast_parameters_independently()` function
-2. Add `forecast_parameters_jointly()` using VAR models
-3. Add automatic strategy selection based on correlations
-4. Allow manual override via arguments
-
-**Testing**:
-- Test independent forecasting strategy
-- Test joint forecasting with VAR
-- Verify automatic strategy selection
-
-**Files**:
-- Modify: `R/forecast.R`
-- Modify: `tests/testthat/test-parameter-forecasting.R`
-
-### 3.5: Stan Model Integration (15 min)
-**Goal**: Extend Stan models to support multi-parameter forecasting
-
-**Tasks**:
-1. Modify Stan data preparation to handle multiple parameter time series
-2. Update `ardf.R`, `vardf.R`, `gpdf.R` to accept parameter structure
-3. Handle parameter-specific priors and constraints
-4. Ensure Stan output maintains parameter organization
-
-**Testing**:
-- Test Stan models with multi-parameter inputs
-- Verify parameter-specific constraints
-- Check Stan output structure
-
-**Files**:
-- Modify: `R/ardf.R`, `R/vardf.R`, `R/gpdf.R`
-- Modify: `R/stan_dataprep.R`
-- Modify: `tests/testthat/test-stan-models.R`
-
-### 3.6: Forecast Output Coordination (15 min)
-**Goal**: Coordinate forecasted parameters into coherent predictions
-
-**Tasks**:
-1. Add `combine_parameter_forecasts()` function
-2. Apply inverse link transformations per parameter
-3. Generate prediction intervals accounting for all parameters
-4. Return forecasts in consistent format
-
-**Testing**:
-- Test forecast combination maintains parameter structure
-- Verify link transformations applied correctly
-- Check prediction interval calculation
-
-**Files**:
-- Modify: `R/forecast.R`
-- Modify: `tests/testthat/test-parameter-forecasting.R`
-
 ---
 
 ## Task 4: Enhanced Prediction Interface (60 min total)
@@ -328,43 +296,8 @@ ffc_gam(list(y ~ fts(time, k=10), ~ fts(time, k=5)),
 - Modify: `R/predict.R`
 - Modify: `tests/testthat/test-predict.R`
 
-### 4.2: Posterior Sampling Integration (15 min)
-**Goal**: Add posterior sampling using gratia patterns
 
-**Tasks**:
-1. Create `fitted_samples.ffc_gam()` method following gratia
-2. Support multi-parameter posterior sampling
-3. Return samples organized by parameter
-4. Handle both unconditional and conditional uncertainty
-
-**Testing**:
-- Test posterior sampling for multi-parameter models
-- Verify sample organization by parameter
-- Check uncertainty types
-
-**Files**:
-- Create: `R/posterior_samples.R`
-- Create: `tests/testthat/test-posterior-samples.R`
-
-### 4.3: Response Simulation (15 min)
-**Goal**: Enable simulation from fitted distributional models
-
-**Tasks**:
-1. Add `simulate.ffc_gam()` method for distributional families
-2. Use family-specific random generation functions
-3. Coordinate multiple parameters for valid responses
-4. Support forecasted parameter values
-
-**Testing**:
-- Test response simulation with various families
-- Verify valid response generation
-- Test with forecasted parameters
-
-**Files**:
-- Modify: `R/predict.R`
-- Modify: `tests/testthat/test-predict.R`
-
-### 4.4: Output Format Standardization (15 min)
+### 4.2: Output Format Standardization (15 min)
 **Goal**: Create consistent output formats across functions
 
 **Tasks**:

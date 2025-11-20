@@ -237,6 +237,21 @@ interpret_ffc <- function(
   )
 }
 
+#' Convert parameter ID to semantic name
+#' @noRd
+get_parameter_prefix <- function(parameter_id) {
+  if (is.null(parameter_id)) {
+    return(NULL)
+  }
+  
+  semantic_names <- c("location", "scale", "shape")
+  if (parameter_id <= length(semantic_names)) {
+    return(semantic_names[parameter_id])
+  } else {
+    return(paste0("param", parameter_id))
+  }
+}
+
 #' Function to create the individual spline effects for time-varying
 #' coefficients of basis functions
 #' @noRd
@@ -325,8 +340,9 @@ dyn_to_spline <- function(
   )
   
   # Add parameter prefix for distributional models
-  if (!is.null(parameter_id)) {
-    base_names <- paste0("param", parameter_id, "_", base_names)
+  param_prefix <- get_parameter_prefix(parameter_id)
+  if (!is.null(param_prefix)) {
+    base_names <- paste0(param_prefix, "_", base_names)
   }
   
   colnames(X) <- base_names
@@ -341,8 +357,9 @@ dyn_to_spline <- function(
         matrix(1, nrow = NROW(X), ncol = 1)
       )
       mean_name <- paste0(label, term_id, "_mean")
-      if (!is.null(parameter_id)) {
-        mean_name <- paste0("param", parameter_id, "_", mean_name)
+      param_prefix <- get_parameter_prefix(parameter_id)
+      if (!is.null(param_prefix)) {
+        mean_name <- paste0(param_prefix, "_", mean_name)
       }
       
       colnames(X) <- c(orig_names, mean_name)

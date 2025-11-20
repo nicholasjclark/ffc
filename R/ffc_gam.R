@@ -203,7 +203,8 @@ ffc_gam <- function(
   out <- update_mod_data(
     gam_object = out,
     fts_smooths = interpreted$fts_smooths,
-    data = data
+    data = data,
+    time_var = time
   )
 
   # Add appropriate class - special class for distributional models
@@ -220,12 +221,13 @@ ffc_gam <- function(
 update_mod_data <- function(
     gam_object,
     fts_smooths,
-    data) {
+    data,
+    time_var = NULL) {
   # Response variable(s) for omitting NAs in data
   # Use helper function to extract response variables robustly
   resp_terms <- extract_response_vars(gam_object$formula, return_all = TRUE)
   out_name <- resp_terms[1]
-
+  
   # Check that response terms are in the data using centralized validation
   validate_response_in_data(gam_object$formula, data)
 
@@ -250,18 +252,69 @@ update_mod_data <- function(
     )
   )
 
-  # Any offset terms
-  termlabs <- attr(
-    terms.formula(gam_object$formula, keep.order = TRUE),
-    "term.labels"
-  )
+  # Extract actual variable names (not function calls) from formulae
+  if (is.list(gam_object$formula)) {
+    # For list formulae, extract variable names from all formulae
+    all_vars_list <- character(0)
+    for (i in seq_along(gam_object$formula)) {
+      # Use all.vars() to get actual variable names, not function calls
+      formula_vars <- all.vars(gam_object$formula[[i]])
+      # Remove response variables (keep only predictors)
+      has_response <- attr(terms.formula(gam_object$formula[[i]]), "response") == 1
+      if (has_response) {
+        response_vars <- all.vars(gam_object$formula[[i]][[2]])  # LHS
+        predictors <- setdiff(formula_vars, response_vars)
+      } else {
+        predictors <- formula_vars
+      }
+      all_vars_list <- c(all_vars_list, predictors)
+    }
+    all_terms <- c(all_terms, unique(all_vars_list))
+    
+    # Keep original term.labels for offset detection only
+    termlabs <- character(0)
+    for (i in seq_along(gam_object$formula)) {
+      formula_terms <- attr(
+        terms.formula(gam_object$formula[[i]], keep.order = TRUE),
+        "term.labels"
+      )
+      termlabs <- c(termlabs, formula_terms)
+    }
+  } else {
+    # For single formulae, use all.vars() for variable names
+    formula_vars <- all.vars(gam_object$formula)
+    has_response <- attr(terms.formula(gam_object$formula), "response") == 1
+    if (has_response) {
+      response_vars <- all.vars(gam_object$formula[[2]])  # LHS
+      predictors <- setdiff(formula_vars, response_vars)
+    } else {
+      predictors <- formula_vars
+    }
+    all_terms <- c(all_terms, predictors)
+    
+    # Keep original term.labels for offset detection only
+    termlabs <- attr(
+      terms.formula(gam_object$formula, keep.order = TRUE),
+      "term.labels"
+    )
+  }
 
-  # Check for offsets as well
-  off_names <- grep(
-    "offset",
-    rownames(attr(terms.formula(gam_object$formula), "factors")),
-    value = TRUE
-  )
+  # Check for offsets as well - need to check all formulae for distributional models
+  if (is.list(gam_object$formula)) {
+    # For list formulae, check factors from all formulae
+    all_factors <- character(0)
+    for (i in seq_along(gam_object$formula)) {
+      formula_factors <- rownames(attr(terms.formula(gam_object$formula[[i]]), "factors"))
+      all_factors <- c(all_factors, formula_factors)
+    }
+    off_names <- grep("offset", all_factors, value = TRUE)
+  } else {
+    off_names <- grep(
+      "offset",
+      rownames(attr(terms.formula(gam_object$formula), "factors")),
+      value = TRUE
+    )
+  }
   if (length(off_names) > 0L) {
     all_terms <- c(all_terms, strip_offset(off_names))
   }
@@ -271,7 +324,13 @@ update_mod_data <- function(
     all_terms,
     c("NA", colnames(gam_object$model))
   )
+  
 
+  # Add time variable if specified and not already included
+  if (!is.null(time_var) && !time_var %in% colnames(gam_object$model)) {
+    vars_to_add <- c(vars_to_add, time_var)
+  }
+  
   # Check if this is a tsibble; if so, add the index var
   # but only if it's not already in the model
   if (inherits(data, "tbl_ts")) {

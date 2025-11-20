@@ -386,8 +386,19 @@ validate_forecast_newdata <- function(newdata, model) {
 #' @return Modified data frame with character variables converted to factors
 #' @noRd
 convert_re_to_factors <- function(formula, data) {
-  checkmate::assert_class(formula, "formula")
   checkmate::assert_data_frame(data)
+  
+  # Handle list formulae for distributional regression
+  if (is.list(formula)) {
+    checkmate::assert_list(formula, types = "formula", min.len = 1)
+    # Process each formula in the list and apply conversions
+    for (i in seq_along(formula)) {
+      data <- convert_re_to_factors(formula[[i]], data)
+    }
+    return(data)
+  }
+  
+  checkmate::assert_class(formula, "formula")
   
   # Extract term labels from formula with error handling
   terms_obj <- tryCatch(
@@ -486,8 +497,10 @@ convert_re_to_factors <- function(formula, data) {
 #' @return Invisible TRUE if all underlying variables exist, otherwise stops
 #' @noRd
 validate_response_in_data <- function(formula, data) {
-  checkmate::assert_class(formula, "formula")
   checkmate::assert_data_frame(data)
+  
+  # Get primary formula for response validation
+  formula <- get_primary_formula(formula)
   
   # Extract response expressions
   resp_terms <- extract_response_vars(formula, return_all = TRUE)

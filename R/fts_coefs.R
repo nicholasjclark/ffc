@@ -10,7 +10,14 @@ extract_parameter_from_basis <- function(basis_var, family) {
   # Standard parameter names: location, scale, shape
   standard_param_names <- c("location", "scale", "shape")
   
-  # Check if this has a parameter prefix (paramN_)
+  # Check if this has a semantic parameter prefix (location_, scale_, shape_)
+  for (param_name in standard_param_names) {
+    if (grepl(paste0("^", param_name, "_"), basis_var)) {
+      return(param_name)
+    }
+  }
+  
+  # Check if this has a numeric parameter prefix (paramN_)
   if (grepl("^param[0-9]+_", basis_var)) {
     # Extract parameter number
     param_num <- as.numeric(gsub("^param([0-9]+)_.*", "\\1", basis_var))
@@ -22,10 +29,10 @@ extract_parameter_from_basis <- function(basis_var, family) {
     
     # Fallback for parameters beyond shape
     return(paste0("param", param_num))
-  } else {
-    # Single-parameter model - always location
-    return("location")
   }
+  
+  # Single-parameter model - always location
+  return("location")
 }
 
 #' Extract time-varying basis coefficients
@@ -74,12 +81,13 @@ fts_coefs.ffc_gam <- function(
 
     # Time variable
     time_var <- object$time_var
+    checkmate::assert_string(time_var, min.chars = 1)
 
     # Get all unique times within training window, assuming
     # equal time steps
     unique_times <- seq(
-      min(object$model[, time_var]),
-      max(object$model[, time_var])
+      min(object$model[[time_var]]),
+      max(object$model[[time_var]])
     )
 
     # Extract unique index values for data that were provided as
@@ -99,7 +107,7 @@ fts_coefs.ffc_gam <- function(
     )
 
     # fts() smooths
-    fts_idx <- grep(":fts_",
+    fts_idx <- grep("fts_",
       sm_names,
       fixed = TRUE
     )
