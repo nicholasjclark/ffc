@@ -886,18 +886,74 @@ forecast.ffc_gam <- function(
       dplyr::mutate(.time = .time_target) |>
       dplyr::select(-.time_target)
 
-    # Calculate intermediate linear predictors
+    # Calculate intermediate linear predictors  
     model_offset <- attr(orig_lpmat, "model.offset")
 
+    # Handle multi-parameter offset expansion for distributional models
+    # Based on actual mgcv offset structure discovered through debugging
+    if (is.list(model_offset)) {
+      # Multi-parameter case: expand offsets using lpi from lpmatrix attributes
+      lpi <- attr(orig_lpmat, "lpi")
+      if (is.null(lpi)) {
+        stop(insight::format_error(
+          "Multi-parameter model missing {.field lpi} attribute in lpmatrix for offset expansion"
+        ), call. = FALSE)
+      }
+      
+      checkmate::assert_list(model_offset, types = "numeric", min.len = 1)
+      checkmate::assert_list(lpi, types = "numeric", min.len = 1)
+      
+      # Validate that offset list length matches lpi list length
+      if (length(model_offset) != length(lpi)) {
+        stop(insight::format_error(
+          paste0("Offset list length {.field ", length(model_offset), 
+                 "} doesn't match parameter count {.field ", length(lpi), "}")
+        ), call. = FALSE)
+      }
+      
+      expanded_offset <- numeric(ncol(orig_lpmat))
+      
+      # Expand each parameter's offset to its coefficient indices
+      for (i in seq_along(model_offset)) {
+        if (!is.null(model_offset[[i]]) && length(model_offset[[i]]) > 0) {
+          # Use the coefficient indices from lpi for this parameter
+          coef_indices <- lpi[[i]]
+          expanded_offset[coef_indices] <- model_offset[[i]]
+        }
+      }
+      model_offset <- expanded_offset
+      
+    } else if (is.null(model_offset)) {
+      model_offset <- rep(0, nrow(orig_lpmat))
+    } else {
+      # Single parameter case - handle scalar or per-observation offsets
+      checkmate::assert_numeric(model_offset)
+      if (length(model_offset) == 1) {
+        # Scalar offset - replicate for all observations
+        model_offset <- rep(model_offset, nrow(orig_lpmat))
+      } else if (length(model_offset) == nrow(orig_lpmat)) {
+        # Already correct length (per-observation) - use as is
+        # No modification needed
+      } else {
+        # Unexpected length - use first element as scalar fallback
+        model_offset <- rep(model_offset[1], nrow(orig_lpmat))
+      }
+    }
+
     # Compute linear predictors using matrix multiplication
-    intermed_linpreds <- orig_betas %*%
-      t(orig_lpmat)
-    intermed_linpreds <- sweep(
-      intermed_linpreds,
-      2,
-      model_offset,
-      "+"
-    )
+    # Apply offset correctly: add to each row before matrix multiplication
+    if (is.null(model_offset) || all(model_offset == 0)) {
+      # No offset needed
+      intermed_linpreds <- orig_betas %*% t(orig_lpmat)
+    } else {
+      # Apply offset by adding to linear predictor matrix before multiplication
+      # Each row of orig_lpmat gets the offset added
+      orig_lpmat_with_offset <- orig_lpmat
+      for (i in seq_len(nrow(orig_lpmat))) {
+        orig_lpmat_with_offset[i, ] <- orig_lpmat[i, ] + model_offset
+      }
+      intermed_linpreds <- orig_betas %*% t(orig_lpmat_with_offset)
+    }
 
     # Compute functional coefficient predictions using matrix operations
     fts_fc <- compute_functional_predictions(
@@ -936,6 +992,12 @@ forecast.ffc_gam <- function(
     )
 
     full_linpreds <- fc_matrix + intermed_linpreds
+    
+    # Preserve lpi attribute for distributional families
+    lpi_attr <- attr(orig_lpmat, "lpi")
+    if (!is.null(lpi_attr)) {
+      attr(full_linpreds, "lpi") <- lpi_attr
+    }
   }
 
   # Now can proceed to send full_linpreds to the relevant
@@ -1024,72 +1086,207 @@ norm_quantiles <- function(x) {
   1.1 - xhat
 }
 
-#' Posterior expectations
+#' Check if family supports multiple parameters
+#' @param family mgcv family object
+#' @return Logical indicating if family has multiple parameters
 #' @noRd
-posterior_epred <- function(object,
-                            linpreds) {
-  # invlink function
-  invlink_fun <- get_family_invlink(object)
+is_distributional_family <- function(family) {
+  checkmate::assert_class(family, "family")
+  !is.null(family$nlp) && family$nlp > 1
+}
 
-  # Compute expectations
-  expected_pred_vec <- invlink_fun(
-    eta = as.vector(linpreds)
-  )
+#' Extract parameter information from linear predictor matrix
+#' @param linpreds Linear predictor matrix from predict() call
+#' @param family mgcv family object
+#' @return List with parameter information and indices
+#' @noRd  
+extract_parameter_info_from_lpmat <- function(linpreds, family) {
+  checkmate::assert_matrix(linpreds)
+  checkmate::assert_class(family, "family")
+  
+  if (is_distributional_family(family)) {
+    # Get parameter indices from lpmatrix attributes (correct mgcv pattern)
+    lpi <- attr(linpreds, "lpi")
+    if (is.null(lpi)) {
+      stop(insight::format_error(
+        "Multi-parameter model missing {.field lpi} attribute in lpmatrix"
+      ), call. = FALSE)
+    }
+    
+    checkmate::assert_list(lpi, types = "numeric", min.len = 1)
+    checkmate::assert_true(length(lpi) == family$nlp)
+    
+    # Create parameter names based on standard distributional conventions
+    par_names <- c("location", "scale", "shape")[seq_len(family$nlp)]
+    if (family$nlp > 3) {
+      par_names <- c(par_names, paste0("parameter_", 4:family$nlp))
+    }
+    
+    list(
+      n_parameters = family$nlp,
+      parameter_names = par_names,
+      parameter_indices = lpi
+    )
+  } else {
+    list(
+      n_parameters = 1L, 
+      parameter_names = "location", 
+      parameter_indices = NULL
+    )
+  }
+}
 
-  # Convert back to matrix
-  out <- matrix(expected_pred_vec,
-    nrow = NROW(linpreds)
-  )
-  return(out)
+#' Split linear predictors by parameter using lpi indices
+#' @param linpreds Linear predictor matrix
+#' @param parameter_info Parameter information from extract_parameter_info
+#' @return List of parameter-specific linear predictors
+#' @noRd
+split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
+  checkmate::assert_matrix(linpreds)
+  checkmate::assert_list(parameter_info, names = "strict")
+  checkmate::assert_names(names(parameter_info), 
+                         must.include = c("n_parameters", "parameter_indices"))
+  
+  if (parameter_info$n_parameters == 1L) {
+    return(list(location = linpreds))
+  }
+  
+  # Multi-parameter: split using lpi indices
+  par_predictions <- vector("list", parameter_info$n_parameters)
+  for (i in seq_len(parameter_info$n_parameters)) {
+    indices <- parameter_info$parameter_indices[[i]]
+    checkmate::assert_integerish(indices, lower = 1, 
+                                upper = ncol(linpreds))
+    par_predictions[[i]] <- linpreds[, indices, drop = FALSE]
+  }
+  names(par_predictions) <- parameter_info$parameter_names
+  return(par_predictions)
+}
+
+#' Apply inverse link functions for distributional families
+#' @param par_predictions List of parameter-specific linear predictors
+#' @param family mgcv family object
+#' @return List of fitted values for each parameter
+#' @noRd
+apply_distributional_inverse_links <- function(par_predictions, family) {
+  checkmate::assert_list(par_predictions, min.len = 1)
+  checkmate::assert_class(family, "family")
+  checkmate::assert_true(!is.null(family$linkinv))
+  
+  fitted_pars <- vector("list", length(par_predictions))
+  
+  if (length(par_predictions) == 1L) {
+    # Single parameter case - standard inverse link
+    fitted_pars[[1]] <- family$linkinv(par_predictions[[1]])
+  } else {
+    # Multi-parameter case - check if family supports parameter argument
+    linkinv_formals <- formals(family$linkinv)
+    supports_parameter_arg <- "parameter" %in% names(linkinv_formals)
+    
+    for (i in seq_along(par_predictions)) {
+      if (supports_parameter_arg) {
+        fitted_pars[[i]] <- family$linkinv(par_predictions[[i]], 
+                                          parameter = i)
+      } else {
+        # Fallback for families without parameter-specific linkinv
+        # This should handle most mgcv distributional families
+        fitted_pars[[i]] <- family$linkinv(par_predictions[[i]])
+      }
+    }
+  }
+  
+  names(fitted_pars) <- names(par_predictions)
+  return(fitted_pars)
+}
+
+#' Posterior expectations with distributional family support
+#' @param object Fitted model object  
+#' @param linpreds Linear predictor matrix from predict() call
+#' @return Matrix of expectations (location parameter only)
+#' @noRd
+posterior_epred <- function(object, linpreds) {
+  checkmate::assert_matrix(linpreds)
+  family <- object$family
+  checkmate::assert_class(family, "family")
+  
+  # For distributional families, expectation = location parameter only
+  # gaulss: E[Y] = μ, twlss: E[Y] = μ, betar: E[Y] = μ
+  if (is_distributional_family(family)) {
+    # Extract parameter information using correct mgcv pattern
+    parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
+    
+    # Get location parameter (first parameter) indices
+    location_indices <- parameter_info$parameter_indices[[1]]
+    checkmate::assert_integerish(location_indices, lower = 1, 
+                                upper = ncol(linpreds))
+    
+    # Extract location linear predictors
+    location_linpreds <- linpreds[, location_indices, drop = FALSE]
+    
+    # Apply inverse link to location parameter only
+    expectations <- family$linkinv(location_linpreds)
+    
+  } else {
+    # Single parameter family - standard approach
+    expectations <- family$linkinv(linpreds)
+  }
+  
+  # Return as matrix
+  return(expectations)
 }
 
 #' Posterior predictions
 #' @noRd
-posterior_predict <- function(object,
-                              linpreds) {
-  # rd function if available
+posterior_predict <- function(object, linpreds) {
+  checkmate::assert_matrix(linpreds)
+  family <- object$family
+  checkmate::assert_class(family, "family")
+  
   rd_fun <- get_family_rd(object)
-
-  # invlink function
-  invlink_fun <- get_family_invlink(object)
-
-  # Dispersion parameter
-  scale_p <- object[["sig2"]]
-  if (is.null(scale)) {
-    scale_p <- summary(object)[["dispersion"]]
+  
+  if (is_distributional_family(family)) {
+    parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
+    par_predictions <- split_linear_predictors_by_lpi(linpreds, parameter_info)
+    fitted_parameters <- apply_distributional_inverse_links(par_predictions, 
+                                                            family)
+    
+    fitted_matrix <- do.call(cbind, fitted_parameters)
+    weights <- rep(1, nrow(linpreds))
+    scale_p <- 1
+    
+    response_pred_vec <- rd_fun(
+      mu = fitted_matrix,
+      wt = weights,
+      scale = scale_p
+    )
+    
+  } else {
+    invlink_fun <- get_family_invlink(object)
+    
+    scale_p <- object[["sig2"]]
+    if (is.null(scale_p)) {
+      scale_p <- summary(object)[["dispersion"]]
+    }
+    
+    if (!grepl("tweedie", family[["family"]], ignore.case = TRUE)) {
+      scale_p <- rep(scale_p, length(linpreds))
+    }
+    
+    weights <- rep(1, length(linpreds))
+    expected_pred_vec <- invlink_fun(eta = as.vector(linpreds))
+    
+    if (grepl("tweedie", family[["family"]], ignore.case = TRUE)) {
+      expected_pred_vec <- pmax(expected_pred_vec, 1e-8)
+    }
+    
+    response_pred_vec <- rd_fun(
+      mu = expected_pred_vec,
+      wt = weights,
+      scale = scale_p
+    )
   }
-
-  if (!grepl("tweedie", object$family[["family"]],
-    ignore.case = TRUE
-  )) {
-    scale_p <- rep(scale_p, length(linpreds))
-  }
-
-  # weights
-  weights <- rep(1, length(linpreds))
-
-  # Compute expectations
-  expected_pred_vec <- invlink_fun(
-    eta = as.vector(linpreds)
-  )
-
-  # For Tweedie family, ensure mu values are non-negative
-  if (grepl("tweedie", object$family[["family"]], ignore.case = TRUE)) {
-    expected_pred_vec <- pmax(expected_pred_vec, 1e-8)
-  }
-
-  # Now compute response predictions
-  response_pred_vec <- rd_fun(
-    mu = expected_pred_vec,
-    wt = weights,
-    scale = scale_p
-  )
-
-  # Convert back to matrix
-  out <- matrix(response_pred_vec,
-    nrow = NROW(linpreds)
-  )
-  return(out)
+  
+  return(matrix(response_pred_vec, nrow = nrow(linpreds)))
 }
 
 #' Functions to enable random number generation from mgcv

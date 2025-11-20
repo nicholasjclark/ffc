@@ -323,11 +323,11 @@ compute_functional_predictions <- function(interpreted_data, functional_fc,
     ), call. = FALSE)
   }
   
-  # Extract and validate fts basis columns
-  fts_cols <- grep("^fts_", names(interpreted_data), value = TRUE)
+  # Extract and validate fts basis columns (handles both single and multi-parameter models)
+  fts_cols <- grep("^(location_|scale_|shape_|param[0-9]+_)?fts_", names(interpreted_data), value = TRUE)
   if (length(fts_cols) == 0) {
     stop(insight::format_error(
-      "No functional basis columns found. Expected columns starting with 'fts_'"
+      "No functional basis columns found. Expected columns starting with 'fts_' or parameter-prefixed 'fts_'"
     ), call. = FALSE)
   }
   
