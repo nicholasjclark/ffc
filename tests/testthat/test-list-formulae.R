@@ -201,7 +201,7 @@ test_that("extract_parameter_from_basis works correctly", {
   # Test parameter extraction from semantic prefixed names
   expect_equal(extract_parameter_from_basis("location_fts_bs_x", gaulss_family), "location")
   expect_equal(extract_parameter_from_basis("scale_fts_bs_x", gaulss_family), "scale")
-  
+
   # Test parameter extraction from numeric prefixed names (backward compatibility)
   expect_equal(extract_parameter_from_basis("param1_fts_bs_x", gaulss_family), "location")
   expect_equal(extract_parameter_from_basis("param2_fts_bs_x", gaulss_family), "scale")
@@ -365,10 +365,9 @@ test_that("fts() method integration with distributional models", {
 test_that("gam_init structure normalization in distributional regression", {
   # Test that gam_init objects are properly normalized for prediction calls
   # Ensures consistent list structure across model fitting and prediction phases
-  
+
   library(mgcv)
-  suppressWarnings({
-    
+
     # Create test data for distributional model
     set.seed(1234)
     n <- 35
@@ -377,7 +376,7 @@ test_that("gam_init structure normalization in distributional regression", {
       x = rnorm(n),
       y = rnorm(n, sd = 0.5)
     )
-    
+
     # Fit distributional model with multiple parameters
     model <- ffc_gam(
       list(y ~ fts(x, k = 4), ~ fts(x, k = 3)),
@@ -385,22 +384,24 @@ test_that("gam_init structure normalization in distributional regression", {
       family = gaulss(),
       time = "time"
     )
-    
+
     # Verify model has correct gam_init structure
     expect_s3_class(model, "ffc_gam_multi")
     expect_length(model$gam_init, 2)
     expect_true(all(sapply(model$gam_init, function(x) inherits(x, "gam"))))
-    
+
     # Create newdata for prediction
     newdata <- data.frame(
       time = (n + 1):(n + 3),
       x = rnorm(3)
     )
-    
+
     # Test prediction with newdata
     pred_result <- predict(model, newdata = newdata, type = "response")
-    
+
     # Verify prediction returns valid structure
     expect_true(is.data.frame(pred_result) || is.matrix(pred_result) || is.numeric(pred_result))
-  })
+
+    # Forecast
+    fc <- forecast(model, newdata = newdata)
 })

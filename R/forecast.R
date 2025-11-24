@@ -941,18 +941,58 @@ forecast.ffc_gam <- function(
     }
 
     # Compute linear predictors using matrix multiplication
-    # Apply offset correctly: add to each row before matrix multiplication
-    if (is.null(model_offset) || all(model_offset == 0)) {
-      # No offset needed
-      intermed_linpreds <- orig_betas %*% t(orig_lpmat)
-    } else {
-      # Apply offset by adding to linear predictor matrix before multiplication
-      # Each row of orig_lpmat gets the offset added
-      orig_lpmat_with_offset <- orig_lpmat
-      for (i in seq_len(nrow(orig_lpmat))) {
-        orig_lpmat_with_offset[i, ] <- orig_lpmat[i, ] + model_offset
+    # For distributional families, compute parameter-specific linear predictors
+    lpi_attr <- attr(orig_lpmat, "lpi")
+    
+    if (!is.null(lpi_attr) && is_distributional_family(object$family)) {
+      # Distributional family: compute parameter-specific linear predictors
+      
+      # Apply offset if needed
+      lpmat_to_use <- orig_lpmat
+      if (!is.null(model_offset) && !all(model_offset == 0)) {
+        for (i in seq_len(nrow(orig_lpmat))) {
+          lpmat_to_use[i, ] <- orig_lpmat[i, ] + model_offset
+        }
       }
-      intermed_linpreds <- orig_betas %*% t(orig_lpmat_with_offset)
+      
+      # Compute parameter-specific linear predictors
+      n_params <- object$family$nlp
+      n_time_points <- nrow(lpmat_to_use)
+      n_draws <- nrow(orig_betas)
+      
+      # Result matrix: rows = draws, cols = (n_params * n_time_points)
+      intermed_linpreds <- matrix(0, nrow = n_draws, ncol = n_params * n_time_points)
+      
+      for (p in seq_len(n_params)) {
+        param_coef_indices <- lpi_attr[[p]]
+        
+        # Extract parameter-specific coefficients and design matrix
+        param_betas <- orig_betas[, param_coef_indices, drop = FALSE]
+        param_lpmat <- lpmat_to_use[, param_coef_indices, drop = FALSE]
+        
+        # Compute linear predictors for this parameter  
+        param_linpreds <- param_betas %*% t(param_lpmat)
+        
+        # Store in appropriate columns
+        col_start <- (p - 1) * n_time_points + 1
+        col_end <- p * n_time_points
+        intermed_linpreds[, col_start:col_end] <- param_linpreds
+      }
+      
+    } else {
+      # Single parameter family: use existing computation
+      if (is.null(model_offset) || all(model_offset == 0)) {
+        # No offset needed
+        intermed_linpreds <- orig_betas %*% t(orig_lpmat)
+      } else {
+        # Apply offset by adding to linear predictor matrix before multiplication
+        # Each row of orig_lpmat gets the offset added
+        orig_lpmat_with_offset <- orig_lpmat
+        for (i in seq_len(nrow(orig_lpmat))) {
+          orig_lpmat_with_offset[i, ] <- orig_lpmat[i, ] + model_offset
+        }
+        intermed_linpreds <- orig_betas %*% t(orig_lpmat_with_offset)
+      }
     }
 
     # Compute functional coefficient predictions using matrix operations
@@ -975,28 +1015,104 @@ forecast.ffc_gam <- function(
       stop("Wrong dimensions in forecast coefs; need to check on this")
     }
 
-    # If dimensions correct, take rowsums for each draw
-    # Preserve original row order by tracking row indices before computation
+    # If dimensions correct, compute parameter-specific functional predictions
+    # For distributional families, need to separate by parameter
     original_row_indices <- fts_fc$.row
-    fc_linpreds <- fts_fc |>
-      dplyr::select(-c(.draw, .row)) |>
-      rowSums()
-    # Add the draw-specific row predictions to the
-    # intermediate prediction matrix
     unique_draws <- unique(fts_fc$.draw)
+    
+    # Input validation
+    checkmate::assert_data_frame(fts_fc, min.rows = 1)
+    checkmate::assert_true(all(c(".draw", ".row") %in% names(fts_fc)))
+    
+    if (is_distributional_family(object$family)) {
+      # Parameter-specific functional coefficient computation
+      n_params <- object$family$nlp
+      n_time_points <- length(unique(original_row_indices))
+      n_draws <- length(unique_draws)
+      
+      # Validation
+      checkmate::assert_count(n_params, positive = TRUE)
+      checkmate::assert_count(n_time_points, positive = TRUE)
+      checkmate::assert_count(n_draws, positive = TRUE)
+      
+      # Initialize parameter-specific fc_matrix: draws × (params * time_points)
+      fc_matrix <- matrix(0, nrow = n_draws, ncol = n_params * n_time_points)
+      
+      # Parameter names for column identification
+      param_names <- c("location", "scale", "shape")
+      
+      for (p in seq_len(n_params)) {
+        param_name <- param_names[p]
+        
+        # Select columns for this parameter using established pattern
+        param_cols <- grep(paste0("^", param_name, "_fts_"), names(fts_fc), 
+                          value = TRUE)
+        
+        # Validation: ensure parameter columns exist
+        if (length(param_cols) == 0) {
+          stop(insight::format_error(
+            paste0("No functional coefficient columns found for parameter ", 
+                   "{.field ", param_name, "}. Expected columns matching ", 
+                   "pattern {.field ", param_name, "_fts_*}")
+          ), call. = FALSE)
+        }
+        
+        # Compute rowsums for this parameter only
+        param_fc_data <- fts_fc |>
+          dplyr::select(dplyr::all_of(c(param_cols, ".draw", ".row")))
+        
+        param_fc_linpreds <- param_fc_data |>
+          dplyr::select(-c(.draw, .row)) |>
+          rowSums()
+        
+        # Reshape to matrix form for this parameter
+        param_fc_matrix <- optimized_fc_matrix_reshape(
+          fc_linpreds = param_fc_linpreds,
+          draw_ids = param_fc_data$.draw,
+          unique_draws = unique_draws
+        )
+        
+        # Validation: ensure matrix dimensions are correct
+        checkmate::assert_matrix(param_fc_matrix, nrows = n_draws, 
+                                ncols = n_time_points)
+        
+        # Store in layout: [param1_times, param2_times, ...]
+        col_start <- (p - 1) * n_time_points + 1
+        col_end <- p * n_time_points
+        fc_matrix[, col_start:col_end] <- param_fc_matrix
+      }
+    } else {
+      # Single parameter: use existing logic unchanged
+      fc_linpreds <- fts_fc |>
+        dplyr::select(-c(.draw, .row)) |>
+        rowSums()
+      
+      fc_matrix <- optimized_fc_matrix_reshape(
+        fc_linpreds = fc_linpreds,
+        draw_ids = fts_fc$.draw,
+        unique_draws = unique_draws
+      )
+    }
 
-    fc_matrix <- optimized_fc_matrix_reshape(
-      fc_linpreds = fc_linpreds,
-      draw_ids = fts_fc$.draw,
-      unique_draws = unique_draws
-    )
-
+    
     full_linpreds <- fc_matrix + intermed_linpreds
     
     # Preserve lpi attribute for distributional families
-    lpi_attr <- attr(orig_lpmat, "lpi")
-    if (!is.null(lpi_attr)) {
-      attr(full_linpreds, "lpi") <- lpi_attr
+    # For distributional families, the lpi structure needs to match the new matrix layout
+    if (is_distributional_family(object$family) && !is.null(attr(orig_lpmat, "lpi"))) {
+      # Reconstruct lpi for the new matrix structure: [param1_times, param2_times, ...]
+      n_params <- object$family$nlp
+      n_time_points <- ncol(full_linpreds) %/% n_params
+      
+      forecast_lpi <- vector("list", n_params)
+      for (p in seq_len(n_params)) {
+        col_start <- (p - 1) * n_time_points + 1
+        col_end <- p * n_time_points
+        forecast_lpi[[p]] <- col_start:col_end
+      }
+      attr(full_linpreds, "lpi") <- forecast_lpi
+    } else if (!is.null(attr(orig_lpmat, "lpi"))) {
+      attr(full_linpreds, "lpi") <- attr(orig_lpmat, "lpi")
     }
   }
 
