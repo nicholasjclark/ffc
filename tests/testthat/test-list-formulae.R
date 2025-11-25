@@ -405,3 +405,104 @@ test_that("gam_init structure normalization in distributional regression", {
     # Forecast
     fc <- forecast(model, newdata = newdata)
 })
+
+# Additional distributional regression test coverage
+test_that("apply_distributional_inverse_links handles missing lpi attribute", {
+  library(mgcv)
+  
+  # Create mock distributional prediction without lpi attribute
+  mock_linpreds <- matrix(rnorm(20), nrow = 10, ncol = 2)
+  gaulss_fam <- gaulss()
+  
+  # Should error when lpi attribute is missing for distributional families
+  expect_error(
+    ffc:::extract_parameter_info_from_lpmat(mock_linpreds, gaulss_fam),
+    "Multi-parameter model missing.*lpi.*attribute"
+  )
+})
+
+test_that("distributional family detection handles edge cases correctly", {
+  library(mgcv)
+  
+  # Test families with exactly 1 parameter (boundary condition)
+  single_param_family <- list(nlp = 1)
+  class(single_param_family) <- "family"
+  expect_false(ffc:::is_distributional_family(single_param_family))
+  
+  # Test families with NULL nlp
+  null_nlp_family <- list(nlp = NULL)
+  class(null_nlp_family) <- "family"
+  expect_false(ffc:::is_distributional_family(null_nlp_family))
+  
+  # Test families with nlp = 0
+  zero_nlp_family <- list(nlp = 0)
+  class(zero_nlp_family) <- "family"
+  expect_false(ffc:::is_distributional_family(zero_nlp_family))
+})
+
+test_that("distributional basis column regex patterns work correctly", {
+  # Test various parameter prefix patterns
+  test_data <- data.frame(
+    y = rnorm(20),
+    x = rnorm(20),
+    time = 1:20,
+    location_fts_bs_x_1 = rnorm(20),
+    scale_fts_bs_x_1 = rnorm(20),
+    shape_fts_bs_x_1 = rnorm(20),
+    param1_fts_bs_x_1 = rnorm(20),  # Backward compatibility
+    param2_fts_bs_x_1 = rnorm(20),
+    regular_column = rnorm(20)
+  )
+  
+  # Test semantic prefix detection
+  location_cols <- grep("^location_fts_", names(test_data), value = TRUE)
+  scale_cols <- grep("^scale_fts_", names(test_data), value = TRUE)
+  shape_cols <- grep("^shape_fts_", names(test_data), value = TRUE)
+  
+  expect_length(location_cols, 1)
+  expect_length(scale_cols, 1) 
+  expect_length(shape_cols, 1)
+  expect_equal(location_cols, "location_fts_bs_x_1")
+  
+  # Test numeric prefix detection (backward compatibility)
+  param_cols <- grep("^param[0-9]+_fts_", names(test_data), value = TRUE)
+  expect_length(param_cols, 2)
+})
+
+test_that("fts_coefs preserves parameter information correctly", {
+  library(mgcv)
+  set.seed(1234)
+  
+  n <- 80
+  test_data <- data.frame(
+    time = 1:n,
+    x = rnorm(n),
+    y = rnorm(n)
+  )
+  
+  model <- ffc_gam(
+    list(y ~ fts(x, k = 4), ~ fts(x, k = 3), ~ 1),
+    data = test_data,
+    family = mgcv::twlss(),
+    time = "time"
+  )
+  
+  # Extract coefficients
+  coefs <- fts_coefs(model, summary = TRUE)
+  
+  # Should have parameter column
+  expect_true(".parameter" %in% names(coefs))
+  
+  # Should have coefficients for location and scale (shape has ~ 1, no fts)
+  unique_params <- unique(coefs$.parameter)
+  expect_true("location" %in% unique_params)
+  expect_true("scale" %in% unique_params)
+  expect_false("shape" %in% unique_params)  # No fts term for shape
+  
+  # Each parameter should have correct number of basis functions
+  location_bases <- unique(coefs[coefs$.parameter == "location", ".basis"])
+  scale_bases <- unique(coefs[coefs$.parameter == "scale", ".basis"])
+  
+  expect_true(length(location_bases) >= 3)  # k=5 minus constraints
+  expect_true(length(scale_bases) >= 2)     # k=4 minus constraints
+})

@@ -960,3 +960,117 @@ test_that("adjust_forecast_uncertainty preserves group structure", {
   expect_true(all(rep_structure$max_rep == times))
   expect_true(all(rep_structure$unique_reps == times))
 })
+
+# Additional distributional forecasting tests
+test_that("distributional forecasting maintains correct matrix dimensions", {
+  library(mgcv)
+  set.seed(1234)
+  
+  n <- 70
+  test_data <- data.frame(
+    time = 1:n,
+    x = rnorm(n),
+    y = rnorm(n, sd = 0.5)
+  )
+  
+  model <- ffc_gam(
+    list(y ~ fts(x, k = 3), ~ fts(x, k = 3)),
+    data = test_data,
+    family = gaulss(),
+    time = "time"
+  )
+  
+  # Create newdata for prediction
+  newdata <- data.frame(time = (n+1):(n+5), x = rnorm(5))
+  
+  # Test that forecast matrix dimensions match expected parameter structure
+  fc_raw <- SW(forecast(model, newdata = newdata, summary = FALSE))
+  
+  # Should be distributional object with correct length
+  expect_true(inherits(fc_raw, "distribution"))
+  expect_equal(length(fc_raw), nrow(newdata))
+  
+  # Test linear predictor matrix structure in prediction
+  pred_lpmat <- predict(model, newdata = newdata, type = "lpmatrix")
+  expect_true(is.matrix(pred_lpmat))
+  
+  # Should have lpi attribute preserved
+  expect_true(!is.null(attr(pred_lpmat, "lpi")))
+  expect_length(attr(pred_lpmat, "lpi"), 2)  # gaulss has 2 parameters
+})
+
+test_that("prediction works consistently across family types", {
+  library(mgcv)
+  set.seed(1234)
+  
+  n <- 60
+  test_data <- data.frame(
+    time = 1:n,
+    x = rnorm(n),
+    y = rnorm(n)
+  )
+  newdata <- data.frame(time = (n+1):(n+3), x = rnorm(3))
+  
+  model_single <- SW(ffc_gam(y ~ fts(x, k = 3), data = test_data, 
+                             family = gaussian(), time = "time"))
+  
+  model_multi <- SW(ffc_gam(list(y ~ fts(x, k = 3), ~ fts(x, k = 3)), 
+                            data = test_data, family = gaulss(), time = "time"))
+  
+  # Both should produce valid predictions
+  pred_single <- predict(model_single, newdata = newdata, type = "response")
+  pred_multi <- predict(model_multi, newdata = newdata, type = "response")
+  
+  expect_true(is.numeric(pred_single))
+  expect_true(is.numeric(pred_multi))
+  expect_equal(length(pred_single), nrow(newdata))
+  expect_equal(length(pred_multi), nrow(newdata))
+  
+  # Both should support forecasting
+  fc_single <- SW(forecast(model_single, newdata = newdata))
+  fc_multi <- SW(forecast(model_multi, newdata = newdata))
+  
+  expect_true(all(c(".estimate", ".error") %in% names(fc_single)))
+  expect_true(all(c(".estimate", ".error") %in% names(fc_multi)))
+})
+
+test_that("forecast matrices preserve distributional lpi structure", {
+  library(mgcv)
+  set.seed(1234)
+  
+  n <- 65
+  test_data <- data.frame(
+    time = 1:n,
+    x = rnorm(n),
+    y = rnorm(n)
+  )
+  
+  model <- ffc_gam(
+    list(y ~ fts(x, k = 3), ~ fts(x, k = 3)), 
+    data = test_data,
+    family = gaulss(),
+    time = "time"
+  )
+  
+  newdata <- data.frame(time = (n+1):(n+3), x = rnorm(3))
+  
+  # Test internal forecast matrix structure
+  # Use summary = FALSE to get matrix output
+  fc_raw <- SW(forecast(model, newdata = newdata, summary = FALSE))
+  
+  # Should maintain parameter structure in distributional object
+  expect_true(inherits(fc_raw, "distribution"))
+  
+  # Test that original lpmatrix structure is preserved
+  orig_lpmat <- predict(model, type = "lpmatrix")
+  new_lpmat <- predict(model, newdata = newdata, type = "lpmatrix")
+  
+  # Both should have lpi attributes
+  expect_true(!is.null(attr(orig_lpmat, "lpi")))
+  expect_true(!is.null(attr(new_lpmat, "lpi")))
+  
+  # lpi structure should be consistent
+  orig_lpi <- attr(orig_lpmat, "lpi")
+  new_lpi <- attr(new_lpmat, "lpi")
+  expect_equal(length(orig_lpi), length(new_lpi))
+})

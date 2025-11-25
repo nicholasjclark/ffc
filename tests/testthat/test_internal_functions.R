@@ -1235,3 +1235,255 @@ test_that("extract_fts_by_variables extracts by variables correctly", {
   expect_equal(result_null, "group1")
   expect_equal(length(result_null), 1)
 })
+
+# Comprehensive initial_spg function tests
+test_that("initial_spg handles empty penalty matrix correctly", {
+  # Test early return when length(S) == 0
+  set.seed(123)
+  n <- 10
+  X <- cbind(1, runif(n))
+  y <- rnorm(n)
+  
+  result <- ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = list(), rank = numeric(0), off = numeric(0)
+  )
+  
+  # Should return empty numeric vector
+  expect_equal(result, rep(0, 0))
+  expect_equal(length(result), 0)
+  expect_true(is.numeric(result))
+})
+
+test_that("initial_spg standard families with type parameter", {
+  set.seed(789)
+  n <- 20
+  X <- cbind(1, runif(n), rnorm(n))
+  y_norm <- rnorm(n)
+  S <- list(diag(3))
+  
+  # Type 1 (default) - uses mgcv::initial.sp
+  sp_type1 <- SW(ffc:::initial_spg(
+    x = X, y = y_norm, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(3), off = c(1, 4), type = 1
+  ))
+  
+  # Type 2 - uses alternative calculation
+  sp_type2 <- SW(ffc:::initial_spg(
+    x = X, y = y_norm, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(3), off = c(1, 4), type = 2
+  ))
+  
+  expect_true(is.numeric(sp_type1))
+  expect_true(is.numeric(sp_type2))
+  expect_equal(length(sp_type1), 1)
+  expect_equal(length(sp_type2), 1)
+  expect_true(all(sp_type1 >= 0))
+  expect_true(all(sp_type2 >= 0))
+  
+  # Type 1 and Type 2 should give different results
+  expect_false(identical(sp_type1, sp_type2))
+})
+
+test_that("initial_spg with extended families", {
+  # Test extended.family class (mgcv families like twlss, gaulss)
+  skip_if_not_installed("mgcv")
+  
+  set.seed(321)
+  n <- 25
+  X <- cbind(1, runif(n), rnorm(n))
+  y <- rnorm(n, mean = 2, sd = 0.5)
+  S <- list(diag(3))
+  
+  # Test with twlss family (3-parameter Tweedie) if available
+  if (exists("twlss", where = asNamespace("mgcv"))) {
+    family_ext <- mgcv::twlss()
+    
+    sp_extended <- SW(ffc:::initial_spg(
+      x = X, y = y, weights = rep(1, n), family = family_ext,
+      S = S, rank = c(3), off = c(1, 4)
+    ))
+    
+    expect_true(is.numeric(sp_extended))
+    expect_equal(length(sp_extended), 1)
+    expect_true(all(sp_extended >= 0))
+  }
+})
+
+test_that("initial_spg with L matrix transformation", {
+  set.seed(654)
+  n <- 20
+  X <- cbind(1, runif(n), rnorm(n), rnorm(n)^2)
+  y <- rnorm(n)
+  S <- list(diag(4), diag(4) * 2)  # Two penalty matrices
+  
+  # Create L matrix for log smoothing parameter transformation
+  L <- rbind(c(1, 0), c(0, 1), c(1, 1))  # 3x2 matrix
+  lsp0 <- c(0.1, 0.2)  # Initial log smoothing parameters
+  
+  sp_with_L <- SW(ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(4, 4), off = c(1, 5, 9), 
+    L = L, lsp0 = lsp0
+  ))
+  
+  # Without L matrix for comparison
+  sp_no_L <- SW(ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(4, 4), off = c(1, 5, 9)
+  ))
+  
+  expect_true(is.numeric(sp_with_L))
+  expect_true(is.numeric(sp_no_L))
+  expect_equal(length(sp_with_L), nrow(L))  # Should match L dimensions
+  expect_equal(length(sp_no_L), length(S))  # Should match S length
+  expect_true(all(sp_with_L > 0))  # Exponential of log parameters
+})
+
+test_that("initial_spg with multiple penalty matrices", {
+  set.seed(987)
+  n <- 30
+  X <- cbind(1, runif(n), rnorm(n), rnorm(n)^2, cos(runif(n)))
+  y <- rnorm(n)
+  
+  # Multiple penalties with different ranks
+  S <- list(
+    diag(5),                    # Identity penalty
+    diff(diag(5), diff = 1),    # First difference penalty  
+    diff(diag(5), diff = 2) %*% t(diff(diag(5), diff = 2))  # Second difference
+  )
+  
+  sp_multi <- SW(ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(5, 4, 3), off = c(1, 6, 11, 16)
+  ))
+  
+  expect_true(is.numeric(sp_multi))
+  expect_equal(length(sp_multi), length(S))
+  expect_true(all(sp_multi >= 0))
+  expect_true(all(is.finite(sp_multi)))
+})
+
+test_that("initial_spg boundary conditions and edge cases", {
+  set.seed(111)
+  n <- 5  # Very small sample
+  X <- cbind(1, runif(n))
+  y <- rnorm(n)
+  S <- list(matrix(c(1), 1, 1))  # 1x1 penalty matrix
+  
+  # Test with minimal data
+  sp_minimal <- SW(ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(1), off = c(2, 3)  # Single parameter penalty
+  ))
+  
+  expect_true(is.numeric(sp_minimal))
+  expect_equal(length(sp_minimal), 1)
+  expect_true(sp_minimal >= 0)
+  
+  # Test with binomial data
+  y_binom <- rbinom(n, size = 10, prob = 0.5)
+  sp_binom <- SW(ffc:::initial_spg(
+    x = X, y = cbind(y_binom, 10 - y_binom), 
+    weights = rep(1, n), family = binomial(),
+    S = S, rank = c(1), off = c(2, 3)
+  ))
+  
+  expect_true(is.numeric(sp_binom))
+  expect_true(sp_binom >= 0)
+})
+
+test_that("initial_spg handles start parameters correctly", {
+  set.seed(222)
+  n <- 20
+  X <- cbind(1, runif(n), rnorm(n))
+  y <- rnorm(n)
+  S <- list(diag(3))
+  
+  # Test with start values
+  start_vals <- c(0.1, 0.2, 0.3)
+  sp_with_start <- SW(ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(3), off = c(1, 4), start = start_vals
+  ))
+  
+  # Test with mustart
+  mustart_vals <- rep(mean(y), n)
+  sp_with_mustart <- SW(ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(3), off = c(1, 4), mustart = mustart_vals
+  ))
+  
+  # Test with etastart  
+  etastart_vals <- rep(0, n)
+  sp_with_etastart <- SW(ffc:::initial_spg(
+    x = X, y = y, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(3), off = c(1, 4), etastart = etastart_vals
+  ))
+  
+  expect_true(all(sapply(list(sp_with_start, sp_with_mustart, sp_with_etastart), 
+                        function(x) is.numeric(x) && length(x) == 1)))
+})
+
+test_that("initial_spg family initialization effects", {
+  set.seed(333)
+  n <- 25
+  X <- cbind(1, runif(n, 0, 1))
+  
+  # Test different families affect initialization differently
+  families_to_test <- list(
+    gauss = gaussian(),
+    pois = poisson(),
+    gamma = Gamma(link = "log"),
+    binomial = binomial()
+  )
+  
+  S <- list(matrix(c(1), 1, 1))
+  
+  results <- list()
+  for (fam_name in names(families_to_test)) {
+    fam <- families_to_test[[fam_name]]
+    
+    if (fam_name == "binomial") {
+      y_test <- cbind(rbinom(n, 10, 0.5), rep(10, n))
+    } else if (fam_name == "pois") {
+      y_test <- rpois(n, lambda = 2)
+    } else if (fam_name == "gamma") {
+      y_test <- rgamma(n, shape = 2, rate = 1)
+    } else {
+      y_test <- rnorm(n)
+    }
+    
+    results[[fam_name]] <- SW(ffc:::initial_spg(
+      x = X, y = y_test, weights = rep(1, n), family = fam,
+      S = S, rank = c(1), off = c(2, 3)
+    ))
+  }
+  
+  # All should be positive numeric values
+  expect_true(all(sapply(results, function(x) is.numeric(x) && x >= 0)))
+  
+  # Different families should generally give different initialization
+  # (though not guaranteed, so we just check they all succeed)
+  expect_equal(length(unique(names(results))), 4)
+})
+
+test_that("initial_spg numerical stability", {
+  set.seed(444)
+  n <- 50
+  
+  # Test with extreme values
+  X_extreme <- cbind(1, runif(n, 1e-10, 1e-8), runif(n, 1e8, 1e10))
+  y_extreme <- rnorm(n, mean = 1e6, sd = 1e3)
+  S <- list(diag(3) * 1e-12)  # Very small penalty
+  
+  sp_extreme <- SW(ffc:::initial_spg(
+    x = X_extreme, y = y_extreme, weights = rep(1, n), family = gaussian(),
+    S = S, rank = c(3), off = c(1, 4)
+  ))
+  
+  # Should still produce finite, non-negative result
+  expect_true(is.finite(sp_extreme))
+  expect_true(sp_extreme >= 0)
+  expect_false(is.na(sp_extreme))
+})

@@ -30,6 +30,7 @@ utils::globalVariables(
     "fc_horizon",
     "times",
     ".sim_rw",
-    "tail_mean"
+    "tail_mean",
+    ".time_target"
   )
 )

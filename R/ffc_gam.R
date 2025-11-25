@@ -192,7 +192,92 @@ ffc_gam <- function(
     na.action = "na.omit",
     ...
   )
-  out <- do.call(engine, fit_args)
+  # Wrap mgcv fitting with intelligent error handling
+  out <- tryCatch({
+    do.call(engine, fit_args)
+  }, error = function(e) {
+    
+    # Extract diagnostic information
+    n_obs <- nrow(interpreted$data)
+    family_info <- if (is.function(family)) family()$family else family$family
+    engine_title <- paste0(toupper(substring(engine, 1, 1)), substring(engine, 2))
+    
+    # Detect QR decomposition errors
+    if (grepl("qr.*y.*same number of rows|arguments imply differing number of rows", 
+              e$message, ignore.case = TRUE)) {
+      
+      stop(insight::format_error(c(
+        "Model fitting failed due to matrix dimension mismatch.",
+        "x" = paste("mgcv error:", e$message),
+        "",
+        "This typically occurs with distributional families when:",
+        "*" = "Model complexity is too high for the available data",
+        "*" = "Sample size is insufficient for the chosen family",
+        "*" = "Formula specification doesn't match family requirements",
+        "",
+        "Current setup:",
+        "!" = paste("Family:", family_info),
+        "!" = paste("Sample size:", n_obs, "observations"), 
+        "!" = paste("Engine:", engine),
+        "",
+        "Solutions to try:",
+        "1" = "Reduce model complexity: lower k= values in fts() and s() terms",
+        "2" = "Increase sample size: collect more data if possible",
+        "3" = paste("Use simpler family: try gaussian() instead of", family_info),
+        "4" = "Check data quality: remove outliers or perfect correlations",
+        "5" = "For distributional families: ensure n >= 50 observations"
+      )), call. = FALSE)
+    }
+    
+    # Detect smoothing parameter initialization errors
+    if (grepl("initial.*sp|pen\\.reg|smoothing.*parameter", 
+              e$message, ignore.case = TRUE)) {
+      stop(insight::format_error(c(
+        "Smoothing parameter initialization failed.",
+        "x" = paste("mgcv error:", e$message),
+        "",
+        "This is often caused by:",
+        "*" = "Overly complex smooth terms for the available data",
+        "*" = "Numerical instability in penalty matrix calculations", 
+        "*" = "Insufficient data for distributional family estimation",
+        "",
+        "Solutions:",
+        "1" = "Reduce smooth complexity: use smaller k= values",
+        "2" = "Try fixed smoothing parameters: add sp= argument",
+        "3" = "Use bam() engine instead of gam() for large datasets",
+        "4" = "For distributional families: try gaussian() first"
+      )), call. = FALSE)
+    }
+    
+    # Detect general mgcv fitting failures  
+    if (grepl("gam|bam", e$message, ignore.case = TRUE)) {
+      stop(insight::format_error(c(
+        paste(engine_title, "model fitting failed."),
+        "x" = paste("mgcv error:", e$message),
+        "",
+        "General troubleshooting:",
+        ">" = "Check that all variables exist in your data",
+        ">" = "Ensure sufficient data for model complexity", 
+        ">" = "Try simpler model structure or different family",
+        ">" = "For distributional families, consider using gaussian() first"
+      )), call. = FALSE)
+    }
+    
+    # If we don't recognize the error, provide general guidance
+    stop(insight::format_error(c(
+      "Model fitting failed with an unrecognized error.",
+      "x" = paste("mgcv error:", e$message),
+      "",
+      "Debugging steps:",
+      "1" = "Check data for missing values, outliers, or correlations",
+      "2" = "Try simpler model structure (fewer terms, smaller k= values)",
+      "3" = "For distributional families: try gaussian() family first",
+      "4" = "Increase sample size if possible",
+      "",
+      "If the error persists, this may be a limitation of mgcv with your",
+      "specific data/model combination. Consider alternative approaches."
+    )), call. = FALSE)
+  })
 
   # Update the object and return
   out$call <- orig_call
