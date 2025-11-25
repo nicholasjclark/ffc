@@ -98,15 +98,6 @@ all_tsbl_checks <- function(.data) {
 #'   cbind, if FALSE reconstructs cbind() call (default FALSE)
 #' @return Character vector of response variable name(s)
 #' @noRd
-#' Validate and normalize formula input for ffc functions
-#'
-#' Standardizes formula validation for both single and list formulae used
-#' throughout the ffc package. Ensures consistent error messages and validation.
-#'
-#' @param formula_or_list Either a single formula or list of formulae  
-#' @param .var.name Variable name for error messages (default "formula")
-#' @return Normalized input (unchanged if valid)
-#' @noRd
 validate_formula_input <- function(formula_or_list, .var.name = "formula") {
   if (is.list(formula_or_list)) {
     checkmate::assert_list(formula_or_list, types = "formula", min.len = 1,

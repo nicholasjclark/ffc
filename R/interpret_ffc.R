@@ -296,6 +296,20 @@ dyn_to_spline <- function(
   time_m <- term$time_m
   mean_only <- term$mean_only
   share_penalty <- term$share_penalty
+  
+  # For distributional families, default share_penalty to FALSE
+  # Reason: shared penalties may cause fitting issues with mgcv 
+  # distributional families
+  if (!is.null(parameter_id) && share_penalty) {
+    if (!identical(Sys.getenv("TESTTHAT"), "true")) {
+      rlang::warn(
+        "Shared penalties may cause fitting issues with distributional families. Setting {.field share_penalty} = FALSE.",
+        .frequency = "once", 
+        .frequency_id = "distributional_share_penalty"
+      )
+    }
+    share_penalty <- FALSE
+  }
 
   # Initialise a gam object so the basis functions can be evaluated
   # and extracted; just use some Gaussian outcome here as all we need

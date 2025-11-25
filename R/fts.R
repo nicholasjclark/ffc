@@ -32,8 +32,10 @@
 #'  Only some smooth classes use this. The `"ps"` class can use a `2` item `array`
 #'  giving the basis and penalty order separately.
 #' @param share_penalty `logical` specifying whether the time-varying coefficient smooths for
-#' this term should all share a smoothing penalty. Defaults to `TRUE`, but changing to `FALSE`
-#' will give more flexibility to capture time-varying functions.
+#' this term should all share a smoothing penalty. Defaults to `TRUE` for single-parameter
+#' families, but automatically set to `FALSE` for distributional families (list formulae)
+#' to prevent mgcv fitting issues. Changing to `FALSE` gives more flexibility to capture 
+#' time-varying functions.
 #' @param by a `factor` variable of the same dimension as each covariate, used to create
 #'  a replicate of the smooth for each factor level.
 #' @rdname fts

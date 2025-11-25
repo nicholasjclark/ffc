@@ -71,8 +71,10 @@ Only some smooth classes use this. The \code{"ps"} class can use a \code{2} item
 giving the basis and penalty order separately.}
 
 \item{share_penalty}{\code{logical} specifying whether the time-varying coefficient smooths for
-this term should all share a smoothing penalty. Defaults to \code{TRUE}, but changing to \code{FALSE}
-will give more flexibility to capture time-varying functions.}
+this term should all share a smoothing penalty. Defaults to \code{TRUE} for single-parameter
+families, but automatically set to \code{FALSE} for distributional families (list formulae)
+to prevent mgcv fitting issues. Changing to \code{FALSE} gives more flexibility to capture
+time-varying functions.}
 
 \item{d}{array of marginal basis dimensions. For example if you want a smooth for 3 covariates 
 made up of a tensor product of a 2 dimensional t.p.r.s. basis and a 1-dimensional basis, then 
