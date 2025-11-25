@@ -75,6 +75,17 @@ is a tidy \code{tbl_df / data.frame}
 Forecasting \code{ffc_gam} models
 }
 \details{
+\strong{Distributional Family Support:}
+
+Full support for distributional regression models using mgcv families:
+\itemize{
+\item \strong{gaulss:} Gaussian location-scale (normal distribution with varying mean and variance)
+\item \strong{twlss:} Tweedie location-scale-shape
+}
+
+For distributional families, forecasting operates on all parameters simultaneously,
+producing forecasts that capture both mean and variance dynamics over time.
+
 \strong{Forecasting Methodology:}
 
 This function implements a two-stage forecasting approach for functional regression

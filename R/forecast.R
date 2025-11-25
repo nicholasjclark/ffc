@@ -430,6 +430,17 @@ fable_forecast <- function(
 #'   chains (MCMC chains, default: 4), iter (iterations, default: 500), 
 #'   silent (suppress progress, default: TRUE), cores, adapt_delta, max_treedepth.
 #' @details
+#' \strong{Distributional Family Support:}
+#'
+#' Full support for distributional regression models using mgcv families:
+#' \itemize{
+#'   \item \strong{gaulss:} Gaussian location-scale (normal distribution with varying mean and variance)
+#'   \item \strong{twlss:} Tweedie location-scale-shape 
+#' }
+#' 
+#' For distributional families, forecasting operates on all parameters simultaneously,
+#' producing forecasts that capture both mean and variance dynamics over time.
+#'
 #' \strong{Forecasting Methodology:}
 #'
 #' This function implements a two-stage forecasting approach for functional regression
@@ -1416,17 +1427,47 @@ posterior_epred <- function(object, linpreds) {
   return(expectations)
 }
 
-#' Posterior predictions with optional parameter matrices for distributional families
-#' @param object Fitted model object
-#' @param linpreds Linear predictor matrix from predict() call
-#' @param location_matrix Optional matrix of location parameter values (NULL = extract from linpreds)
-#' @param scale_matrix Optional matrix of scale parameter values (NULL = extract from linpreds)
-#' @param shape_matrix Optional matrix of shape parameter values (NULL = extract from linpreds)
-#' @return Matrix of posterior predictions with nrow = nrow(linpreds)
-#' @details For distributional families, parameter matrices allow direct specification
-#'   of parameter values, bypassing lpi extraction from linpreds. All parameter matrices
-#'   must have same number of rows and columns. When NULL, existing parameter extraction
-#'   logic is used. Parameter matrices are validated for correct dimensions.
+#' Generate posterior predictions with support for distributional families
+#' 
+#' @description
+#' Generates posterior predictions from fitted ffc_gam models, with specialized
+#' support for distributional families (gaulss, twlss, betar, etc.). For
+#' distributional families, supports both traditional linear predictor input
+#' and direct parameter matrix specification for improved performance.
+#'
+#' @param object Fitted ffc_gam model object
+#' @param linpreds Linear predictor matrix from predict() call. For distributional 
+#'   families, this should include lpi attribute for parameter extraction.
+#' @param location_matrix Optional matrix of location parameter fitted values.
+#'   When provided for distributional families, bypasses lpi extraction. Should
+#'   have same dimensions as timepoints x draws. Default NULL.
+#' @param scale_matrix Optional matrix of scale parameter fitted values. 
+#'   Required for 2+ parameter families when location_matrix provided. Default NULL.
+#' @param shape_matrix Optional matrix of shape parameter fitted values.
+#'   Required for 3+ parameter families when location_matrix provided. Default NULL.
+#'   
+#' @return Matrix of posterior predictions with nrow = number of draws, 
+#'   ncol = number of timepoints/observations
+#'   
+#' @details 
+#' ## Parameter Matrix Mode (Distributional Families)
+#' When parameter matrices are provided, they should contain fitted values 
+#' (already inverse-linked) rather than linear predictors. This mode is more
+#' efficient for forecasting as it avoids redundant inverse link computation.
+#' 
+#' ## Standard Mode
+#' When parameter matrices are NULL, the function extracts parameters from 
+#' linpreds using the lpi attribute and applies appropriate inverse link functions.
+#' 
+#' ## Family Support
+#' - Single-parameter families (gaussian, poisson): Uses standard rd functions
+#' - Distributional families (gaulss, twlss, betar): Supports both modes
+#' 
+#' @examples
+#' # Internal function - called by forecast() methods
+#' # For distributional families in forecasting pipeline:
+#' # posterior_predict(model, linpreds, location_matrix, scale_matrix)
+#' 
 #' @noRd
 posterior_predict <- function(object, linpreds, location_matrix = NULL,
                              scale_matrix = NULL, shape_matrix = NULL) {
