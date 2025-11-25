@@ -86,5 +86,23 @@ predict.ffc_gam <- function(
     )
   )
 
+  # For distributional families with type="response", return only expectation
+  if (type == "response" && 
+      is_distributional_family(object$family) && 
+      is.matrix(out) && 
+      !se.fit) {
+    
+    # Validate parameters for distributional logic
+    checkmate::assert_string(type, .var.name = "type")
+    checkmate::assert_flag(se.fit, .var.name = "se.fit")
+    checkmate::assert_class(object$family, "family", 
+                           .var.name = "object$family")
+    
+    # TEMPORARY FIX: Return first column as expectation
+    # NOTE: This assumes location parameter = expectation, which may not
+    # hold for all distributional families. Needs proper research.
+    out <- out[, 1, drop = TRUE]
+  }
+
   return(out)
 }

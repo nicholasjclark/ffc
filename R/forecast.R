@@ -1128,10 +1128,75 @@ forecast.ffc_gam <- function(
   }
 
   if (type == "response") {
-    preds <- posterior_predict(
-      object,
-      full_linpreds
-    )
+    # Distributional families need parameter-specific fitted values
+    if (is_distributional_family(object$family)) {
+      # Validate lpi attribute required for parameter extraction
+      if (is.null(attr(full_linpreds, "lpi"))) {
+        stop(insight::format_error(
+          "Linear predictors missing {.field lpi} attribute 
+          required for distributional families"
+        ), call. = FALSE)
+      }
+      
+      # Extract parameter indices and split linear predictors
+      parameter_info <- extract_parameter_info_from_lpmat(
+        full_linpreds, object$family
+      )
+      par_linpreds <- split_linear_predictors_by_lpi(
+        full_linpreds, parameter_info
+      )
+      
+      # Convert linear predictors to response scale
+      fitted_parameters <- apply_distributional_inverse_links(
+        par_linpreds, object$family
+      )
+      
+      # Prepare validated parameter matrices
+      location_matrix <- fitted_parameters[[1]]
+      checkmate::assert_matrix(location_matrix, 
+                               nrows = nrow(full_linpreds))
+      
+      scale_matrix <- NULL
+      if (length(fitted_parameters) >= 2) {
+        scale_matrix <- fitted_parameters[[2]]
+        checkmate::assert_matrix(scale_matrix, 
+                                nrows = nrow(full_linpreds))
+      }
+      
+      shape_matrix <- NULL
+      if (length(fitted_parameters) >= 3) {
+        shape_matrix <- fitted_parameters[[3]]
+        checkmate::assert_matrix(shape_matrix, 
+                                nrows = nrow(full_linpreds))
+      }
+      
+      # Debug output for forecast pipeline
+      if (Sys.getenv("DEBUG_FFC") == "TRUE") {
+        cat("DEBUG forecast (distributional path):\n")
+        cat("  full_linpreds dim:", dim(full_linpreds), "\n")
+        cat("  par_linpreds[[1]] dim:", dim(par_linpreds[[1]]), "\n")
+        cat("  location_matrix dim:", dim(location_matrix), "\n")
+        if (!is.null(scale_matrix))
+          cat("  scale_matrix dim:", dim(scale_matrix), "\n")
+        cat("  n_parameters:", length(fitted_parameters), "\n")
+      }
+      
+      # Reason: parameter matrices provide fitted values directly,
+      # avoiding redundant inverse link computation in posterior_predict
+      preds <- posterior_predict(
+        object,
+        linpreds = par_linpreds[[1]], # Location linear predictors
+        location_matrix = location_matrix,
+        scale_matrix = scale_matrix,
+        shape_matrix = shape_matrix
+      )
+    } else {
+      # Single parameter families use standard path
+      preds <- posterior_predict(
+        object,
+        full_linpreds
+      )
+    }
   }
 
   # Summarise if necessary
@@ -1156,10 +1221,8 @@ forecast.ffc_gam <- function(
     )
     class(out) <- c("tbl_df", "tbl", "data.frame")
   } else {
-    # Create distribution object with one distribution per observation (row)
-    # Each distribution contains all draws for that observation
     out <- distributional::dist_sample(
-      lapply(seq_len(NROW(preds)), function(i) preds[i, ])
+      lapply(seq_len(NCOL(preds)), function(i) preds[, i])
     )
   }
   
@@ -1446,9 +1509,49 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
       fitted_parameters <- apply_distributional_inverse_links(par_predictions, family)
     }
     
-    fitted_matrix <- do.call(cbind, fitted_parameters)
-    weights <- rep(1, nrow(linpreds))
+    # Matrix reshaping for rd function parameter compatibility
+    # rd expects each row to be one observation with parameters as columns
+    n_draws <- nrow(fitted_parameters[[1]])
+    n_cols <- ncol(fitted_parameters[[1]])
+    n_total <- n_draws * n_cols
+    
+    # Validate computed dimensions
+    checkmate::assert_count(n_draws, positive = TRUE)
+    checkmate::assert_count(n_cols, positive = TRUE)
+    checkmate::assert_count(n_total, positive = TRUE)
+    
+    # Validate fitted_parameters structure
+    checkmate::assert_list(fitted_parameters, min.len = 1)
+    for (i in seq_along(fitted_parameters)) {
+      checkmate::assert_matrix(fitted_parameters[[i]], 
+                               nrows = n_draws, ncols = n_cols,
+                               .var.name = paste0("fitted_parameters[[", i, "]]"))
+    }
+    
+    # Create matrix where each row represents one draw-timepoint combination
+    # Transpose first to ensure correct vectorization order
+    fitted_matrix <- matrix(NA, nrow = n_total, 
+                           ncol = length(fitted_parameters))
+    
+    # Efficient row-wise reshaping preserves draw-timepoint relationships
+    for (i in seq_along(fitted_parameters)) {
+      fitted_matrix[, i] <- as.vector(t(fitted_parameters[[i]]))
+    }
+    
+    # Validate final matrix dimensions
+    checkmate::assert_matrix(fitted_matrix, nrows = n_total, 
+                            ncols = length(fitted_parameters))
+    
+    weights <- rep(1, n_total)
     scale_p <- 1
+    
+    # Debug output for dimension tracking
+    if (Sys.getenv("DEBUG_FFC") == "TRUE") {
+      cat("DEBUG posterior_predict (distributional):\n")
+      cat("  n_draws:", n_draws, "n_cols:", n_cols, "\n")
+      cat("  fitted_matrix dim:", dim(fitted_matrix), "\n")
+      cat("  weights length:", length(weights), "\n")
+    }
     
     response_pred_vec <- rd_fun(
       mu = fitted_matrix,

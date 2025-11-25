@@ -690,6 +690,31 @@ out <- tryCatch({
 5. ✅ **Error Handling**: Intelligent mgcv error interception with actionable guidance
 6. ⚠️ **Production Ready**: 98.2% test success rate, 3 dimension-related failures remaining
 
+## Important Implementation Note: Shared Penalties and Distributional Families
+
+**Issue Discovered (November 25, 2025)**: Shared penalties (`share_penalty = TRUE`) do not work reliably with mgcv distributional families. This causes model fitting errors such as "missing value where TRUE/FALSE needed" in mgcv internals.
+
+**Recommended Solution**:
+1. **Default behavior**: Set `share_penalty = FALSE` by default for distributional families in `fts()` function
+2. **User notification**: Add one-time warning when distributional families are used with `share_penalty = TRUE`
+3. **Documentation**: Update `fts()` documentation to note this limitation
+
+**Implementation Location**: `R/interpret_ffc.R` in `fts()` function processing
+
+**Warning Message Template**:
+```r
+if (is_distributional_family(family) && share_penalty) {
+  rlang::warn(
+    "Shared penalties may cause fitting issues with distributional families. Setting share_penalty = FALSE.",
+    .frequency = "once", 
+    .frequency_id = "distributional_share_penalty"
+  )
+  share_penalty <- FALSE
+}
+```
+
+**Evidence**: Modified test in `test-list-formulae.R` lines 490-492 uses `share_penalty = FALSE` to prevent mgcv fitting errors with `twlss()` family.
+
 ## Relevant Files Modified/Created
 
 ### Core R Files
@@ -708,3 +733,26 @@ out <- tryCatch({
 ### Documentation
 - `vignettes/distributional-regression.Rmd` - Tutorial vignette
 - Updated man pages for all modified functions
+
+---
+
+## KNOWN ISSUES REQUIRING FUTURE RESEARCH
+
+### Expectation Computation for Distributional Families
+**File**: `R/predict.R` lines 101-104
+**Issue**: Current implementation assumes E[Y] = location parameter (first column) for all distributional families
+**Problem**: This assumption may not hold universally across all mgcv distributional families
+
+**Examples of potential issues**:
+- For some families, expectation may depend on multiple parameters
+- Parameter ordering may vary between families
+- Some families may require transformation of parameters to compute expectation
+
+**Required Research**:
+1. Review mgcv documentation for each distributional family's expectation formula
+2. Investigate gratia package's approach to distributional family expectations
+3. Test expectation computation across families: gaulss, twlss, betar, beta, gevlss, etc.
+4. Implement family-specific expectation functions if needed
+
+**Temporary Fix**: Lines 101-104 in `R/predict.R` return `out[, 1, drop = TRUE]` with clear documentation of the assumption
+**Priority**: Medium - affects correctness of prediction expectations for some families
