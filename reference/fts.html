@@ -134,8 +134,10 @@ giving the basis and penalty order separately.</p></dd>
 
 <dt id="arg-share-penalty">share_penalty<a class="anchor" aria-label="anchor" href="#arg-share-penalty"></a></dt>
 <dd><p><code>logical</code> specifying whether the time-varying coefficient smooths for
-this term should all share a smoothing penalty. Defaults to <code>TRUE</code>, but changing to <code>FALSE</code>
-will give more flexibility to capture time-varying functions.</p></dd>
+this term should all share a smoothing penalty. Defaults to <code>TRUE</code> for single-parameter
+families, but automatically set to <code>FALSE</code> for distributional families (list formulae)
+to prevent mgcv fitting issues. Changing to <code>FALSE</code> gives more flexibility to capture
+time-varying functions.</p></dd>
 
 
 <dt id="arg-d">d<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>

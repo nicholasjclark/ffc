@@ -100,8 +100,10 @@ fts(
 - share_penalty:
 
   `logical` specifying whether the time-varying coefficient smooths for
-  this term should all share a smoothing penalty. Defaults to `TRUE`,
-  but changing to `FALSE` will give more flexibility to capture
+  this term should all share a smoothing penalty. Defaults to `TRUE` for
+  single-parameter families, but automatically set to `FALSE` for
+  distributional families (list formulae) to prevent mgcv fitting
+  issues. Changing to `FALSE` gives more flexibility to capture
   time-varying functions.
 
 - d:
