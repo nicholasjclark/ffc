@@ -104,6 +104,19 @@ output is a matrix. If `summary == TRUE`, the output is a tidy
 
 ## Details
 
+**Distributional Family Support:**
+
+Full support for distributional regression models using mgcv families:
+
+- **gaulss:** Gaussian location-scale (normal distribution with varying
+  mean and variance)
+
+- **twlss:** Tweedie location-scale-shape
+
+For distributional families, forecasting operates on all parameters
+simultaneously, producing forecasts that capture both mean and variance
+dynamics over time.
+
 **Forecasting Methodology:**
 
 This function implements a two-stage forecasting approach for functional

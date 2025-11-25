@@ -138,7 +138,12 @@ is a tidy <code>tbl_df / data.frame</code></p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Forecasting Methodology:</strong></p>
+    <p><strong>Distributional Family Support:</strong></p>
+<p>Full support for distributional regression models using mgcv families:</p><ul><li><p><strong>gaulss:</strong> Gaussian location-scale (normal distribution with varying mean and variance)</p></li>
+<li><p><strong>twlss:</strong> Tweedie location-scale-shape</p></li>
+</ul><p>For distributional families, forecasting operates on all parameters simultaneously,
+producing forecasts that capture both mean and variance dynamics over time.</p>
+<p><strong>Forecasting Methodology:</strong></p>
 <p>This function implements a two-stage forecasting approach for functional regression
 models with time-varying coefficients of the form:
 $$y_t = \sum_{j=1}^{J} \beta_j(t) B_j(x) + \epsilon_t$$
