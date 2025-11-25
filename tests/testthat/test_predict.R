@@ -237,3 +237,178 @@ test_that("predict.ffc_gam() integrates correctly with fts basis functions", {
   expect_true(is.matrix(lpmat))
   expect_equal(nrow(lpmat), nrow(test_newdata))
 })
+
+# Additional distributional prediction tests
+test_that("split_linear_predictors_by_lpi validates parameter indices", {
+  library(mgcv)
+  
+  # Create linpreds matrix with 10 columns
+  linpreds <- matrix(rnorm(100), nrow = 10, ncol = 10)
+  
+  # Create invalid parameter info with out-of-bounds indices
+  invalid_param_info <- list(
+    n_parameters = 2L,
+    parameter_indices = list(1:5, 11:15)  # Second set exceeds ncol(linpreds)
+  )
+  
+  # Should error when indices exceed matrix columns
+  expect_error(
+    ffc:::split_linear_predictors_by_lpi(linpreds, invalid_param_info),
+    "Assertion on 'indices' failed"
+  )
+})
+
+test_that("apply_distributional_inverse_links validates parameter count", {
+  library(mgcv)
+  
+  # Create gaulss family (2 parameters)
+  gaulss_fam <- gaulss()
+  
+  # Create parameter predictions with wrong number of parameters
+  wrong_par_predictions <- list(
+    location = matrix(rnorm(10), nrow = 5),
+    scale = matrix(rnorm(10), nrow = 5), 
+    shape = matrix(rnorm(10), nrow = 5)   # gaulss only has 2 parameters
+  )
+  
+  # Should error when parameter count exceeds family nlp
+  expect_error(
+    ffc:::apply_distributional_inverse_links(wrong_par_predictions, gaulss_fam),
+    "par_predictions length vs family parameters"
+  )
+})
+
+test_that("distributional families handle invalid link function calls", {
+  library(mgcv)
+  
+  # Create mock parameter predictions with invalid dimensions
+  invalid_predictions <- list(
+    location = matrix(c(Inf, -Inf, NaN), nrow = 3),  # Invalid values
+    scale = matrix(c(1, 2, 3), nrow = 3)
+  )
+  
+  gaulss_fam <- gaulss()
+  
+  # Should handle infinite/NaN values gracefully
+  result <- SW(ffc:::apply_distributional_inverse_links(invalid_predictions, gaulss_fam))
+  
+  # Result should be a list with same structure
+  expect_true(is.list(result))
+  expect_length(result, 2)
+  
+  # Test with completely empty predictions
+  empty_predictions <- list(
+    location = matrix(numeric(0), nrow = 0),
+    scale = matrix(numeric(0), nrow = 0)
+  )
+  
+  empty_result <- ffc:::apply_distributional_inverse_links(empty_predictions, gaulss_fam)
+  expect_true(is.list(empty_result))
+  expect_length(empty_result, 2)
+  expect_equal(nrow(empty_result[[1]]), 0)
+  expect_equal(nrow(empty_result[[2]]), 0)
+})
+
+# Tests for new posterior_predict parameter matrix functionality
+test_that("posterior_predict validates parameter matrix dimensions", {
+  set.seed(42)
+  n_obs <- 5
+  linpreds <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  
+  # Test wrong row dimensions should error before function execution
+  wrong_matrix <- matrix(rnorm(3 * 2), nrow = 3, ncol = 2)
+  
+  # This should error in validation step (checkmate assertion)
+  expect_error({
+    ffc:::posterior_predict(
+      object = list(family = gaussian()),
+      linpreds = linpreds,
+      location_matrix = wrong_matrix
+    )
+  }, "Must have exactly 5 rows")
+})
+
+test_that("posterior_predict validates parameter matrix column consistency", {
+  set.seed(42)
+  n_obs <- 5
+  linpreds <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  
+  # Test inconsistent column counts between parameter matrices
+  location_matrix <- matrix(rnorm(n_obs * 3), nrow = n_obs, ncol = 3)
+  scale_matrix <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  
+  expect_error({
+    ffc:::posterior_predict(
+      object = list(family = gaussian()),
+      linpreds = linpreds,
+      location_matrix = location_matrix,
+      scale_matrix = scale_matrix
+    )
+  }, "same number of columns")
+})
+
+test_that("posterior_predict validates non-matrix parameter inputs", {
+  set.seed(42)
+  n_obs <- 5
+  linpreds <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  
+  # Non-matrix parameter should error in validation
+  expect_error({
+    ffc:::posterior_predict(
+      object = list(family = gaussian()),
+      linpreds = linpreds,
+      location_matrix = c(1, 2, 3, 4, 5)  # vector not matrix
+    )
+  }, "matrix")
+})
+
+test_that("posterior_predict validates family-specific parameter requirements", {
+  library(mgcv)
+  set.seed(42)
+  n_obs <- 5
+  linpreds <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  
+  # Test gaulss family (nlp=2, requires location + scale)
+  gaulss_family <- gaulss()
+  gaulss_object <- list(family = gaulss_family)
+  
+  location_matrix <- matrix(rnorm(n_obs * 3), nrow = n_obs, ncol = 3)
+  scale_matrix <- matrix(rnorm(n_obs * 3), nrow = n_obs, ncol = 3)
+  shape_matrix <- matrix(rnorm(n_obs * 3), nrow = n_obs, ncol = 3)
+  
+  # Missing scale_matrix should error
+  expect_error({
+    ffc:::posterior_predict(gaulss_object, linpreds,
+                           location_matrix = location_matrix)
+  }, "gaulss.*requires.*scale_matrix")
+  
+  # Extra shape_matrix should error  
+  expect_error({
+    ffc:::posterior_predict(gaulss_object, linpreds,
+                           location_matrix = location_matrix,
+                           scale_matrix = scale_matrix,
+                           shape_matrix = shape_matrix)
+  }, "gaulss.*does not use.*shape_matrix")
+})
+
+test_that("posterior_predict validates twlss family parameter requirements", {
+  library(mgcv)
+  set.seed(42)
+  n_obs <- 5
+  linpreds <- matrix(rnorm(n_obs * 3), nrow = n_obs, ncol = 3)
+  
+  # Test twlss family (nlp=3, requires location + scale + shape)
+  twlss_family <- twlss()
+  twlss_object <- list(family = twlss_family)
+  
+  location_matrix <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  scale_matrix <- matrix(rnorm(n_obs * 2), nrow = n_obs, ncol = 2)
+  
+  # Missing shape_matrix should error
+  expect_error({
+    ffc:::posterior_predict(twlss_object, linpreds,
+                           location_matrix = location_matrix,
+                           scale_matrix = scale_matrix)
+  }, "twlss.*requires.*shape_matrix")
+})
+

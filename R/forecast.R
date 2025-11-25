@@ -1156,8 +1156,10 @@ forecast.ffc_gam <- function(
     )
     class(out) <- c("tbl_df", "tbl", "data.frame")
   } else {
+    # Create distribution object with one distribution per observation (row)
+    # Each distribution contains all draws for that observation
     out <- distributional::dist_sample(
-      lapply(seq_len(NCOL(preds)), function(i) preds[, i])
+      lapply(seq_len(NROW(preds)), function(i) preds[i, ])
     )
   }
   
@@ -1287,27 +1289,27 @@ split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
 apply_distributional_inverse_links <- function(par_predictions, family) {
   checkmate::assert_list(par_predictions, min.len = 1)
   checkmate::assert_class(family, "family")
-  checkmate::assert_true(!is.null(family$linkinv))
   
   fitted_pars <- vector("list", length(par_predictions))
   
-  if (length(par_predictions) == 1L) {
-    # Single parameter case - standard inverse link
-    fitted_pars[[1]] <- family$linkinv(par_predictions[[1]])
-  } else {
-    # Multi-parameter case - check if family supports parameter argument
-    linkinv_formals <- formals(family$linkinv)
-    supports_parameter_arg <- "parameter" %in% names(linkinv_formals)
+  if (!is.null(family$linfo)) {
+    # Distributional families - use parameter-specific inverse links
+    checkmate::assert_true(
+      length(par_predictions) <= family$nlp,
+      .var.name = "par_predictions length vs family parameters"
+    )
     
     for (i in seq_along(par_predictions)) {
-      if (supports_parameter_arg) {
-        fitted_pars[[i]] <- family$linkinv(par_predictions[[i]], 
-                                          parameter = i)
-      } else {
-        # Fallback for families without parameter-specific linkinv
-        # This should handle most mgcv distributional families
-        fitted_pars[[i]] <- family$linkinv(par_predictions[[i]])
-      }
+      # Defensive check for parameter bounds
+      checkmate::assert_true(i <= length(family$linfo))
+      fitted_pars[[i]] <- family$linfo[[i]]$linkinv(par_predictions[[i]])
+    }
+  } else {
+    # Standard families - use single inverse link
+    checkmate::assert_true(!is.null(family$linkinv))
+    
+    for (i in seq_along(par_predictions)) {
+      fitted_pars[[i]] <- family$linkinv(par_predictions[[i]])
     }
   }
   
@@ -1351,20 +1353,98 @@ posterior_epred <- function(object, linpreds) {
   return(expectations)
 }
 
-#' Posterior predictions
+#' Posterior predictions with optional parameter matrices for distributional families
+#' @param object Fitted model object
+#' @param linpreds Linear predictor matrix from predict() call
+#' @param location_matrix Optional matrix of location parameter values (NULL = extract from linpreds)
+#' @param scale_matrix Optional matrix of scale parameter values (NULL = extract from linpreds)
+#' @param shape_matrix Optional matrix of shape parameter values (NULL = extract from linpreds)
+#' @return Matrix of posterior predictions with nrow = nrow(linpreds)
+#' @details For distributional families, parameter matrices allow direct specification
+#'   of parameter values, bypassing lpi extraction from linpreds. All parameter matrices
+#'   must have same number of rows and columns. When NULL, existing parameter extraction
+#'   logic is used. Parameter matrices are validated for correct dimensions.
 #' @noRd
-posterior_predict <- function(object, linpreds) {
+posterior_predict <- function(object, linpreds, location_matrix = NULL,
+                             scale_matrix = NULL, shape_matrix = NULL) {
   checkmate::assert_matrix(linpreds)
   family <- object$family
   checkmate::assert_class(family, "family")
   
+  # Validate parameter matrices if provided
+  if (!is.null(location_matrix)) {
+    checkmate::assert_matrix(location_matrix, nrows = nrow(linpreds))
+  }
+  if (!is.null(scale_matrix)) {
+    checkmate::assert_matrix(scale_matrix, nrows = nrow(linpreds))
+  }
+  if (!is.null(shape_matrix)) {
+    checkmate::assert_matrix(shape_matrix, nrows = nrow(linpreds))
+  }
+  
+  # Validate parameter matrix column consistency
+  param_matrices <- list(location_matrix, scale_matrix, shape_matrix)
+  provided_matrices <- param_matrices[!sapply(param_matrices, is.null)]
+  if (length(provided_matrices) > 1) {
+    ncols <- unique(sapply(provided_matrices, ncol))
+    checkmate::assert_true(length(ncols) == 1,
+      .var.name = "parameter matrices must have same number of columns")
+  }
+  
+  # Family-specific parameter matrix validation for distributional families
+  if (is_distributional_family(family)) {
+    required_params <- family$nlp
+    provided_matrices <- list(location_matrix, scale_matrix, shape_matrix)
+    provided_count <- sum(!sapply(provided_matrices, is.null))
+    
+    # Check if any parameter matrices are provided (mixed mode validation)
+    if (provided_count > 0) {
+      # Get expected parameter names dynamically based on family$nlp
+      expected_params <- c("location_matrix", "scale_matrix", "shape_matrix")[seq_len(required_params)]
+      provided_params <- c("location_matrix", "scale_matrix", "shape_matrix")[!sapply(provided_matrices, is.null)]
+      
+      # Validate required parameters are provided
+      missing_params <- setdiff(expected_params, provided_params)
+      if (length(missing_params) > 0) {
+        stop(insight::format_error(
+          paste0("Family {.field ", family$family, "} requires ",
+                 paste(paste0("{.field ", missing_params, "}"), collapse = ", "), ". ",
+                 "Provide all required parameter matrices or none.")
+        ))
+      }
+      
+      # Validate no extra parameters are provided
+      extra_params <- setdiff(provided_params, expected_params)
+      if (length(extra_params) > 0) {
+        stop(insight::format_error(
+          paste0("Family {.field ", family$family, "} does not use ",
+                 paste(paste0("{.field ", extra_params, "}"), collapse = ", "), ".")
+        ))
+      }
+    }
+  }
+  
   rd_fun <- get_family_rd(object)
   
   if (is_distributional_family(family)) {
-    parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
-    par_predictions <- split_linear_predictors_by_lpi(linpreds, parameter_info)
-    fitted_parameters <- apply_distributional_inverse_links(par_predictions, 
-                                                            family)
+    # Check if parameter matrices are provided
+    param_matrices <- list(location_matrix, scale_matrix, shape_matrix)
+    has_param_matrices <- sum(!sapply(param_matrices, is.null)) > 0
+    
+    if (has_param_matrices) {
+      # Reason: parameter matrices contain fitted values, skip lpi extraction and inverse linking
+      par_names <- c("location", "scale", "shape")[seq_len(family$nlp)]
+      fitted_parameters <- param_matrices[seq_len(family$nlp)]
+      names(fitted_parameters) <- par_names
+      
+      # Validate fitted parameter structure
+      checkmate::assert_true(length(fitted_parameters) == family$nlp)
+    } else {
+      # Reason: extract linear predictors and apply inverse links for standard flow
+      parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
+      par_predictions <- split_linear_predictors_by_lpi(linpreds, parameter_info)
+      fitted_parameters <- apply_distributional_inverse_links(par_predictions, family)
+    }
     
     fitted_matrix <- do.call(cbind, fitted_parameters)
     weights <- rep(1, nrow(linpreds))
