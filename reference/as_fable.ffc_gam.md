@@ -115,18 +115,18 @@ accuracy(fc_fable, test)   # Accuracy metrics
 #> # A tibble: 1 × 13
 #>   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
 #>   <chr>   <chr>    <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ETS Melbour… Vict… Visiti… Test   20.9  82.4  63.6  1.42  7.74   NaN   NaN
+#> 1 FFC_ETS Melbour… Vict… Visiti… Test   21.4  91.6  75.5  1.37  9.12   NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 hilo(fc_fable, level = c(80, 95))  # Prediction intervals
 #> # A tsibble: 5 x 12 [1Q]
 #> # Key:       Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <dbl> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  806. FFC_E…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  742. FFC_E…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  767. FFC_E…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  750. FFC_E…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  847. FFC_E…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  826. FFC_E…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  754. FFC_E…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  763. FFC_E…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  741. FFC_E…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  825. FFC_E…
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
@@ -139,11 +139,11 @@ fc_fable |>
 #> # A tsibble: 5 x 4 [1Q]
 #>   Quarter mean_forecast   q25   q75
 #>     <qtr>         <dbl> <dbl> <dbl>
-#> 1 2016 Q4          806.  749.  854.
-#> 2 2017 Q1          742.  700.  783.
-#> 3 2017 Q2          767.  725.  808.
-#> 4 2017 Q3          750.  705.  795.
-#> 5 2017 Q4          847.  787.  900.
+#> 1 2016 Q4          826.  770.  873.
+#> 2 2017 Q1          754.  715.  801.
+#> 3 2017 Q2          763.  715.  804.
+#> 4 2017 Q3          741.  694.  788.
+#> 5 2017 Q4          825.  777.  881.
 
 # With pre-computed forecasts
 forecasts <- forecast(mod, newdata = test, model = "ETS", summary = FALSE)

@@ -91,10 +91,11 @@ forecast(
 - ...:
 
   Additional arguments for Stan dynamic factor models (ARDF, VARDF,
-  GPDF). Key arguments include: K (number of factors, default: 2), lag
-  (AR order, default: 1), chains (MCMC chains, default: 4), iter
-  (iterations, default: 500), silent (suppress progress, default: TRUE),
-  cores, adapt_delta, max_treedepth.
+  GPDF). Key arguments include: n_samples (number of forecast samples,
+  default: 200), K (number of factors, default: 2), lag (AR order,
+  default: 1), chains (MCMC chains, default: 4), iter (iterations,
+  default: 500), silent (suppress progress, default: TRUE), cores,
+  adapt_delta, max_treedepth.
 
 ## Value
 
@@ -179,13 +180,13 @@ These components are combined additively: \\\text{Stan forecasts} +
   at non-zero levels). Default is ENS ensemble, controlled by
   `mean_model` parameter.
 
-**Important Note on `times` Parameter:**
+**Important Note on `n_samples` Parameter:**
 
-For Stan dynamic factor models, the `times` parameter is automatically
-set to `(iter - warmup) * chains` to ensure dimensional consistency. Any
-user-specified `times` value will be ignored with a warning. For ARIMA
-models, `times` can be specified freely and controls the number of
-posterior draws.
+For Stan dynamic factor models, the `n_samples` parameter is
+automatically set to `(iter - warmup) * chains` to ensure dimensional
+consistency. Any user-specified `n_samples` value will be ignored with a
+warning. For ARIMA models, `n_samples` can be specified freely and
+controls the number of posterior draws.
 
 ## See also
 
@@ -223,4 +224,37 @@ fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 
 # Get raw forecast matrix without summary
 fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
+
+# Distributional regression forecasting example  
+library(mgcv)
+set.seed(123)
+n <- 50
+dist_data <- data.frame(
+  time = 1:n,
+  x = rnorm(n),
+  y = rnorm(n, mean = sin(2 * pi * (1:n) / 10))
+)
+
+# Fit distributional model
+dist_mod <- ffc_gam(
+  list(
+    y ~ fts(x, k = 4),    
+    ~ fts(x, k = 3)       
+  ),
+  family = gaulss(),
+  data = dist_data,
+  time = "time"
+)
+
+# Forecast distributional model
+new_dist_data <- data.frame(time = (n+1):(n+3), x = rnorm(3))
+dist_fc <- forecast(dist_mod, newdata = new_dist_data)
+# Contains prediction intervals accounting for both parameters
+print(dist_fc)
+#> # A tibble: 3 × 6
+#>   .estimate .error .q2.5  .q10  .q90 .q97.5
+#>       <dbl>  <dbl> <dbl> <dbl> <dbl>  <dbl>
+#> 1    0.0690  0.665 -1.84 -1.32  1.39   2.11
+#> 2   -0.0113  0.732 -1.77 -1.10  1.52   2.28
+#> 3    0.135   0.722 -1.81 -1.12  1.41   2.22
 ```

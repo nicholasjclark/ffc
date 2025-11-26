@@ -273,7 +273,7 @@ The functional coefficients reveal the underlying dynamics of the model:
 # Extract coefficients with their time series structure
 func_coefs <- fts_coefs(mod_elnino, summary = FALSE, times = 10)
 print(func_coefs)
-#> # A tibble: 3,630 × 6
+#> # A tibble: 9,075 × 6
 #>    .basis         .parameter .time .estimate .realisation  year
 #>  * <chr>          <chr>      <int>     <dbl>        <int> <int>
 #>  1 fts_year1_mean location    1982    0.991             1  1982
@@ -286,7 +286,7 @@ print(func_coefs)
 #>  8 fts_year1_mean location    1989   -0.701             1  1989
 #>  9 fts_year1_mean location    1990   -0.398             1  1990
 #> 10 fts_year1_mean location    1991    0.235             1  1991
-#> # ℹ 3,620 more rows
+#> # ℹ 9,065 more rows
 
 # Visualize coefficient evolution
 autoplot(func_coefs) +
@@ -570,20 +570,20 @@ fable_forecasts <- as_fable(
 # Evaluate forecast accuracy using fable metrics
 accuracy(fable_forecasts, test_data)
 #> # A tibble: 12 × 11
-#>    .model  month .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE      ACF1
-#>    <chr>   <int> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>     <dbl>
-#>  1 FFC_ENS     1 Test  0.360 1.04  0.963 1.30   3.82   NaN   NaN -0.237   
-#>  2 FFC_ENS     2 Test  0.122 0.947 0.845 0.339  3.17   NaN   NaN -0.302   
-#>  3 FFC_ENS     3 Test  0.449 1.07  0.904 1.52   3.28   NaN   NaN -0.327   
-#>  4 FFC_ENS     4 Test  0.262 0.980 0.880 0.881  3.40   NaN   NaN -0.316   
-#>  5 FFC_ENS     5 Test  0.467 1.19  0.884 1.69   3.44   NaN   NaN -0.152   
-#>  6 FFC_ENS     6 Test  0.207 1.21  0.902 0.638  3.73   NaN   NaN  0.0180  
-#>  7 FFC_ENS     7 Test  0.557 1.44  0.880 2.19   3.69   NaN   NaN  0.000356
-#>  8 FFC_ENS     8 Test  0.369 1.03  0.716 1.53   3.24   NaN   NaN  0.0931  
-#>  9 FFC_ENS     9 Test  0.523 1.31  0.920 2.18   4.20   NaN   NaN  0.111   
-#> 10 FFC_ENS    10 Test  0.643 1.39  1.14  2.66   5.20   NaN   NaN  0.00159 
-#> 11 FFC_ENS    11 Test  0.699 1.44  1.17  2.87   5.18   NaN   NaN -0.0954  
-#> 12 FFC_ENS    12 Test  0.709 1.51  1.39  2.73   5.89   NaN   NaN -0.135
+#>    .model  month .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE    ACF1
+#>    <chr>   <int> <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>   <dbl>
+#>  1 FFC_ENS     1 Test  0.542 1.10  0.943 2.03   3.72   NaN   NaN -0.236 
+#>  2 FFC_ENS     2 Test  0.132 1.00  0.898 0.373  3.37   NaN   NaN -0.310 
+#>  3 FFC_ENS     3 Test  0.488 1.13  0.926 1.66   3.36   NaN   NaN -0.408 
+#>  4 FFC_ENS     4 Test  0.252 0.865 0.749 0.861  2.88   NaN   NaN -0.406 
+#>  5 FFC_ENS     5 Test  0.541 1.23  0.923 1.98   3.59   NaN   NaN -0.201 
+#>  6 FFC_ENS     6 Test  0.261 1.15  0.841 0.881  3.47   NaN   NaN  0.0770
+#>  7 FFC_ENS     7 Test  0.560 1.32  0.840 2.23   3.54   NaN   NaN  0.0548
+#>  8 FFC_ENS     8 Test  0.432 1.13  0.838 1.81   3.82   NaN   NaN  0.140 
+#>  9 FFC_ENS     9 Test  0.714 1.40  0.983 3.10   4.47   NaN   NaN  0.0984
+#> 10 FFC_ENS    10 Test  0.585 1.47  1.14  2.36   5.19   NaN   NaN  0.0282
+#> 11 FFC_ENS    11 Test  0.630 1.39  1.10  2.56   4.85   NaN   NaN -0.0418
+#> 12 FFC_ENS    12 Test  0.845 1.51  1.37  3.33   5.76   NaN   NaN -0.0638
 
 # Create publication-ready plots using fable's autoplot
 fable_forecasts |>

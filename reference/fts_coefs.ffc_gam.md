@@ -9,7 +9,7 @@ can be visualized and / or forecasted ahead
 fts_coefs(object, ...)
 
 # S3 method for class 'ffc_gam'
-fts_coefs(object, summary = TRUE, times = 25, ...)
+fts_coefs(object, summary = TRUE, n_samples = 25, ...)
 ```
 
 ## Arguments
@@ -30,7 +30,7 @@ fts_coefs(object, summary = TRUE, times = 25, ...)
   replicate realisations of each basis coefficient time series will be
   returned
 
-- times:
+- n_samples:
 
   A positive `integer` specifying the number of time series realisation
   paths to simulate from the fitted model. Ignored if `summary = FALSE`

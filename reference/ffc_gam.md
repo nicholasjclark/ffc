@@ -144,8 +144,45 @@ summary(mod)
 #> R-sq.(adj) =  0.972   Deviance explained = 94.7%
 #> fREML =  46558  Scale est. = 1         n = 8282
 
+# Distributional regression with gaulss() family
+# Simulated data with time-varying location and scale
+library(mgcv)
+#> Loading required package: nlme
+#> 
+#> Attaching package: ‘nlme’
+#> The following object is masked from ‘package:dplyr’:
+#> 
+#>     collapse
+#> This is mgcv 1.9-3. For overview type 'help("mgcv-package")'.
+set.seed(1234)
+n <- 50
+sim_data <- data.frame(
+  time = 1:n,
+  x = rnorm(n),
+  y = rnorm(n, mean = sin(2 * pi * (1:n) / 20), 
+            sd = 0.5 + 0.3 * cos(2 * pi * (1:n) / 15))
+)
+
+# Fit distributional model with time-varying parameters
+dist_mod <- ffc_gam(
+  list(
+    y ~ fts(x, k = 5),      # Location parameter
+    ~ fts(x, k = 3)         # Scale parameter  
+  ),
+  family = gaulss(),
+  data = sim_data,
+  time = "time"
+)
+#> Warning: Shared penalties may cause fitting issues with distributional families. Setting {.field share_penalty} = FALSE.
+#> This warning is displayed once per session.
+
+# Extract parameter-specific coefficients
+coefs <- fts_coefs(dist_mod)
+print(unique(coefs$.parameter))  # Shows "location" and "scale"
+#> [1] "location" "scale"   
+
 # Extract and visualize time-varying coefficients
-coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+coefs <- fts_coefs(mod, summary = FALSE, n_samples = 5)
 autoplot(coefs)
 
 
@@ -165,10 +202,10 @@ head(mortality_fc)
 #> # A tibble: 6 × 6
 #>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
 #>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-#> 1  0.00117  0.00112 0.00110  0.00112  0.00123  0.00126 
-#> 2  0.00104  0.00125 0.000982 0.00100  0.00109  0.00112 
-#> 3  0.000928 0.00136 0.000877 0.000895 0.000968 0.000990
-#> 4  0.000829 0.00146 0.000784 0.000799 0.000862 0.000878
-#> 5  0.000742 0.00150 0.000703 0.000718 0.000769 0.000782
-#> 6  0.000665 0.00165 0.000633 0.000646 0.000691 0.000700
+#> 1  0.00115  0.00119 0.000997 0.00104  0.00130  0.00138 
+#> 2  0.00102  0.00132 0.000883 0.000936 0.00115  0.00120 
+#> 3  0.000904 0.00147 0.000759 0.000822 0.00105  0.00111 
+#> 4  0.000804 0.00152 0.000694 0.000736 0.000913 0.00104 
+#> 5  0.000714 0.00160 0.000616 0.000658 0.000823 0.000894
+#> 6  0.000638 0.00168 0.000545 0.000578 0.000728 0.000812
 ```

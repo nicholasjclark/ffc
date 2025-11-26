@@ -381,7 +381,7 @@ functional_coefs <- fts_coefs(
   times = 10
 )
 functional_coefs
-#> # A tibble: 7,790 × 6
+#> # A tibble: 19,475 × 6
 #>    .basis         .parameter .time .estimate .realisation  year
 #>  * <chr>          <chr>      <int>     <dbl>        <int> <int>
 #>  1 fts_year1_mean location    1980     0.356            1  1980
@@ -394,7 +394,7 @@ functional_coefs
 #>  8 fts_year1_mean location    1987     0.247            1  1987
 #>  9 fts_year1_mean location    1988     0.234            1  1988
 #> 10 fts_year1_mean location    1989     0.265            1  1989
-#> # ℹ 7,780 more rows
+#> # ℹ 19,465 more rows
 ```
 
 ### Visualizing coefficient evolution
@@ -434,21 +434,21 @@ functional_fc <- forecast(
   model = "ARIMA"
 )
 functional_fc
-#> # A tsibble: 9,500 x 6 [1Y]
-#> # Key:       .basis, .realisation, .model, .rep [1,900]
+#> # A tsibble: 59,375 x 6 [1Y]
+#> # Key:       .basis, .realisation, .model, .rep [11,875]
 #>    .basis                     .realisation .model  year .rep   .sim
 #>    <chr>                             <int> <chr>  <dbl> <chr> <dbl>
-#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      1.99
-#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      2.01
-#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      2.05
-#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      2.10
-#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      2.14
+#>  1 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 1      1.96
+#>  2 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 1      1.92
+#>  3 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 1      1.86
+#>  4 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 1      1.81
+#>  5 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 1      1.78
 #>  6 fts_bs_s_age_bysexfemale_1            1 ARIMA   2021 10     1.96
-#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     1.92
-#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     1.85
-#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     1.80
-#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     1.79
-#> # ℹ 9,490 more rows
+#>  7 fts_bs_s_age_bysexfemale_1            1 ARIMA   2022 10     1.93
+#>  8 fts_bs_s_age_bysexfemale_1            1 ARIMA   2023 10     1.88
+#>  9 fts_bs_s_age_bysexfemale_1            1 ARIMA   2024 10     1.86
+#> 10 fts_bs_s_age_bysexfemale_1            1 ARIMA   2025 10     1.86
+#> # ℹ 59,365 more rows
 ```
 
 The forecast includes uncertainty in both the time series models and the
@@ -486,12 +486,12 @@ head(mortality_forecasts)
 #> # A tibble: 6 × 6
 #>   .estimate  .error    .q2.5     .q10     .q90   .q97.5
 #>       <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-#> 1  0.00177  0.00168 0.00153  0.00160  0.00197  0.00205 
-#> 2  0.00113  0.00111 0.000974 0.00103  0.00124  0.00129 
-#> 3  0.000723 0.00139 0.000623 0.000663 0.000791 0.000821
-#> 4  0.000465 0.00200 0.000404 0.000428 0.000510 0.000529
-#> 5  0.000304 0.00187 0.000267 0.000281 0.000336 0.000347
-#> 6  0.000206 0.00153 0.000179 0.000189 0.000227 0.000238
+#> 1  0.00167  0.00161 0.00107  0.00130  0.00236  0.00318 
+#> 2  0.00105  0.00109 0.000683 0.000776 0.00125  0.00204 
+#> 3  0.000665 0.00142 0.000431 0.000512 0.000788 0.00104 
+#> 4  0.000446 0.00226 0.000285 0.000358 0.000558 0.000747
+#> 5  0.000285 0.00232 0.000190 0.000216 0.000360 0.000428
+#> 6  0.000194 0.00141 0.000113 0.000144 0.000241 0.000330
 
 # Plot forecasted mortality rates, together with uncertainties
 ggplot(mortality_forecasts |>

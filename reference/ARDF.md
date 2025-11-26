@@ -112,6 +112,6 @@ mod <- ffc_gam(
 # Step 2: Use ARDF for forecasting functional coefficients
 fc <- forecast(mod, newdata = test_data, model = "ARDF",
                chains = 1, iter = 300)
-#> Warning: For Stan models, setting times = 150 to match posterior samples. Requested times = 200 would cause dimension mismatch.
+#> Warning: For Stan models, setting n_samples = 150 to match posterior samples. Requested n_samples = 200 would cause dimension mismatch.
 #> This warning is displayed once per session.
 ```

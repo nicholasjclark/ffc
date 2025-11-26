@@ -149,7 +149,7 @@ Default is <code>TRUE</code>. When <code>FALSE</code>, shows progress approximat
 <span class="r-in"><span><span class="co"># Step 2: Use ARDF for forecasting functional coefficients</span></span></span>
 <span class="r-in"><span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">test_data</span>, model <span class="op">=</span> <span class="st">"ARDF"</span>,</span></span>
 <span class="r-in"><span>               chains <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>For Stan models, setting times = 150 to match posterior samples. Requested times = 200 would cause dimension mismatch.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>For Stan models, setting n_samples = 150 to match posterior samples. Requested n_samples = 200 would cause dimension mismatch.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">This warning is displayed once per session.</span></span>
 </code></pre></div>
     </div>

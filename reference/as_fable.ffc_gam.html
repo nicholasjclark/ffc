@@ -153,18 +153,18 @@ formatted <code>fable</code> x that can be used with <code>fabletools</code> fun
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 13</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> FFC_ETS Melbour… Vict… Visiti… Test   20.9  82.4  63.6  1.42  7.74   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> FFC_ETS Melbour… Vict… Visiti… Test   21.4  91.6  75.5  1.37  9.12   <span style="color: #BB0000;">NaN</span>   <span style="color: #BB0000;">NaN</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: ACF1 &lt;dbl&gt;</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://pkg.mitchelloharawild.com/distributional/reference/hilo.html" class="external-link">hilo</a></span><span class="op">(</span><span class="va">fc_fable</span>, level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">95</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Prediction intervals</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tsibble: 5 x 12 [1Q]</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Key:       Region, State, Purpose [1]</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;qtr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dist&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  806. FFC_E…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  742. FFC_E…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  767. FFC_E…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  750. FFC_E…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  847. FFC_E…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  826. FFC_E…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  754. FFC_E…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  763. FFC_E…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  741. FFC_E…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  825. FFC_E…</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: `80%` &lt;hilo&gt;, `95%` &lt;hilo&gt;</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Distribution summaries</span></span></span>
@@ -177,11 +177,11 @@ formatted <code>fable</code> x that can be used with <code>fabletools</code> fun
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tsibble: 5 x 4 [1Q]</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Quarter mean_forecast   q25   q75</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;qtr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 2016 Q4          806.  749.  854.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 2017 Q1          742.  700.  783.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2017 Q2          767.  725.  808.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2017 Q3          750.  705.  795.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 2017 Q4          847.  787.  900.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 2016 Q4          826.  770.  873.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 2017 Q1          754.  715.  801.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2017 Q2          763.  715.  804.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2017 Q3          741.  694.  788.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 2017 Q4          825.  777.  881.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With pre-computed forecasts</span></span></span>
 <span class="r-in"><span><span class="va">forecasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span><span class="va">mod</span>, newdata <span class="op">=</span> <span class="va">test</span>, model <span class="op">=</span> <span class="st">"ETS"</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
