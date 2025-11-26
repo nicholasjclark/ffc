@@ -19,7 +19,7 @@
 #'   family = poisson(),
 #'   engine = "bam"
 #' )
-#' coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+#' coefs <- fts_coefs(mod, summary = FALSE, n_samples = 5)
 #' autoplot(coefs)
 #' @export
 autoplot.fts_ts <- function(object, ...) {

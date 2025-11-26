@@ -25,7 +25,7 @@ mod <- ffc_gam(
   family = poisson(),
   engine = "bam"
 )
-coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+coefs <- fts_coefs(mod, summary = FALSE, n_samples = 5)
 autoplot(coefs)
 }
 \author{

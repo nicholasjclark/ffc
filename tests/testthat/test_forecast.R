@@ -1,13 +1,13 @@
 # Test forecasting functionality
 test_that("forecast.fts_ts() works with ARIMA model", {
   # Extract functional coefficients for forecasting
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 3)
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 3)
 
   # Test basic ARIMA forecasting
   fc_arima <- SW(forecast(functional_coefs,
                           model = "ARIMA",
                           h = 2,
-                          times = 3))
+                          n_samples = 3))
 
   # Check basic structure
   expect_true(inherits(fc_arima, "tbl_df"))
@@ -23,13 +23,13 @@ test_that("forecast.fts_ts() works with ARIMA model", {
 })
 
 test_that("forecast.fts_ts() works with different fable models", {
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
 
   # Test ENS ensemble model
   fc_ens <- SW(forecast(functional_coefs,
                         model = "ENS",
                         h = 2,
-                        times = 2))
+                        n_samples = 2))
   expect_true(inherits(fc_ens, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_ens)))
 
@@ -37,7 +37,7 @@ test_that("forecast.fts_ts() works with different fable models", {
   fc_naive <- SW(forecast(functional_coefs,
                           model = "NAIVE",
                           h = 2,
-                          times = 2))
+                          n_samples = 2))
   expect_true(inherits(fc_naive, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_naive)))
 
@@ -45,37 +45,37 @@ test_that("forecast.fts_ts() works with different fable models", {
   fc_rw <- SW(forecast(functional_coefs,
                        model = "RW",
                        h = 2,
-                       times = 2))
+                       n_samples = 2))
   expect_true(inherits(fc_rw, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_rw)))
 })
 
 test_that("forecast.fts_ts() validates parameters correctly", {
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
 
   # Test invalid h parameter
   expect_error(forecast(functional_coefs, h = 0))
   expect_error(forecast(functional_coefs, h = -1))
   expect_error(forecast(functional_coefs, h = 1.5))
 
-  # Test invalid times parameter
-  expect_error(forecast(functional_coefs, times = 0))
-  expect_error(forecast(functional_coefs, times = -1))
-  expect_error(forecast(functional_coefs, times = 1.5))
+  # Test invalid n_samples parameter
+  expect_error(forecast(functional_coefs, n_samples = 0))
+  expect_error(forecast(functional_coefs, n_samples = -1))
+  expect_error(forecast(functional_coefs, n_samples = 1.5))
 
   # Test stationary parameter with non-ARIMA model
   expect_error(forecast(functional_coefs, model = "ETS", stationary = TRUE))
 })
 
 test_that("forecast.fts_ts() handles stationary ARIMA correctly", {
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
 
   # Test stationary ARIMA
   fc_stationary <- SW(forecast(functional_coefs,
                                model = "ARIMA",
                                stationary = TRUE,
                                h = 2,
-                               times = 2))
+                               n_samples = 2))
 
   expect_true(inherits(fc_stationary, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_stationary)))
@@ -205,30 +205,30 @@ test_that("forecast.ffc_gam() handles custom quantiles", {
 })
 
 test_that("forecast methods preserve object attributes", {
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
 
   # Check that fts_ts object has expected attributes
   expect_true(!is.null(attr(functional_coefs, "time_var")))
   expect_true(!is.null(attr(functional_coefs, "summarized")))
 
   # Forecast should complete without error despite attributes
-  fc <- SW(forecast(functional_coefs, h = 1, times = 2))
+  fc <- SW(forecast(functional_coefs, h = 1, n_samples = 2))
   expect_true(inherits(fc, "tbl_df"))
 })
 
 test_that("forecast handles edge cases appropriately", {
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
 
   # Test h = 1 (minimum horizon)
-  fc_h1 <- SW(forecast(functional_coefs, h = 1, times = 2))
+  fc_h1 <- SW(forecast(functional_coefs, h = 1, n_samples = 2))
   expect_true(length(unique(fc_h1$.time)) == 1)
 
-  # Test times = 1 (minimum realisations)
-  fc_t1 <- SW(forecast(functional_coefs, h = 2, times = 1))
+  # Test n_samples = 1 (minimum realisations)
+  fc_t1 <- SW(forecast(functional_coefs, h = 2, n_samples = 1))
   expect_true(all(fc_t1$.rep == 1))
 
   # Test larger horizon
-  fc_large <- SW(forecast(functional_coefs, h = 5, times = 2))
+  fc_large <- SW(forecast(functional_coefs, h = 5, n_samples = 2))
   expect_true(length(unique(fc_large$.time)) == 5)
 })
 
@@ -738,14 +738,14 @@ test_that("adjust_forecast_uncertainty works correctly", {
     stringsAsFactors = FALSE
   )
 
-  times <- 2
+  n_samples <- 2
   h <- 1
 
   # Test the internal function
   result <- SW(ffc:::adjust_forecast_uncertainty(
     forecast_df = forecast_df,
     object_sds = object_sds,
-    times = times,
+    n_samples = n_samples,
     h = h
   ))
 
@@ -753,13 +753,13 @@ test_that("adjust_forecast_uncertainty works correctly", {
   expect_true(inherits(result, "tbl_df"))
   expect_true(all(c(".basis", ".realisation", ".sim", ".rep") %in% names(result)))
 
-  # Check dimensions - should have times * h rows for each basis/realisation combination
-  expected_rows <- nrow(forecast_df) * times * h
+  # Check dimensions - should have n_samples * h rows for each basis/realisation combination
+  expected_rows <- nrow(forecast_df) * n_samples * h
   expect_equal(nrow(result), expected_rows)
 
   # Check that .rep variable is properly structured
-  expect_true(all(result$.rep %in% 1:times))
-  expect_equal(length(unique(result$.rep)), times)
+  expect_true(all(result$.rep %in% 1:n_samples))
+  expect_equal(length(unique(result$.rep)), n_samples)
 
   # Check that .sim values are numeric
   expect_true(is.numeric(result$.sim))
@@ -792,19 +792,19 @@ test_that("adjust_forecast_uncertainty handles missing .sd data correctly", {
     stringsAsFactors = FALSE
   )
 
-  times <- 2
+  n_samples <- 2
   h <- 1
 
   # Should handle the missing .sd gracefully through the left_join
   result <- SW(ffc:::adjust_forecast_uncertainty(
     forecast_df = forecast_df,
     object_sds = object_sds,
-    times = times,
+    n_samples = n_samples,
     h = h
   ))
 
   expect_true(inherits(result, "tbl_df"))
-  expect_equal(nrow(result), nrow(forecast_df) * times * h)
+  expect_equal(nrow(result), nrow(forecast_df) * n_samples * h)
 
   # Check that we have some NA values where .sd wasn't available
   expect_true(any(is.na(result$.sd)))
@@ -929,13 +929,13 @@ test_that("adjust_forecast_uncertainty preserves group structure", {
     stringsAsFactors = FALSE
   )
 
-  times <- 2
+  n_samples <- 2
   h <- 1
 
   result <- SW(ffc:::adjust_forecast_uncertainty(
     forecast_df = forecast_df,
     object_sds = object_sds,
-    times = times,
+    n_samples = n_samples,
     h = h
   ))
 
@@ -944,7 +944,7 @@ test_that("adjust_forecast_uncertainty preserves group structure", {
     dplyr::group_by(.basis, .realisation) |>
     dplyr::summarise(n = dplyr::n(), .groups = "drop")
 
-  expect_true(all(group_counts$n == times * h))
+  expect_true(all(group_counts$n == n_samples * h))
 
   # Check that .rep is correctly structured within each group
   rep_structure <- result |>
@@ -957,43 +957,43 @@ test_that("adjust_forecast_uncertainty preserves group structure", {
     )
 
   expect_true(all(rep_structure$min_rep == 1))
-  expect_true(all(rep_structure$max_rep == times))
-  expect_true(all(rep_structure$unique_reps == times))
+  expect_true(all(rep_structure$max_rep == n_samples))
+  expect_true(all(rep_structure$unique_reps == n_samples))
 })
 
 # Additional distributional forecasting tests
 test_that("distributional forecasting maintains correct matrix dimensions", {
   library(mgcv)
   set.seed(1234)
-  
+
   n <- 70
   test_data <- data.frame(
     time = 1:n,
     x = rnorm(n),
     y = rnorm(n, sd = 0.5)
   )
-  
+
   model <- ffc_gam(
     list(y ~ fts(x, k = 3), ~ fts(x, k = 3)),
     data = test_data,
     family = gaulss(),
     time = "time"
   )
-  
+
   # Create newdata for prediction
   newdata <- data.frame(time = (n+1):(n+5), x = rnorm(5))
-  
+
   # Test that forecast matrix dimensions match expected parameter structure
   fc_raw <- SW(forecast(model, newdata = newdata, summary = FALSE))
-  
+
   # Should be distributional object with correct length
   expect_true(inherits(fc_raw, "distribution"))
   expect_equal(length(fc_raw), nrow(newdata))
-  
+
   # Test linear predictor matrix structure in prediction
   pred_lpmat <- predict(model, newdata = newdata, type = "lpmatrix")
   expect_true(is.matrix(pred_lpmat))
-  
+
   # Should have lpi attribute preserved
   expect_true(!is.null(attr(pred_lpmat, "lpi")))
   expect_length(attr(pred_lpmat, "lpi"), 2)  # gaulss has 2 parameters
@@ -1002,7 +1002,7 @@ test_that("distributional forecasting maintains correct matrix dimensions", {
 test_that("prediction works consistently across family types", {
   library(mgcv)
   set.seed(1234)
-  
+
   n <- 60
   test_data <- data.frame(
     time = 1:n,
@@ -1010,26 +1010,26 @@ test_that("prediction works consistently across family types", {
     y = rnorm(n)
   )
   newdata <- data.frame(time = (n+1):(n+3), x = rnorm(3))
-  
-  model_single <- SW(ffc_gam(y ~ fts(x, k = 3), data = test_data, 
+
+  model_single <- SW(ffc_gam(y ~ fts(x, k = 3), data = test_data,
                              family = gaussian(), time = "time"))
-  
-  model_multi <- SW(ffc_gam(list(y ~ fts(x, k = 3), ~ fts(x, k = 3)), 
+
+  model_multi <- SW(ffc_gam(list(y ~ fts(x, k = 3), ~ fts(x, k = 3)),
                             data = test_data, family = gaulss(), time = "time"))
-  
+
   # Both should produce valid predictions
   pred_single <- predict(model_single, newdata = newdata, type = "response")
   pred_multi <- predict(model_multi, newdata = newdata, type = "response")
-  
+
   expect_true(is.numeric(pred_single))
   expect_true(is.numeric(pred_multi))
   expect_equal(length(pred_single), nrow(newdata))
   expect_equal(length(pred_multi), nrow(newdata))
-  
+
   # Both should support forecasting
   fc_single <- SW(forecast(model_single, newdata = newdata))
   fc_multi <- SW(forecast(model_multi, newdata = newdata))
-  
+
   expect_true(all(c(".estimate", ".error") %in% names(fc_single)))
   expect_true(all(c(".estimate", ".error") %in% names(fc_multi)))
 })
@@ -1037,40 +1037,91 @@ test_that("prediction works consistently across family types", {
 test_that("forecast matrices preserve distributional lpi structure", {
   library(mgcv)
   set.seed(1234)
-  
+
   n <- 65
   test_data <- data.frame(
     time = 1:n,
     x = rnorm(n),
     y = rnorm(n)
   )
-  
+
   model <- ffc_gam(
-    list(y ~ fts(x, k = 3), ~ fts(x, k = 3)), 
+    list(y ~ fts(x, k = 3), ~ fts(x, k = 3)),
     data = test_data,
     family = gaulss(),
     time = "time"
   )
-  
+
   newdata <- data.frame(time = (n+1):(n+3), x = rnorm(3))
-  
+
   # Test internal forecast matrix structure
   # Use summary = FALSE to get matrix output
   fc_raw <- SW(forecast(model, newdata = newdata, summary = FALSE))
-  
+
   # Should maintain parameter structure in distributional object
   expect_true(inherits(fc_raw, "distribution"))
-  
+
   # Test that original lpmatrix structure is preserved
   orig_lpmat <- predict(model, type = "lpmatrix")
   new_lpmat <- predict(model, newdata = newdata, type = "lpmatrix")
-  
+
   # Both should have lpi attributes
   expect_true(!is.null(attr(orig_lpmat, "lpi")))
   expect_true(!is.null(attr(new_lpmat, "lpi")))
-  
+
   # lpi structure should be consistent
   orig_lpi <- attr(orig_lpmat, "lpi")
   new_lpi <- attr(new_lpmat, "lpi")
   expect_equal(length(orig_lpi), length(new_lpi))
+})
+
+test_that("twlss distributional forecasting with cyclic splines works", {
+  library(mgcv)
+  set.seed(1234)
+
+  n_years <- 15
+  n_months <- 12
+  n_total <- n_years * n_months
+
+  test_data <- data.frame(
+    time = 1:n_total,
+    month = rep(1:n_months, n_years),
+    y = rTweedie(exp(2 + 1.5 * cos(2 * pi * rep(1:n_months, n_years) / 12) +
+                     0.8 * sin(2 * pi * rep(1:n_months, n_years) / 12) +
+                     0.05 * (1:n_total)), p = 1.5, phi = 1)
+  )
+
+  model <- SW(ffc_gam(
+    list(
+      y ~ fts(month, bs = "cc", k = 4, time_k = 5),
+      ~ fts(time, k = 4, time_k = 3),
+      ~ 1
+    ),
+    data = test_data,
+    family = twlss(),
+    time = "time"
+  ))
+
+  newdata <- data.frame(
+    time = (n_total + 1):(n_total + 12),
+    month = 1:12
+  )
+
+  pred_result <- predict(model, newdata = newdata, type = "response")
+  expect_true(is.numeric(pred_result))
+  expect_equal(length(pred_result), nrow(newdata))
+
+  coef_1 <- fts_coefs(model, parameter = 1)
+  coef_2 <- fts_coefs(model, parameter = 2)
+  expect_s3_class(coef_1, "fts_ts")
+  expect_s3_class(coef_2, "fts_ts")
+
+  fc_result <- forecast(model, newdata = newdata, summary = TRUE)
+  expect_s3_class(fc_result, "data.frame")
+  expect_true(all(c(".estimate", ".error") %in% names(fc_result)))
+  expect_equal(nrow(fc_result), nrow(newdata))
+
+  fc_raw <- forecast(model, newdata = newdata, summary = FALSE)
+  expect_true(inherits(fc_raw, "distribution"))
+  expect_equal(length(fc_raw), nrow(newdata))
 })

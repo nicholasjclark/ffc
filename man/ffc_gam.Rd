@@ -73,8 +73,35 @@ mod <- ffc_gam(
 class(mod)
 summary(mod)
 
+# Distributional regression with gaulss() family
+# Simulated data with time-varying location and scale
+library(mgcv)
+set.seed(1234)
+n <- 50
+sim_data <- data.frame(
+  time = 1:n,
+  x = rnorm(n),
+  y = rnorm(n, mean = sin(2 * pi * (1:n) / 20), 
+            sd = 0.5 + 0.3 * cos(2 * pi * (1:n) / 15))
+)
+
+# Fit distributional model with time-varying parameters
+dist_mod <- ffc_gam(
+  list(
+    y ~ fts(x, k = 5),      # Location parameter
+    ~ fts(x, k = 3)         # Scale parameter  
+  ),
+  family = gaulss(),
+  data = sim_data,
+  time = "time"
+)
+
+# Extract parameter-specific coefficients
+coefs <- fts_coefs(dist_mod)
+print(unique(coefs$.parameter))  # Shows "location" and "scale"
+
 # Extract and visualize time-varying coefficients
-coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+coefs <- fts_coefs(mod, summary = FALSE, n_samples = 5)
 autoplot(coefs)
 
 # Forecast future mortality patterns

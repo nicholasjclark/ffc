@@ -14,38 +14,38 @@ test_that("fts() validates time_k parameter correctly", {
   expect_error(fts(time, time_k = NULL))
 })
 
-test_that("forecast.fts_ts() validates h and times parameters correctly", {
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
+test_that("forecast.fts_ts() validates h and n_samples parameters correctly", {
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
   
-  # Test valid h and times parameters
-  expect_no_error(SW(forecast(functional_coefs, h = 1, times = 1, model = "ETS")))
-  expect_no_error(SW(forecast(functional_coefs, h = 5, times = 10, model = "ETS")))
+  # Test valid h and n_samples parameters
+  expect_no_error(SW(forecast(functional_coefs, h = 1, n_samples = 1, model = "ETS")))
+  expect_no_error(SW(forecast(functional_coefs, h = 5, n_samples = 10, model = "ETS")))
   
   # Test invalid h parameter
-  expect_error(forecast(functional_coefs, h = 0, times = 2, model = "ETS"))
-  expect_error(forecast(functional_coefs, h = -1, times = 2, model = "ETS"))
-  expect_error(forecast(functional_coefs, h = 1.5, times = 2, model = "ETS"))
-  expect_error(forecast(functional_coefs, h = "2", times = 2, model = "ETS"))
+  expect_error(forecast(functional_coefs, h = 0, n_samples = 2, model = "ETS"))
+  expect_error(forecast(functional_coefs, h = -1, n_samples = 2, model = "ETS"))
+  expect_error(forecast(functional_coefs, h = 1.5, n_samples = 2, model = "ETS"))
+  expect_error(forecast(functional_coefs, h = "2", n_samples = 2, model = "ETS"))
   
-  # Test invalid times parameter
-  expect_error(forecast(functional_coefs, h = 2, times = 0, model = "ETS"))
-  expect_error(forecast(functional_coefs, h = 2, times = -1, model = "ETS"))
-  expect_error(forecast(functional_coefs, h = 2, times = 1.5, model = "ETS"))
-  expect_error(forecast(functional_coefs, h = 2, times = "5", model = "ETS"))
+  # Test invalid n_samples parameter
+  expect_error(forecast(functional_coefs, h = 2, n_samples = 0, model = "ETS"))
+  expect_error(forecast(functional_coefs, h = 2, n_samples = -1, model = "ETS"))
+  expect_error(forecast(functional_coefs, h = 2, n_samples = 1.5, model = "ETS"))
+  expect_error(forecast(functional_coefs, h = 2, n_samples = "5", model = "ETS"))
 })
 
-test_that("fts_coefs() validates times parameter correctly", {
-  # Test valid times parameter (use >= 2 to avoid matrix dimension issues)
-  expect_no_error(fts_coefs(example_mod, summary = FALSE, times = 2))
-  expect_no_error(fts_coefs(example_mod, summary = FALSE, times = 5))
-  expect_no_error(fts_coefs(example_mod, summary = FALSE, times = 100))
+test_that("fts_coefs() validates n_samples parameter correctly", {
+  # Test valid n_samples parameter (use >= 2 to avoid matrix dimension issues)
+  expect_no_error(fts_coefs(example_mod, summary = FALSE, n_samples = 2))
+  expect_no_error(fts_coefs(example_mod, summary = FALSE, n_samples = 5))
+  expect_no_error(fts_coefs(example_mod, summary = FALSE, n_samples = 100))
   
-  # Test invalid times parameter
-  expect_error(fts_coefs(example_mod, summary = FALSE, times = 0))
-  expect_error(fts_coefs(example_mod, summary = FALSE, times = -1))
-  expect_error(fts_coefs(example_mod, summary = FALSE, times = 1.5))
-  expect_error(fts_coefs(example_mod, summary = FALSE, times = "5"))
-  expect_error(fts_coefs(example_mod, summary = FALSE, times = NA))
+  # Test invalid n_samples parameter
+  expect_error(fts_coefs(example_mod, summary = FALSE, n_samples = 0))
+  expect_error(fts_coefs(example_mod, summary = FALSE, n_samples = -1))
+  expect_error(fts_coefs(example_mod, summary = FALSE, n_samples = 1.5))
+  expect_error(fts_coefs(example_mod, summary = FALSE, n_samples = "5"))
+  expect_error(fts_coefs(example_mod, summary = FALSE, n_samples = NA))
 })
 
 test_that("validation provides clear error messages", {
@@ -53,26 +53,26 @@ test_that("validation provides clear error messages", {
   expect_error(fts(time, time_k = 0), "time_k.*>= 1")
   expect_error(fts(time, time_k = -1), "time_k.*>= 1")
   
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
   expect_error(forecast(functional_coefs, h = 0, model = "ETS"), "h.*>= 1")
-  expect_error(forecast(functional_coefs, times = 0, model = "ETS"), "times.*>= 1")
+  expect_error(forecast(functional_coefs, n_samples = 0, model = "ETS"), "n_samples.*>= 1")
   
-  expect_error(fts_coefs(example_mod, summary = FALSE, times = 0), "times.*>= 1")
+  expect_error(fts_coefs(example_mod, summary = FALSE, n_samples = 0), "n_samples.*>= 1")
 })
 
 test_that("validation handles boundary cases correctly", {
   # Test minimum valid values
   expect_no_error(fts(time, time_k = 1))
   
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
-  expect_no_error(SW(forecast(functional_coefs, h = 1, times = 1, model = "ETS")))
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
+  expect_no_error(SW(forecast(functional_coefs, h = 1, n_samples = 1, model = "ETS")))
   
-  expect_no_error(fts_coefs(example_mod, summary = FALSE, times = 2))
+  expect_no_error(fts_coefs(example_mod, summary = FALSE, n_samples = 2))
   
   # Test reasonably large values
   expect_no_error(fts(time, time_k = 50))
-  expect_no_error(SW(forecast(functional_coefs, h = 10, times = 50, model = "ETS")))
-  expect_no_error(fts_coefs(example_mod, summary = FALSE, times = 50))
+  expect_no_error(SW(forecast(functional_coefs, h = 10, n_samples = 50, model = "ETS")))
+  expect_no_error(fts_coefs(example_mod, summary = FALSE, n_samples = 50))
 })
 
 test_that("validation integrates properly with function flow", {
@@ -83,12 +83,12 @@ test_that("validation integrates properly with function flow", {
   expect_true(inherits(fts_call, "list"))
   
   # forecast() with valid parameters should work normally
-  functional_coefs <- fts_coefs(example_mod, summary = FALSE, times = 3)
-  fc <- SW(forecast(functional_coefs, h = 2, times = 3, model = "ETS"))
+  functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 3)
+  fc <- SW(forecast(functional_coefs, h = 2, n_samples = 3, model = "ETS"))
   expect_true(inherits(fc, "tbl_df"))
   
   # fts_coefs() with valid parameters should work normally
-  coefs <- fts_coefs(example_mod, summary = FALSE, times = 3)
+  coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 3)
   expect_true(inherits(coefs, "fts_ts"))
 })
 

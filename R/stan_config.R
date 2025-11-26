@@ -19,7 +19,7 @@ get_stan_defaults <- function(type = "sampling") {
     ),
     "forecast" = list(
       h = 1,
-      times = 200
+      n_samples = 200
     ),
     "basis" = list(
       time_k = 10

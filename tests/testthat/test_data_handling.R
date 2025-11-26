@@ -7,7 +7,7 @@ test_that("interpret_ffc() handles tibble to data.frame conversion", {
     data = dat_df,
     time_var = "time"
   ))
-  
+
   # Test with tibble (should convert to data.frame internally)
   dat_tbl <- tibble::as_tibble(dat)
   result_tbl <- interpret_ffc(
@@ -15,7 +15,7 @@ test_that("interpret_ffc() handles tibble to data.frame conversion", {
     data = dat_tbl,
     time_var = "time"
   )
-  
+
   # Should work without error
   expect_true(inherits(result_tbl, "list"))
   expect_true("data" %in% names(result_tbl))
@@ -29,7 +29,7 @@ test_that("interpret_ffc() preserves original data structure", {
     data = dat_tbl,
     time_var = "time"
   )
-  
+
   # Original data should be preserved
   expect_true("orig_data" %in% names(result))
   expect_true(inherits(result$orig_data, "tbl_df"))
@@ -40,20 +40,20 @@ test_that("interpret_ffc() preserves original data structure", {
 test_that("expand_tbl_ts() works correctly", {
   # Create a test fts_ts object
   test_coefs <- fts_coefs(example_mod, summary = FALSE, times = 2)
-  
+
   # Convert to the format expected by expand_tbl_ts
   test_data <- test_coefs %>%
     dplyr::select(.basis, .realisation, .time = time, .estimate)
-  
+
   # Test expansion
   expanded <- expand_tbl_ts(test_data, h = 3)
-  
+
   # Should have more rows due to expansion
   expect_true(nrow(expanded) > nrow(test_data))
-  
+
   # Should include NA values for future time points
   expect_true(any(is.na(expanded$.estimate)))
-  
+
   # Time range should be extended
   original_max_time <- max(test_data$.time)
   expanded_max_time <- max(expanded$.time)
@@ -67,16 +67,16 @@ test_that("make_future_data() creates appropriate future data structure", {
     value = rnorm(10),
     index = time
   )
-  
+
   # Test future data creation
   future_data <- make_future_data(test_tsibble, h = 5)
-  
+
   # Should be a tsibble
   expect_true(tsibble::is_tsibble(future_data))
-  
+
   # Should have 5 future time points
   expect_equal(nrow(future_data), 5)
-  
+
   # Time should continue from where original data ended
   expect_true(min(future_data$time) > max(test_tsibble$time))
 })
@@ -89,13 +89,13 @@ test_that("tsibble checking functions work correctly", {
     index = time
   )
   expect_no_error(check_gaps(regular_data))
-  
+
   # Test check_regular with regular data
   expect_no_error(check_regular(regular_data))
-  
+
   # Test check_ordered with ordered data
   expect_no_error(check_ordered(regular_data))
-  
+
   # Test all_tsbl_checks with valid data
   expect_no_error(all_tsbl_checks(regular_data))
 })
@@ -109,7 +109,7 @@ test_that("tsibble checking functions detect issues", {
     regular = FALSE
   )
   expect_error(check_regular(irregular_data), "irregular time series")
-  
+
   # Test with empty data
   empty_data <- tsibble::tsibble(
     time = integer(0),
@@ -129,24 +129,24 @@ test_that("ffc_gam() handles different data types", {
     family = poisson()
   )
   expect_true(inherits(mod_df, "ffc_gam"))
-  
+
   # Test with tibble
   dat_tbl <- tibble::as_tibble(dat)
   mod_tbl <- ffc_gam(
     y ~ s(season, bs = "cc", k = 12) + fts(time, time_k = 5),
-    time = "time", 
+    time = "time",
     data = dat_tbl,
     family = poisson()
   )
   expect_true(inherits(mod_tbl, "ffc_gam"))
-  
+
   # Results should be equivalent
   expect_equal(length(coef(mod_df)), length(coef(mod_tbl)))
   expect_equal(nrow(mod_df$model), nrow(mod_tbl$model))
 })
 
 test_that("ffc_gam() validates time variable exists", {
-  # Test with missing time variable  
+  # Test with missing time variable
   expect_error(
     ffc_gam(
       y ~ s(season, bs = "cc", k = 12) + fts(time, time_k = 5),
@@ -162,7 +162,7 @@ test_that("missing data handling works correctly", {
   dat_missing <- dat
   dat_missing$y[c(10, 20, 30)] <- NA
   dat_missing$season[c(15, 25)] <- NA
-  
+
   # Should reject missing values with helpful error
   expect_error(
     ffc_gam(
@@ -179,7 +179,7 @@ test_that("offset handling works correctly", {
   # Create data with offset variable
   dat_offset <- dat
   dat_offset$offset_var <- log(dat_offset$y + 1)
-  
+
   # Test with offset in formula
   mod_offset <- ffc_gam(
     y ~ offset(offset_var) + s(season, bs = "cc", k = 12) + fts(time, time_k = 5),
@@ -187,7 +187,7 @@ test_that("offset handling works correctly", {
     data = dat_offset,
     family = poisson()
   )
-  
+
   expect_true(inherits(mod_offset, "ffc_gam"))
   expect_true(!is.null(mod_offset$offset))
 })
@@ -199,17 +199,17 @@ test_that("formula interpretation handles complex cases", {
     data = dat,
     time_var = "time"
   )
-  
+
   expect_true(inherits(complex_result, "list"))
   expect_true(length(complex_result$fts_smooths) == 1)
-  
+
   # Test formula with no fts terms
   simple_result <- interpret_ffc(
     formula = y ~ s(season, k = 5) + s(year, k = 4),
     data = dat,
     time_var = "time"
   )
-  
+
   expect_true(inherits(simple_result, "list"))
   expect_true(length(simple_result$fts_smooths) == 0)
 })
@@ -221,7 +221,7 @@ test_that("edge cases in data dimensions", {
     season = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
     time = 1:10
   )
-  
+
   # Should work but may produce warnings about small data size
   expect_no_error(
     SW(mod_minimal <- ffc_gam(
@@ -231,7 +231,7 @@ test_that("edge cases in data dimensions", {
       family = poisson()
     ))
   )
-  
+
   expect_true(inherits(mod_minimal, "ffc_gam"))
 })
 
@@ -241,13 +241,13 @@ test_that("data structure preservation in predictions", {
     season = c(1, 6, 12),
     time = c(76, 77, 78)
   )
-  
+
   newdata_tbl <- tibble::as_tibble(newdata_df)
-  
+
   # Predictions should work with both data types
   pred_df <- predict(example_mod, newdata = newdata_df, type = "response")
   pred_tbl <- predict(example_mod, newdata = newdata_tbl, type = "response")
-  
+
   # Results should be identical
   expect_equal(pred_df, pred_tbl)
   expect_equal(length(pred_df), nrow(newdata_df))
@@ -260,9 +260,9 @@ test_that("fts_coefs() handles different summary options", {
   expect_true(inherits(coefs_summary, "fts_ts"))
   expect_true(attr(coefs_summary, "summarized"))
   expect_true(all(c(".estimate", ".se") %in% names(coefs_summary)))
-  
+
   # Test raw coefficients
-  coefs_raw <- fts_coefs(example_mod, summary = FALSE, times = 3)
+  coefs_raw <- fts_coefs(example_mod, summary = FALSE, n_samples = 3)
   expect_true(inherits(coefs_raw, "fts_ts"))
   expect_false(attr(coefs_raw, "summarized"))
   expect_true(".realisation" %in% names(coefs_raw))
@@ -272,7 +272,7 @@ test_that("fts_coefs() handles different summary options", {
 test_that("model.frame.ffc_gam() works correctly", {
   # Test model frame extraction
   mf <- model.frame(example_mod)
-  
+
   expect_true(inherits(mf, "data.frame"))
   expect_equal(nrow(mf), nrow(example_mod$model))
   expect_true(all(names(example_mod$model) %in% names(mf)))
@@ -281,17 +281,17 @@ test_that("model.frame.ffc_gam() works correctly", {
 test_that("Stan data preparation function exists and has proper structure", {
   # Test that prep_tbl_ts_stan function exists and can be called
   expect_true(exists("prep_tbl_ts_stan", envir = asNamespace("ffc")))
-  
+
   # Test that function has proper parameters
   prep_func <- get("prep_tbl_ts_stan", envir = asNamespace("ffc"))
   expect_true(is.function(prep_func))
-  
+
   # Test argument validation
   expect_error(prep_tbl_ts_stan(
     .data = data.frame(),
     h = 2,
     K = 1,
-    p = 1, 
+    p = 1,
     family = gaussian(),
     model = "invalid_model"
   ))

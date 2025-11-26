@@ -540,3 +540,39 @@ validate_response_in_data <- function(formula, data) {
   invisible(TRUE)
 }
 
+
+#' Validate gam_init structure for distributional models
+#'
+#' Validates that gam_init structure maintains proper parameter organization
+#' needed for distributional regression forecasting
+#'
+#' @param gam_init_list List structure to validate
+#' @param n_parameters Expected number of parameters
+#' @return TRUE if valid structure, FALSE otherwise
+#' @noRd
+validate_gam_init_structure <- function(gam_init_list, n_parameters) {
+  checkmate::assert_list(gam_init_list, null.ok = TRUE)
+  checkmate::assert_int(n_parameters, lower = 1)
+  
+  if (length(gam_init_list) != n_parameters) {
+    return(FALSE)
+  }
+  
+  # Each parameter should have a list of GAM objects or be empty
+  for (i in seq_along(gam_init_list)) {
+    param_gams <- gam_init_list[[i]]
+    if (!is.null(param_gams) && !is.list(param_gams)) {
+      return(FALSE)
+    }
+    
+    # Check that non-empty parameter lists contain GAM objects
+    if (length(param_gams) > 0) {
+      gam_checks <- sapply(param_gams, function(x) inherits(x, "gam"))
+      if (!all(gam_checks)) {
+        return(FALSE)
+      }
+    }
+  }
+  
+  return(TRUE)
+}

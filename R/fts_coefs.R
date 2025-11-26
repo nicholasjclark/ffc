@@ -48,7 +48,7 @@ extract_parameter_from_basis <- function(basis_var, family) {
 #' time series be returned instead of realized curves? Default is `TRUE`. If
 #' `FALSE`, replicate realisations of each basis coefficient time series will
 #' be returned
-#' @param times A positive `integer` specifying the number of time series
+#' @param n_samples A positive `integer` specifying the number of time series
 #' realisation paths to simulate from the fitted model. Ignored if
 #' `summary = FALSE`
 #' @param ... Ignored
@@ -70,14 +70,14 @@ fts_coefs <- function(object, ...) {
 fts_coefs.ffc_gam <- function(
     object,
     summary = TRUE,
-    times = 25,
+    n_samples = 25,
     ...) {
   if (is.null(object$fts_smooths)) {
     message("No functional smooths using fts() were included in this model")
     return(NULL)
   } else {
     # Sanity check
-    checkmate::assert_count(times, positive = TRUE)
+    checkmate::assert_count(n_samples, positive = TRUE)
 
     # Time variable
     time_var <- object$time_var
@@ -114,7 +114,7 @@ fts_coefs.ffc_gam <- function(
 
     # Extract estimated coefficients
     betas <- mgcv::rmvn(
-      n = times,
+      n = n_samples,
       mu = coef(object),
       V = vcov(object)
     )
@@ -144,11 +144,11 @@ fts_coefs.ffc_gam <- function(
         object$smooth[[sm]]$last.para
 
       # Preallocate a matrix to store predictions for each simulation
-      preds <- matrix(NA, nrow = times, ncol = nrow(pred_dat))
+      preds <- matrix(NA, nrow = n_samples, ncol = nrow(pred_dat))
 
       # Fill the prediction matrix by multiplying the predictor matrix with
       # the sampled coefficients
-      for (i in 1:times) {
+      for (i in 1:n_samples) {
         preds[i, ] <- as.vector(lp %*% betas[i, beta_idx])
       }
 
@@ -169,7 +169,7 @@ fts_coefs.ffc_gam <- function(
       } else {
         # Otherwise, return all simulation replicates in long format
         # using map_dfr()
-        dat <- purrr::map_dfr(1:times, function(x) {
+        dat <- purrr::map_dfr(1:n_samples, function(x) {
           repdat <- tibble::tibble(
             .basis = by_var,
             .parameter = parameter_name,

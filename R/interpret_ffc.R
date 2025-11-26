@@ -37,11 +37,20 @@ interpret_ffc <- function(
   if (is.list(formula)) {
     processed_formulae <- vector("list", length = length(formula))
     all_fts_smooths <- list()
-    combined_gam_init <- list()
+    # Initialize parameter-aware structure for distributional models
+    combined_gam_init <- vector("list", length = length(formula))
     
     # Ensure gam_init is properly structured for multiple formulae
     if (length(gam_init) == 0) {
       gam_init <- vector("list", length = length(formula))
+    } else {
+      # Validate existing structure for forecasting
+      if (!validate_gam_init_structure(gam_init, length(formula))) {
+        stop(insight::format_error(
+          paste0("Invalid gam_init structure for distributional model with ",
+                 length(formula), " parameters. Expected list of lists of GAM objects.")
+        ), call. = FALSE)
+      }
     }
     
     # Process each formula element
@@ -146,9 +155,14 @@ interpret_ffc <- function(
         all_fts_smooths <- c(all_fts_smooths, param_smooths)
       }
       
-      # Collect gam_init objects
+      # Collect gam_init objects - maintain parameter structure for distributional models
       if (length(single_result$gam_init) > 0) {
-        combined_gam_init <- c(combined_gam_init, single_result$gam_init)
+        # Ensure combined_gam_init has proper parameter slots
+        if (length(combined_gam_init) < i) {
+          length(combined_gam_init) <- i
+        }
+        # Store gam_init objects for this parameter
+        combined_gam_init[[i]] <- single_result$gam_init
       }
     }
     
@@ -275,6 +289,7 @@ normalize_gam_init_structure <- function(obj) {
     list()
   }
 }
+
 
 #' Function to create the individual spline effects for time-varying
 #' coefficients of basis functions

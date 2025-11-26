@@ -36,6 +36,24 @@
 #'   engine = "bam"
 #' )
 #' preds <- predict(mod, type = "response")
+#'
+#' # Distributional regression prediction
+#' library(mgcv)
+#' set.seed(42)
+#' n <- 40
+#' sim_data <- data.frame(
+#'   time = 1:n,
+#'   x = rnorm(n), 
+#'   y = rnorm(n)
+#' )
+#' dist_mod <- ffc_gam(
+#'   list(y ~ fts(x, k = 4), ~ fts(x, k = 3)),
+#'   family = gaulss(), 
+#'   data = sim_data,
+#'   time = "time"
+#' )
+#' # Returns expected values (location parameter) for distributional families
+#' dist_preds <- predict(dist_mod, type = "response")
 #' @export
 predict.ffc_gam <- function(
     object,

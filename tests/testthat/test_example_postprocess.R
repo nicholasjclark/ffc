@@ -63,7 +63,7 @@ test_that("fts_coefs() works correctly", {
   functional_coefs <- fts_coefs(
     example_mod,
     summary = FALSE,
-    times = 3
+    n_samples = 3
   )
   expect_true(inherits(functional_coefs, "fts_ts"))
   expect_true(inherits(functional_coefs, "tbl_df"))

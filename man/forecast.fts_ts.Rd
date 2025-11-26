@@ -8,7 +8,7 @@
   object,
   model = "ARIMA",
   h = get_stan_param("h", "forecast"),
-  times = 25,
+  n_samples = 25,
   stationary = FALSE,
   ...
 )
@@ -31,7 +31,7 @@ to provide more robust predictions when model uncertainty is high.}
 \item{h}{A positive \code{integer} specifying the length of the forecast
 horizon}
 
-\item{times}{A positive \code{integer} specifying the number of forecast
+\item{n_samples}{A positive \code{integer} specifying the number of forecast
 realisation paths to simulate from the fitted forecast \code{model}}
 
 \item{stationary}{If \code{TRUE}, the fitted time series models are
@@ -67,7 +67,7 @@ mod <- ffc_gam(
   family = poisson(),
   engine = "bam"
 )
-coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+coefs <- fts_coefs(mod, summary = FALSE, n_samples = 5)
 
 # Generate ETS forecasts
 forecast(coefs, model = "ETS", h = 3)

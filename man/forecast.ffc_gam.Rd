@@ -62,7 +62,8 @@ This is only used when forecasting mixed mean/non-mean basis functions with
 Stan factor models.}
 
 \item{...}{Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF).
-Key arguments include: K (number of factors, default: 2), lag (AR order, default: 1),
+Key arguments include: n_samples (number of forecast samples, default: 200),
+K (number of factors, default: 2), lag (AR order, default: 1),
 chains (MCMC chains, default: 4), iter (iterations, default: 500),
 silent (suppress progress, default: TRUE), cores, adapt_delta, max_treedepth.}
 }
@@ -139,11 +140,11 @@ coefficient series and assume zero-centered time series for efficiency.
 at non-zero levels). Default is ENS ensemble, controlled by \code{mean_model} parameter.
 }
 
-\strong{Important Note on \code{times} Parameter:}
+\strong{Important Note on \code{n_samples} Parameter:}
 
-For Stan dynamic factor models, the \code{times} parameter is automatically set to
+For Stan dynamic factor models, the \code{n_samples} parameter is automatically set to
 \code{(iter - warmup) * chains} to ensure dimensional consistency. Any user-specified
-\code{times} value will be ignored with a warning. For ARIMA models, \code{times} can be
+\code{n_samples} value will be ignored with a warning. For ARIMA models, \code{n_samples} can be
 specified freely and controls the number of posterior draws.
 }
 \examples{
@@ -170,6 +171,33 @@ fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 
 # Get raw forecast matrix without summary
 fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
+
+# Distributional regression forecasting example  
+library(mgcv)
+set.seed(123)
+n <- 50
+dist_data <- data.frame(
+  time = 1:n,
+  x = rnorm(n),
+  y = rnorm(n, mean = sin(2 * pi * (1:n) / 10))
+)
+
+# Fit distributional model
+dist_mod <- ffc_gam(
+  list(
+    y ~ fts(x, k = 4),    
+    ~ fts(x, k = 3)       
+  ),
+  family = gaulss(),
+  data = dist_data,
+  time = "time"
+)
+
+# Forecast distributional model
+new_dist_data <- data.frame(time = (n+1):(n+3), x = rnorm(3))
+dist_fc <- forecast(dist_mod, newdata = new_dist_data)
+# Contains prediction intervals accounting for both parameters
+print(dist_fc)
 }
 \seealso{
 \code{\link[=ffc_gam]{ffc_gam()}}, \code{\link[=fts]{fts()}}, \code{\link[=forecast.fts_ts]{forecast.fts_ts()}}
