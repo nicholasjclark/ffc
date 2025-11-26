@@ -28,9 +28,9 @@
 #' @examples
 #' # Fit a model and generate predictions
 #' mod <- ffc_gam(
-#'   deaths ~ offset(log(population)) + sex + 
+#'   deaths ~ offset(log(population)) + sex +
 #'     fts(age, k = 8, bs = "cr", time_k = 10),
-#'   time = "year", 
+#'   time = "year",
 #'   data = qld_mortality,
 #'   family = poisson(),
 #'   engine = "bam"
@@ -43,12 +43,12 @@
 #' n <- 40
 #' sim_data <- data.frame(
 #'   time = 1:n,
-#'   x = rnorm(n), 
+#'   x = rnorm(n),
 #'   y = rnorm(n)
 #' )
 #' dist_mod <- ffc_gam(
 #'   list(y ~ fts(x, k = 4), ~ fts(x, k = 3)),
-#'   family = gaulss(), 
+#'   family = gaulss(),
 #'   data = sim_data,
 #'   time = "time"
 #' )
@@ -56,11 +56,12 @@
 #' dist_preds <- predict(dist_mod, type = "response")
 #' @export
 predict.ffc_gam <- function(
-    object,
-    newdata,
-    type = "link",
-    se.fit = FALSE,
-    ...) {
+  object,
+  newdata,
+  type = "link",
+  se.fit = FALSE,
+  ...
+) {
   type <- match.arg(
     type,
     choices = c(
@@ -105,17 +106,21 @@ predict.ffc_gam <- function(
   )
 
   # For distributional families with type="response", return only expectation
-  if (type == "response" && 
-      is_distributional_family(object$family) && 
-      is.matrix(out) && 
-      !se.fit) {
-    
+  if (
+    type == "response" &&
+      is_distributional_family(object$family) &&
+      is.matrix(out) &&
+      !se.fit
+  ) {
     # Validate parameters for distributional logic
     checkmate::assert_string(type, .var.name = "type")
     checkmate::assert_flag(se.fit, .var.name = "se.fit")
-    checkmate::assert_class(object$family, "family", 
-                           .var.name = "object$family")
-    
+    checkmate::assert_class(
+      object$family,
+      "family",
+      .var.name = "object$family"
+    )
+
     # TEMPORARY FIX: Return first column as expectation
     # NOTE: This assumes location parameter = expectation, which may not
     # hold for all distributional families. Needs proper research.

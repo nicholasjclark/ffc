@@ -34,7 +34,7 @@
 #' @param share_penalty `logical` specifying whether the time-varying coefficient smooths for
 #' this term should all share a smoothing penalty. Defaults to `TRUE` for single-parameter
 #' families, but automatically set to `FALSE` for distributional families (list formulae)
-#' to prevent mgcv fitting issues. Changing to `FALSE` gives more flexibility to capture 
+#' to prevent mgcv fitting issues. Changing to `FALSE` gives more flexibility to capture
 #' time-varying functions.
 #' @param by a `factor` variable of the same dimension as each covariate, used to create
 #'  a replicate of the smooth for each factor level.
@@ -54,19 +54,20 @@
 #' fts(age, k = 8, bs = "cr", time_k = 10)
 #' @export
 fts <- function(
-    ...,
-    mean_only = FALSE,
-    k = NA,
-    time_k = 10,
-    bs = "cr",
-    time_bs = "ts",
-    m = NA,
-    time_m = 2,
-    share_penalty = TRUE,
-    d = NA,
-    by = NA,
-    xt = NULL,
-    pc = NULL) {
+  ...,
+  mean_only = FALSE,
+  k = NA,
+  time_k = 10,
+  bs = "cr",
+  time_bs = "ts",
+  m = NA,
+  time_m = 2,
+  share_penalty = TRUE,
+  d = NA,
+  by = NA,
+  xt = NULL,
+  pc = NULL
+) {
   checkmate::assert_count(time_k, positive = TRUE)
 
   # Terms to be smoothed without evaluation
@@ -136,13 +137,13 @@ extract_fts_by_variables <- function(fts_smooths) {
   if (length(fts_smooths) == 0) {
     return(character(0))
   }
-  
+
   by_vars <- character(0)
   for (fts_obj in fts_smooths) {
     if (!is.null(fts_obj$by) && fts_obj$by != "NA") {
       by_vars <- c(by_vars, fts_obj$by)
     }
   }
-  
+
   unique(by_vars)
 }

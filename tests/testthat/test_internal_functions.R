@@ -15,7 +15,7 @@ test_that("rmvn generates multivariate normal samples correctly", {
 
   # Check means are approximately correct
   sample_means <- colMeans(samples)
-  expect_true(all(abs(sample_means - mu) < 0.2))  # Should be close for n=100
+  expect_true(all(abs(sample_means - mu) < 0.2)) # Should be close for n=100
 
   # Check covariance structure is approximately correct
   sample_cov <- cov(samples)
@@ -136,7 +136,10 @@ test_that("character family specifications work correctly", {
     x = 1:40,
     time = 1:40
   )
-  binomial_data$y <- cbind(binomial_data$successes, binomial_data$trials - binomial_data$successes)
+  binomial_data$y <- cbind(
+    binomial_data$successes,
+    binomial_data$trials - binomial_data$successes
+  )
 
   # Test "gaussian" family
   mod_gaussian <- SW(ffc_gam(
@@ -241,7 +244,7 @@ test_that("compress_iseq handles edge cases", {
   # Test repeated values (function doesn't deduplicate, just sorts)
   result_duplicates <- ffc:::compress_iseq(c(1, 1, 2, 3, 3))
   expect_true(is.character(result_duplicates))
-  expect_true(grepl("c\\(", result_duplicates))  # Should start with "c("
+  expect_true(grepl("c\\(", result_duplicates)) # Should start with "c("
 })
 
 test_that("initial_spg returns proper smoothing parameter structure", {
@@ -255,7 +258,7 @@ test_that("initial_spg returns proper smoothing parameter structure", {
   X <- cbind(1, x, x^2, x^3)
 
   # Create simple penalty matrix
-  D <- diff(diag(4), diff = 2)  # Second difference penalty
+  D <- diff(diag(4), diff = 2) # Second difference penalty
   S <- list(t(D) %*% D)
 
   # Test basic functionality
@@ -266,29 +269,29 @@ test_that("initial_spg returns proper smoothing parameter structure", {
     family = gaussian(),
     S = S,
     rank = c(2),
-    off = c(1, 5)  # Penalty applies to columns 2-4 (indices 1+1 to 5-1)
+    off = c(1, 5) # Penalty applies to columns 2-4 (indices 1+1 to 5-1)
   ))
 
   # Check that result is a vector of smoothing parameters
   expect_true(is.numeric(sp_init))
   expect_true(length(sp_init) == length(S))
-  expect_true(all(sp_init >= 0))  # Smoothing parameters should be non-negative
+  expect_true(all(sp_init >= 0)) # Smoothing parameters should be non-negative
 })
 
 test_that("olid detects identifiability issues correctly", {
   # Create a design matrix with identifiability issues (collinear columns)
   X <- cbind(
-    c(1, 1, 1, 1),     # intercept
-    c(1, 2, 3, 4),     # x
-    c(2, 4, 6, 8),     # 2*x (collinear with column 2)
-    c(1, 4, 9, 16)     # x^2
+    c(1, 1, 1, 1), # intercept
+    c(1, 2, 3, 4), # x
+    c(2, 4, 6, 8), # 2*x (collinear with column 2)
+    c(1, 4, 9, 16) # x^2
   )
 
   # Basic test parameters
-  nsdf <- c(1, 3)    # 1 parametric term, 3 smooth terms
-  pstart <- c(1, 2)  # penalty starts
-  flpi <- list(c(1), c(1))  # factor level parameter indices for each smooth
-  lpi <- list(1:4)   # all parameters in first linear predictor
+  nsdf <- c(1, 3) # 1 parametric term, 3 smooth terms
+  pstart <- c(1, 2) # penalty starts
+  flpi <- list(c(1), c(1)) # factor level parameter indices for each smooth
+  lpi <- list(1:4) # all parameters in first linear predictor
 
   # Test identifiability detection
   result <- SW(ffc:::olid(X, nsdf, pstart, flpi, lpi))
@@ -305,15 +308,15 @@ test_that("olid detects identifiability issues correctly", {
 test_that("olid handles full rank design matrices", {
   # Create a full rank design matrix
   X <- cbind(
-    c(1, 1, 1, 1),     # intercept
-    c(1, 2, 3, 4),     # x
-    c(1, 4, 9, 16),    # x^2
-    c(1, 8, 27, 64)    # x^3
+    c(1, 1, 1, 1), # intercept
+    c(1, 2, 3, 4), # x
+    c(1, 4, 9, 16), # x^2
+    c(1, 8, 27, 64) # x^3
   )
 
   nsdf <- c(1, 3)
   pstart <- c(1, 2)
-  flpi <- list(c(1), c(1))  # proper factor level parameter indices
+  flpi <- list(c(1), c(1)) # proper factor level parameter indices
   lpi <- list(1:4)
 
   # Test with full rank matrix
@@ -359,22 +362,25 @@ test_that("gam_setup and ffc_gam_setup work through ffc_gam interface", {
   expect_true(length(coef(mod_knots)) > 0)
 
   # Test error for invalid knots (should be caught by ffc_gam_setup)
-  expect_error(ffc_gam(
-    y ~ s(x, k = 5) + fts(time, k = 5, time_k = 5),
-    knots = "invalid_knots",  # Should be a list
-    time = "time",
-    data = test_data,
-    family = gaussian()
-  ), "knot.*must be supplied as lists")
+  expect_error(
+    ffc_gam(
+      y ~ s(x, k = 5) + fts(time, k = 5, time_k = 5),
+      knots = "invalid_knots", # Should be a list
+      time = "time",
+      data = test_data,
+      family = gaussian()
+    ),
+    "knot.*must be supplied as lists"
+  )
 })
 
 test_that("parametric_penalty returns NULL when no penalties", {
   # Create proper terms object using actual R terms functionality
-  f <- ~ 1
+  f <- ~1
   pterms <- terms(f)
 
   # Empty assignment (no terms beyond intercept)
-  assign <- c(0)  # only intercept
+  assign <- c(0) # only intercept
 
   # Test with empty paraPen
   result <- SW(ffc:::parametric_penalty(
@@ -392,7 +398,7 @@ test_that("parametric_penalty returns NULL for terms without penalties", {
   # Test with terms that have no penalties applied
   f <- ~ x + z
   pterms <- terms(f)
-  assign <- c(0, 1, 2)  # intercept, x, z
+  assign <- c(0, 1, 2) # intercept, x, z
 
   # Call with NULL paraPen
   result <- SW(ffc:::parametric_penalty(
@@ -602,7 +608,7 @@ test_that("gam_setup with various options", {
   test_data <- data.frame(
     y = rnorm(n),
     x = runif(n),
-    g = factor(rep(c("a", "b"), each = n/2))
+    g = factor(rep(c("a", "b"), each = n / 2))
   )
 
   # Test absorb.cons parameter
@@ -718,9 +724,9 @@ test_that("ffc_gam with paraPen parameter", {
   # paraPen requires a list with penalty matrices
   paraPen <- list(
     x1 = list(
-      diag(1),  # Penalty matrix
-      sp = 0.1,  # Smoothing parameter
-      rank = 1   # Rank of penalty
+      diag(1), # Penalty matrix
+      sp = 0.1, # Smoothing parameter
+      rank = 1 # Rank of penalty
     )
   )
 
@@ -750,7 +756,7 @@ test_that("ffc_gam with sp parameter for fixed smoothing", {
   # Need to match the number of smoothing parameters in the model
   # The model will have several smoothing parameters:
   # one for s(x), and several for the fts components (basis and time)
-  sp_fixed <- rep(0.1, 10)  # Provide enough smoothing parameters
+  sp_fixed <- rep(0.1, 10) # Provide enough smoothing parameters
 
   mod_sp <- SW(ffc_gam(
     y ~ s(x, k = 6) + fts(time, k = 5, time_k = 5),
@@ -873,7 +879,7 @@ test_that("gam_setup with apply.by parameter", {
   test_data <- data.frame(
     y = rnorm(n),
     x = runif(n),
-    grp = factor(rep(c("A", "B", "C"), each = n/3))
+    grp = factor(rep(c("A", "B", "C"), each = n / 3))
   )
 
   # Test with by variable
@@ -953,7 +959,7 @@ test_that("gam_setup handles sparse.cons parameter", {
     formula = formula_interp,
     pterms = pterms,
     data = mf,
-    sparse.cons = 1  # Enable sparse constraints
+    sparse.cons = 1 # Enable sparse constraints
   ))
 
   expect_true(is.list(G_sparse))
@@ -964,7 +970,7 @@ test_that("gam_setup handles sparse.cons parameter", {
     formula = formula_interp,
     pterms = pterms,
     data = mf,
-    sparse.cons = 0  # Disable sparse constraints
+    sparse.cons = 0 # Disable sparse constraints
   ))
 
   expect_true(is.list(G_dense))
@@ -988,12 +994,15 @@ test_that("ffc_gam requires data.frame input (not list)", {
   )
 
   # Test that ffc_gam rejects list data with clear error
-  expect_error(ffc_gam(
-    y ~ s(x1, k = 6) + s(x2, k = 6) + fts(time, k = 5, time_k = 5),
-    time = "time",
-    data = list_data,
-    family = gaussian()
-  ), "Must be of type 'data.frame'")
+  expect_error(
+    ffc_gam(
+      y ~ s(x1, k = 6) + s(x2, k = 6) + fts(time, k = 5, time_k = 5),
+      time = "time",
+      data = list_data,
+      family = gaussian()
+    ),
+    "Must be of type 'data.frame'"
+  )
 
   # Confirm it works with data.frame
   df_data <- data.frame(y = y, x1 = x1, x2 = x2, time = time)
@@ -1245,8 +1254,13 @@ test_that("initial_spg handles empty penalty matrix correctly", {
   y <- rnorm(n)
 
   result <- ffc:::initial_spg(
-    x = X, y = y, weights = rep(1, n), family = gaussian(),
-    S = list(), rank = numeric(0), off = numeric(0)
+    x = X,
+    y = y,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = list(),
+    rank = numeric(0),
+    off = numeric(0)
   )
 
   # Should return empty numeric vector
@@ -1264,14 +1278,26 @@ test_that("initial_spg standard families with type parameter", {
 
   # Type 1 (default) - uses mgcv::initial.sp
   sp_type1 <- SW(ffc:::initial_spg(
-    x = X, y = y_norm, weights = rep(1, n), family = gaussian(),
-    S = S, rank = c(3), off = c(1, 4), type = 1
+    x = X,
+    y = y_norm,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4),
+    type = 1
   ))
 
   # Type 2 - uses alternative calculation
   sp_type2 <- SW(ffc:::initial_spg(
-    x = X, y = y_norm, weights = rep(1, n), family = gaussian(),
-    S = S, rank = c(3), off = c(1, 4), type = 2
+    x = X,
+    y = y_norm,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4),
+    type = 2
   ))
 
   expect_true(is.numeric(sp_type1))
@@ -1292,15 +1318,20 @@ test_that("initial_spg standard families with type parameter", {
 
 test_that("initial_spg boundary conditions and edge cases", {
   set.seed(111)
-  n <- 5  # Very small sample
+  n <- 5 # Very small sample
   X <- cbind(1, runif(n))
   y <- rnorm(n)
-  S <- list(matrix(c(1), 1, 1))  # 1x1 penalty matrix
+  S <- list(matrix(c(1), 1, 1)) # 1x1 penalty matrix
 
   # Test with minimal data
   sp_minimal <- SW(ffc:::initial_spg(
-    x = X, y = y, weights = rep(1, n), family = gaussian(),
-    S = S, rank = c(1), off = c(2, 3)  # Single parameter penalty
+    x = X,
+    y = y,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(1),
+    off = c(2, 3) # Single parameter penalty
   ))
 
   expect_true(is.numeric(sp_minimal))
@@ -1310,9 +1341,13 @@ test_that("initial_spg boundary conditions and edge cases", {
   # Test with binomial data
   y_binom <- rbinom(n, size = 10, prob = 0.5)
   sp_binom <- SW(ffc:::initial_spg(
-    x = X, y = cbind(y_binom, 10 - y_binom),
-    weights = rep(1, n), family = binomial(),
-    S = S, rank = c(1), off = c(2, 3)
+    x = X,
+    y = cbind(y_binom, 10 - y_binom),
+    weights = rep(1, n),
+    family = binomial(),
+    S = S,
+    rank = c(1),
+    off = c(2, 3)
   ))
 
   expect_true(is.numeric(sp_binom))
@@ -1329,26 +1364,46 @@ test_that("initial_spg handles start parameters correctly", {
   # Test with start values
   start_vals <- c(0.1, 0.2, 0.3)
   sp_with_start <- SW(ffc:::initial_spg(
-    x = X, y = y, weights = rep(1, n), family = gaussian(),
-    S = S, rank = c(3), off = c(1, 4), start = start_vals
+    x = X,
+    y = y,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4),
+    start = start_vals
   ))
 
   # Test with mustart
   mustart_vals <- rep(mean(y), n)
   sp_with_mustart <- SW(ffc:::initial_spg(
-    x = X, y = y, weights = rep(1, n), family = gaussian(),
-    S = S, rank = c(3), off = c(1, 4), mustart = mustart_vals
+    x = X,
+    y = y,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4),
+    mustart = mustart_vals
   ))
 
   # Test with etastart
   etastart_vals <- rep(0, n)
   sp_with_etastart <- SW(ffc:::initial_spg(
-    x = X, y = y, weights = rep(1, n), family = gaussian(),
-    S = S, rank = c(3), off = c(1, 4), etastart = etastart_vals
+    x = X,
+    y = y,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4),
+    etastart = etastart_vals
   ))
 
-  expect_true(all(sapply(list(sp_with_start, sp_with_mustart, sp_with_etastart),
-                        function(x) is.numeric(x) && length(x) == 1)))
+  expect_true(all(sapply(
+    list(sp_with_start, sp_with_mustart, sp_with_etastart),
+    function(x) is.numeric(x) && length(x) == 1
+  )))
 })
 
 test_that("initial_spg family initialization effects", {
@@ -1381,8 +1436,13 @@ test_that("initial_spg family initialization effects", {
     }
 
     results[[fam_name]] <- SW(ffc:::initial_spg(
-      x = X, y = y_test, weights = rep(1, n), family = fam,
-      S = S, rank = c(1), off = c(2, 3)
+      x = X,
+      y = y_test,
+      weights = rep(1, n),
+      family = fam,
+      S = S,
+      rank = c(1),
+      off = c(2, 3)
     ))
   }
 
@@ -1401,11 +1461,16 @@ test_that("initial_spg numerical stability", {
   # Test with extreme values
   X_extreme <- cbind(1, runif(n, 1e-10, 1e-8), runif(n, 1e8, 1e10))
   y_extreme <- rnorm(n, mean = 1e6, sd = 1e3)
-  S <- list(diag(3) * 1e-12)  # Very small penalty
+  S <- list(diag(3) * 1e-12) # Very small penalty
 
   sp_extreme <- SW(ffc:::initial_spg(
-    x = X_extreme, y = y_extreme, weights = rep(1, n), family = gaussian(),
-    S = S, rank = c(3), off = c(1, 4)
+    x = X_extreme,
+    y = y_extreme,
+    weights = rep(1, n),
+    family = gaussian(),
+    S = S,
+    rank = c(3),
+    off = c(1, 4)
   ))
 
   # Should still produce finite, non-negative result

@@ -51,12 +51,12 @@
 #' forecast(coefs, model = "ETS", h = 3)
 #' @export
 forecast.fts_ts <- function(
-    object,
-    model = "ARIMA",
-    h = get_stan_param("h", "forecast"),
-    n_samples = 25,
-    stationary = FALSE,
-    ...
+  object,
+  model = "ARIMA",
+  h = get_stan_param("h", "forecast"),
+  n_samples = 25,
+  stationary = FALSE,
+  ...
 ) {
   # Ensure required fable package is installed
   insight::check_if_installed("fable")
@@ -113,14 +113,38 @@ extract_model_params <- function(...) {
   lag <- if ("lag" %in% names(dots)) dots$lag else 1
 
   # Stan sampling parameters with sensible defaults
-  chains <- if ("chains" %in% names(dots)) dots$chains else get_stan_param("chains")
+  chains <- if ("chains" %in% names(dots)) {
+    dots$chains
+  } else {
+    get_stan_param("chains")
+  }
   iter <- if ("iter" %in% names(dots)) dots$iter else get_stan_param("iter")
-  warmup <- if ("warmup" %in% names(dots)) dots$warmup else floor(iter / 2)  # Half of actual iter
-  cores <- if ("cores" %in% names(dots)) dots$cores else min(get_stan_param("chains"), parallel::detectCores() - 1)
-  adapt_delta <- if ("adapt_delta" %in% names(dots)) dots$adapt_delta else get_stan_param("adapt_delta")
-  max_treedepth <- if ("max_treedepth" %in% names(dots)) dots$max_treedepth else get_stan_param("max_treedepth")
-  silent <- if ("silent" %in% names(dots)) dots$silent else get_stan_param("silent")
-  n_samples <- if ("n_samples" %in% names(dots)) dots$n_samples else get_stan_param("n_samples", "forecast")
+  warmup <- if ("warmup" %in% names(dots)) dots$warmup else floor(iter / 2) # Half of actual iter
+  cores <- if ("cores" %in% names(dots)) {
+    dots$cores
+  } else {
+    min(get_stan_param("chains"), parallel::detectCores() - 1)
+  }
+  adapt_delta <- if ("adapt_delta" %in% names(dots)) {
+    dots$adapt_delta
+  } else {
+    get_stan_param("adapt_delta")
+  }
+  max_treedepth <- if ("max_treedepth" %in% names(dots)) {
+    dots$max_treedepth
+  } else {
+    get_stan_param("max_treedepth")
+  }
+  silent <- if ("silent" %in% names(dots)) {
+    dots$silent
+  } else {
+    get_stan_param("silent")
+  }
+  n_samples <- if ("n_samples" %in% names(dots)) {
+    dots$n_samples
+  } else {
+    get_stan_param("n_samples", "forecast")
+  }
 
   # Validate parameters using checkmate
   checkmate::assert_count(K, positive = TRUE)
@@ -144,8 +168,14 @@ extract_model_params <- function(...) {
   min_samples <- 100
   if (post_samples < min_samples) {
     stop(insight::format_error(
-      paste0("Configuration produces only ", post_samples, " posterior samples. ",
-             "Increase iter, chains, or reduce warmup to get at least ", min_samples, " samples.")
+      paste0(
+        "Configuration produces only ",
+        post_samples,
+        " posterior samples. ",
+        "Increase iter, chains, or reduce warmup to get at least ",
+        min_samples,
+        " samples."
+      )
     ))
   }
 
@@ -153,9 +183,19 @@ extract_model_params <- function(...) {
   max_cores <- parallel::detectCores()
   if (cores > max_cores) {
     if (!identical(Sys.getenv("TESTTHAT"), "true")) {
-      rlang::warn(paste0("Requested ", cores, " cores but only ", max_cores,
-                        " available. Using ", min(cores, max_cores), " cores."),
-                  .frequency = "once", .frequency_id = "cores_limit")
+      rlang::warn(
+        paste0(
+          "Requested ",
+          cores,
+          " cores but only ",
+          max_cores,
+          " available. Using ",
+          min(cores, max_cores),
+          " cores."
+        ),
+        .frequency = "once",
+        .frequency_id = "cores_limit"
+      )
     }
     cores <- min(cores, max_cores)
   }
@@ -230,10 +270,10 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
 #' to simulate more realistic forecast distributions
 #' @noRd
 adjust_forecast_uncertainty <- function(
-    forecast_df,
-    object_sds,
-    n_samples,
-    h
+  forecast_df,
+  object_sds,
+  n_samples,
+  h
 ) {
   forecast_df |>
     dplyr::left_join(
@@ -243,16 +283,19 @@ adjust_forecast_uncertainty <- function(
     dplyr::mutate(
       .estimate = vctrs::new_vctr(
         purrr::map2(
-          .estimate, .sd,
-          \(x, y) generate(
-            distributional::dist_normal(
-              mean = mean(x),
-              sd = sqrt(
-                distributional::parameters(x)$sigma^2 + y^2
-              )
-            ),
-            times = n_samples
-          )
+          .estimate,
+          .sd,
+          \(x, y) {
+            generate(
+              distributional::dist_normal(
+                mean = mean(x),
+                sd = sqrt(
+                  distributional::parameters(x)$sigma^2 + y^2
+                )
+              ),
+              times = n_samples
+            )
+          }
         ),
         class = "distribution"
       )
@@ -270,12 +313,12 @@ adjust_forecast_uncertainty <- function(
 #' If uncertainty estimates are available, adjust forecasts
 #' @noRd
 fable_forecast <- function(
-    object_tsbl,
-    model,
-    h,
-    n_samples,
-    stationary = FALSE,
-    object_sds = NULL
+  object_tsbl,
+  model,
+  h,
+  n_samples,
+  stationary = FALSE,
+  object_sds = NULL
 ) {
   # Input validation
   checkmate::assert_data_frame(object_tsbl, min.rows = 1)
@@ -324,12 +367,18 @@ fable_forecast <- function(
     required_cols <- c(".basis", ".realisation", time_index, ".sim", ".rep")
 
     # Validate ETS forecast structure
-    checkmate::assert_subset(required_cols, names(ets_fc),
-      .var.name = paste("ETS forecast columns (time index:", time_index, ")"))
+    checkmate::assert_subset(
+      required_cols,
+      names(ets_fc),
+      .var.name = paste("ETS forecast columns (time index:", time_index, ")")
+    )
 
     # Validate RW forecast structure
-    checkmate::assert_subset(required_cols, names(rw_fc),
-      .var.name = paste("RW forecast columns (time index:", time_index, ")"))
+    checkmate::assert_subset(
+      required_cols,
+      names(rw_fc),
+      .var.name = paste("RW forecast columns (time index:", time_index, ")")
+    )
 
     # Combine forecasts with equal weights (arithmetic mean)
     # Use dynamic time index column name in join
@@ -559,16 +608,17 @@ fable_forecast <- function(
 #' @author Nicholas J Clark
 #' @export
 forecast.ffc_gam <- function(
-    object,
-    newdata,
-    type = "response",
-    model = "ENS",
-    stationary = FALSE,
-    summary = TRUE,
-    robust = TRUE,
-    probs = c(0.025, 0.1, 0.9, 0.975),
-    mean_model = "ENS",
-    ...) {
+  object,
+  newdata,
+  type = "response",
+  model = "ENS",
+  stationary = FALSE,
+  summary = TRUE,
+  robust = TRUE,
+  probs = c(0.025, 0.1, 0.9, 0.975),
+  mean_model = "ENS",
+  ...
+) {
   type <- match.arg(
     arg = type,
     choices = c(
@@ -594,12 +644,22 @@ forecast.ffc_gam <- function(
 
   # For Stan models, ensure times matches posterior samples to avoid dimension mismatches
   if (model %in% c('ARDF', 'GPDF', 'VARDF')) {
-    stan_post_samples <- (temp_params$iter - temp_params$warmup) * temp_params$chains
+    stan_post_samples <- (temp_params$iter - temp_params$warmup) *
+      temp_params$chains
     if (temp_params$n_samples != stan_post_samples) {
       if (!identical(Sys.getenv("TESTTHAT"), "true")) {
-        rlang::warn(paste0("For Stan models, setting n_samples = ", stan_post_samples, " to match posterior samples. ",
-                          "Requested n_samples = ", temp_params$n_samples, " would cause dimension mismatch."),
-                    .frequency = "once", .frequency_id = "stan_times_mismatch")
+        rlang::warn(
+          paste0(
+            "For Stan models, setting n_samples = ",
+            stan_post_samples,
+            " to match posterior samples. ",
+            "Requested n_samples = ",
+            temp_params$n_samples,
+            " would cause dimension mismatch."
+          ),
+          .frequency = "once",
+          .frequency_id = "stan_times_mismatch"
+        )
       }
       temp_params$n_samples <- stan_post_samples
     }
@@ -632,7 +692,6 @@ forecast.ffc_gam <- function(
     if (!is.null(model_offset) && !all(model_offset == 0)) {
       full_linpreds <- sweep(full_linpreds, 2, model_offset, "+")
     }
-
   } else {
     # Determine horizon (assuming equal time gaps)
     time_var <- object$time_var
@@ -723,18 +782,17 @@ forecast.ffc_gam <- function(
     # Structure the functional_coefs object for automatic
     # recognition of time signatures (if the data provided are
     # a tsibble format)
-      if (!is.null(attr(intermed_coefs, "index"))) {
-        if (!attr(intermed_coefs, "index") %in% names(functional_coefs)){
-          functional_coefs <- functional_coefs |>
-            dplyr::left_join(
-              intermed_coefs |>
-                dplyr::select(.time, !!attr(intermed_coefs, "index")) |>
-                dplyr::distinct(),
-              by = dplyr::join_by(.time)
-            )
-        }
+    if (!is.null(attr(intermed_coefs, "index"))) {
+      if (!attr(intermed_coefs, "index") %in% names(functional_coefs)) {
+        functional_coefs <- functional_coefs |>
+          dplyr::left_join(
+            intermed_coefs |>
+              dplyr::select(.time, !!attr(intermed_coefs, "index")) |>
+              dplyr::distinct(),
+            by = dplyr::join_by(.time)
+          )
       }
-
+    }
 
     functional_coefs <- structure(
       functional_coefs,
@@ -754,8 +812,12 @@ forecast.ffc_gam <- function(
     has_mean_basis <- any(grepl('_mean', basis_names))
     has_non_mean_basis <- any(!grepl('_mean', basis_names))
 
-    if(model %in% c('ARDF', 'GPDF', 'VARDF') &
-       has_mean_basis & has_non_mean_basis) {
+    if (
+      model %in%
+        c('ARDF', 'GPDF', 'VARDF') &
+        has_mean_basis &
+        has_non_mean_basis
+    ) {
       # For factor models, it will very often make sense to forecast any
       # _mean basis (i.e. level shifts) separately as they can behave very
       # differently to remaining basis coefficient time series
@@ -774,7 +836,7 @@ forecast.ffc_gam <- function(
         )
       )
 
-      if('.time' %in% colnames(functional_fc_others)){
+      if ('.time' %in% colnames(functional_fc_others)) {
         functional_fc_others <- functional_fc_others |>
           dplyr::select(-.time)
       }
@@ -794,17 +856,18 @@ forecast.ffc_gam <- function(
         tsibble::as_tibble() |>
         dplyr::select(dplyr::any_of(names(functional_fc_others)))
 
-      if(!time_var %in% colnames(functional_fc_mean) &
-         is.null(attr(intermed_coefs, "index"))){
+      if (
+        !time_var %in% colnames(functional_fc_mean) &
+          is.null(attr(intermed_coefs, "index"))
+      ) {
         functional_fc_mean <- functional_fc_mean |>
-          dplyr::mutate({{time_var}} := .time)
+          dplyr::mutate({{ time_var }} := .time)
       }
 
       # Bind the two forecasts together
       functional_fc <- functional_fc_others |>
         dplyr::mutate(.rep = as.character(.rep)) |>
         dplyr::bind_rows(functional_fc_mean)
-
     } else {
       # Use single forecasting approach for all basis functions
       # This handles cases where:
@@ -816,8 +879,16 @@ forecast.ffc_gam <- function(
           object = functional_coefs,
           h = max_horizon,
           n_samples = temp_params$n_samples,
-          model = if(has_mean_basis & !has_non_mean_basis) mean_model else model,
-          stationary = if(has_mean_basis & !has_non_mean_basis) FALSE else stationary,
+          model = if (has_mean_basis & !has_non_mean_basis) {
+            mean_model
+          } else {
+            model
+          },
+          stationary = if (has_mean_basis & !has_non_mean_basis) {
+            FALSE
+          } else {
+            stationary
+          },
           ...
         )
       )
@@ -847,7 +918,6 @@ forecast.ffc_gam <- function(
         functional_fc <- functional_fc |>
           dplyr::rename(.time = !!time_var)
       }
-
     } else if (time_var %in% colnames(functional_fc)) {
       # Replace .time column with time_var if available
       functional_fc <- functional_fc |>
@@ -887,8 +957,9 @@ forecast.ffc_gam <- function(
       # Forecast times are subset of target times - map by temporal value
       if (is.numeric(forecast_times) && is.numeric(target_times)) {
         # Use tolerance for floating point comparison
-        available_targets <- target_times[sapply(target_times, function(t)
-          any(abs(forecast_times - t) < TIME_TOLERANCE))]
+        available_targets <- target_times[sapply(target_times, function(t) {
+          any(abs(forecast_times - t) < TIME_TOLERANCE)
+        })]
       } else {
         available_targets <- target_times[target_times %in% forecast_times]
       }
@@ -896,23 +967,37 @@ forecast.ffc_gam <- function(
       if (length(available_targets) == length(forecast_times)) {
         time_mapping <- data.frame(
           .time = forecast_times,
-          .time_target = forecast_times  # Direct mapping for matching values
+          .time_target = forecast_times # Direct mapping for matching values
         )
       } else {
-        stop(insight::format_error(
-          paste0("Cannot map forecast times to target times. ",
-                 "Forecast generated {.field ", length(forecast_times),
-                 "} time steps but only {.field ", length(available_targets),
-                 "} match target times.")
-        ), call. = FALSE)
+        stop(
+          insight::format_error(
+            paste0(
+              "Cannot map forecast times to target times. ",
+              "Forecast generated {.field ",
+              length(forecast_times),
+              "} time steps but only {.field ",
+              length(available_targets),
+              "} match target times."
+            )
+          ),
+          call. = FALSE
+        )
       }
     } else {
       # More forecast times than target times - internal error
-      stop(insight::format_error(
-        paste0("Generated {.field ", length(forecast_times),
-               "} forecast times but found {.field ", length(target_times),
-               "} target times. This suggests an internal forecasting error.")
-      ), call. = FALSE)
+      stop(
+        insight::format_error(
+          paste0(
+            "Generated {.field ",
+            length(forecast_times),
+            "} forecast times but found {.field ",
+            length(target_times),
+            "} target times. This suggests an internal forecasting error."
+          )
+        ),
+        call. = FALSE
+      )
     }
 
     # Remap the .time values using the mapping table
@@ -931,9 +1016,12 @@ forecast.ffc_gam <- function(
       # Multi-parameter case: expand offsets using lpi from lpmatrix attributes
       lpi <- attr(orig_lpmat, "lpi")
       if (is.null(lpi)) {
-        stop(insight::format_error(
-          "Multi-parameter model missing {.field lpi} attribute in lpmatrix for offset expansion"
-        ), call. = FALSE)
+        stop(
+          insight::format_error(
+            "Multi-parameter model missing {.field lpi} attribute in lpmatrix for offset expansion"
+          ),
+          call. = FALSE
+        )
       }
 
       checkmate::assert_list(model_offset, types = "numeric", min.len = 1)
@@ -941,10 +1029,18 @@ forecast.ffc_gam <- function(
 
       # Validate that offset list length matches lpi list length
       if (length(model_offset) != length(lpi)) {
-        stop(insight::format_error(
-          paste0("Offset list length {.field ", length(model_offset),
-                 "} doesn't match parameter count {.field ", length(lpi), "}")
-        ), call. = FALSE)
+        stop(
+          insight::format_error(
+            paste0(
+              "Offset list length {.field ",
+              length(model_offset),
+              "} doesn't match parameter count {.field ",
+              length(lpi),
+              "}"
+            )
+          ),
+          call. = FALSE
+        )
       }
 
       expanded_offset <- numeric(ncol(orig_lpmat))
@@ -958,7 +1054,6 @@ forecast.ffc_gam <- function(
         }
       }
       model_offset <- expanded_offset
-
     } else if (is.null(model_offset)) {
       model_offset <- rep(0, nrow(orig_lpmat))
     } else {
@@ -997,11 +1092,14 @@ forecast.ffc_gam <- function(
       n_draws <- nrow(orig_betas)
 
       # Result matrix: rows = draws, cols = (n_params * n_time_points)
-      intermed_linpreds <- matrix(0, nrow = n_draws, ncol = n_params * n_time_points)
+      intermed_linpreds <- matrix(
+        0,
+        nrow = n_draws,
+        ncol = n_params * n_time_points
+      )
 
       for (p in seq_len(n_params)) {
         param_coef_indices <- lpi_attr[[p]]
-
 
         # Extract parameter-specific coefficients and design matrix
         param_betas <- orig_betas[, param_coef_indices, drop = FALSE]
@@ -1015,7 +1113,6 @@ forecast.ffc_gam <- function(
         col_end <- p * n_time_points
         intermed_linpreds[, col_start:col_end] <- param_linpreds
       }
-
     } else {
       # Single parameter family: use existing computation
       if (is.null(model_offset) || all(model_offset == 0)) {
@@ -1097,7 +1194,12 @@ forecast.ffc_gam <- function(
 
           # Reshape to draws × time_points matrix
           # fts_fc is ordered by .row then .draw, so we need to transpose the arrangement
-          param_fc_matrix <- matrix(param_sums, nrow = n_draws, ncol = n_time_points, byrow = TRUE)
+          param_fc_matrix <- matrix(
+            param_sums,
+            nrow = n_draws,
+            ncol = n_time_points,
+            byrow = TRUE
+          )
 
           # Place coefficients in appropriate columns of fc_matrix
           start_col <- (p - 1) * n_time_points + 1
@@ -1124,7 +1226,12 @@ forecast.ffc_gam <- function(
 
         # Reshape to draws × timepoints matrix
         # fts_fc is ordered by .row then .draw, so use byrow=TRUE
-        fc_matrix <- matrix(fc_values, nrow = n_draws, ncol = n_time_points, byrow = TRUE)
+        fc_matrix <- matrix(
+          fc_values,
+          nrow = n_draws,
+          ncol = n_time_points,
+          byrow = TRUE
+        )
 
         # Add functional coefficients to intermediate predictions
         full_linpreds <- intermed_linpreds + fc_matrix
@@ -1153,7 +1260,9 @@ forecast.ffc_gam <- function(
 
   # Now can proceed to send full_linpreds to the relevant
   # invlink and rng functions for outcome-level predictions
-  if (type == "link") preds <- full_linpreds
+  if (type == "link") {
+    preds <- full_linpreds
+  }
 
   if (type == "expected") {
     preds <- posterior_epred(
@@ -1165,27 +1274,31 @@ forecast.ffc_gam <- function(
   if (type == "response") {
     # Distributional families need parameter-specific fitted values
     if (is_distributional_family(object$family)) {
-
       # Validate lpi attribute required for parameter extraction
       if (is.null(attr(full_linpreds, "lpi"))) {
-        stop(insight::format_error(
-          "Linear predictors missing {.field lpi} attribute
+        stop(
+          insight::format_error(
+            "Linear predictors missing {.field lpi} attribute
           required for distributional families"
-        ), call. = FALSE)
+          ),
+          call. = FALSE
+        )
       }
 
       # Extract parameter indices and split linear predictors
       parameter_info <- extract_parameter_info_from_lpmat(
-        full_linpreds, object$family
+        full_linpreds,
+        object$family
       )
       par_linpreds <- split_linear_predictors_by_lpi(
-        full_linpreds, parameter_info
+        full_linpreds,
+        parameter_info
       )
-
 
       # Convert linear predictors to response scale
       fitted_parameters <- apply_distributional_inverse_links(
-        par_linpreds, object$family
+        par_linpreds,
+        object$family
       )
 
       # Prepare parameter matrices for posterior_predict
@@ -1194,7 +1307,6 @@ forecast.ffc_gam <- function(
       scale_matrix <- NULL
       if (length(fitted_parameters) >= 2) {
         scale_matrix <- fitted_parameters[[2]]
-
       }
 
       shape_matrix <- NULL
@@ -1211,7 +1323,6 @@ forecast.ffc_gam <- function(
         scale_matrix = scale_matrix,
         shape_matrix = shape_matrix
       )
-
     } else {
       # Single parameter families use standard path
       preds <- posterior_predict(
@@ -1264,10 +1375,18 @@ forecast.ffc_gam <- function(
     } else {
       # Log mismatch for debugging
       if (!identical(Sys.getenv("TESTTHAT"), "true")) {
-        rlang::warn(paste0("Row count mismatch in order restoration: ",
-                          "expected ", NROW(out), " rows but found ",
-                          length(surviving_rows), " IDs"),
-                    .frequency = "once", .frequency_id = "row_count_mismatch")
+        rlang::warn(
+          paste0(
+            "Row count mismatch in order restoration: ",
+            "expected ",
+            NROW(out),
+            " rows but found ",
+            length(surviving_rows),
+            " IDs"
+          ),
+          .frequency = "once",
+          .frequency_id = "row_count_mismatch"
+        )
       }
     }
   }
@@ -1311,9 +1430,12 @@ extract_parameter_info_from_lpmat <- function(linpreds, family) {
     # Get parameter indices from lpmatrix attributes (correct mgcv pattern)
     lpi <- attr(linpreds, "lpi")
     if (is.null(lpi)) {
-      stop(insight::format_error(
-        "Multi-parameter model missing {.field lpi} attribute in lpmatrix"
-      ), call. = FALSE)
+      stop(
+        insight::format_error(
+          "Multi-parameter model missing {.field lpi} attribute in lpmatrix"
+        ),
+        call. = FALSE
+      )
     }
 
     checkmate::assert_list(lpi, types = "numeric", min.len = 1)
@@ -1347,8 +1469,10 @@ extract_parameter_info_from_lpmat <- function(linpreds, family) {
 split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
   checkmate::assert_matrix(linpreds)
   checkmate::assert_list(parameter_info, names = "strict")
-  checkmate::assert_names(names(parameter_info),
-                         must.include = c("n_parameters", "parameter_indices"))
+  checkmate::assert_names(
+    names(parameter_info),
+    must.include = c("n_parameters", "parameter_indices")
+  )
 
   if (parameter_info$n_parameters == 1L) {
     return(list(location = linpreds))
@@ -1358,8 +1482,7 @@ split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
   par_predictions <- vector("list", parameter_info$n_parameters)
   for (i in seq_len(parameter_info$n_parameters)) {
     indices <- parameter_info$parameter_indices[[i]]
-    checkmate::assert_integerish(indices, lower = 1,
-                                upper = ncol(linpreds))
+    checkmate::assert_integerish(indices, lower = 1, upper = ncol(linpreds))
     par_predictions[[i]] <- linpreds[, indices, drop = FALSE]
   }
   names(par_predictions) <- parameter_info$parameter_names
@@ -1420,7 +1543,11 @@ posterior_epred <- function(object, linpreds) {
     cat("family$linkinv is NULL:", is.null(family$linkinv), "\n")
     cat("family$linfo length:", length(family$linfo), "\n")
     if (length(family$linfo) > 0) {
-      cat("family$linfo[[1]]$linkinv is NULL:", is.null(family$linfo[[1]]$linkinv), "\n")
+      cat(
+        "family$linfo[[1]]$linkinv is NULL:",
+        is.null(family$linfo[[1]]$linkinv),
+        "\n"
+      )
     }
 
     # Extract parameter information using correct mgcv pattern
@@ -1428,8 +1555,11 @@ posterior_epred <- function(object, linpreds) {
 
     # Get location parameter (first parameter) indices
     location_indices <- parameter_info$parameter_indices[[1]]
-    checkmate::assert_integerish(location_indices, lower = 1,
-                                upper = ncol(linpreds))
+    checkmate::assert_integerish(
+      location_indices,
+      lower = 1,
+      upper = ncol(linpreds)
+    )
 
     cat("Location indices:", paste(location_indices, collapse = ", "), "\n")
 
@@ -1438,12 +1568,19 @@ posterior_epred <- function(object, linpreds) {
 
     # Apply inverse link to location parameter only
     expectations <- family$linkinv(location_linpreds)
-    cat("After family$linkinv - expectations is NULL:", is.null(expectations), "\n")
+    cat(
+      "After family$linkinv - expectations is NULL:",
+      is.null(expectations),
+      "\n"
+    )
     if (!is.null(expectations)) {
       cat("Expectations range:", round(range(expectations), 3), "\n")
-      cat("Expectations sample (first 3):", round(expectations[1:min(3, length(expectations))], 3), "\n")
+      cat(
+        "Expectations sample (first 3):",
+        round(expectations[1:min(3, length(expectations))], 3),
+        "\n"
+      )
     }
-
   } else {
     # Single parameter family - standard approach
     expectations <- family$linkinv(linpreds)
@@ -1495,8 +1632,13 @@ posterior_epred <- function(object, linpreds) {
 #' # posterior_predict(model, linpreds, location_matrix, scale_matrix)
 #'
 #' @noRd
-posterior_predict <- function(object, linpreds, location_matrix = NULL,
-                             scale_matrix = NULL, shape_matrix = NULL) {
+posterior_predict <- function(
+  object,
+  linpreds,
+  location_matrix = NULL,
+  scale_matrix = NULL,
+  shape_matrix = NULL
+) {
   checkmate::assert_matrix(linpreds)
   family <- object$family
   checkmate::assert_class(family, "family")
@@ -1517,8 +1659,10 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
   provided_matrices <- param_matrices[!sapply(param_matrices, is.null)]
   if (length(provided_matrices) > 1) {
     ncols <- unique(sapply(provided_matrices, ncol))
-    checkmate::assert_true(length(ncols) == 1,
-      .var.name = "parameter matrices must have same number of columns")
+    checkmate::assert_true(
+      length(ncols) == 1,
+      .var.name = "parameter matrices must have same number of columns"
+    )
   }
 
   # Family-specific parameter matrix validation for distributional families
@@ -1530,16 +1674,27 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
     # Check if any parameter matrices are provided (mixed mode validation)
     if (provided_count > 0) {
       # Get expected parameter names dynamically based on family$nlp
-      expected_params <- c("location_matrix", "scale_matrix", "shape_matrix")[seq_len(required_params)]
-      provided_params <- c("location_matrix", "scale_matrix", "shape_matrix")[!sapply(provided_matrices, is.null)]
+      expected_params <- c(
+        "location_matrix",
+        "scale_matrix",
+        "shape_matrix"
+      )[seq_len(required_params)]
+      provided_params <- c("location_matrix", "scale_matrix", "shape_matrix")[
+        !sapply(provided_matrices, is.null)
+      ]
 
       # Validate required parameters are provided
       missing_params <- setdiff(expected_params, provided_params)
       if (length(missing_params) > 0) {
         stop(insight::format_error(
-          paste0("Family {.field ", family$family, "} requires ",
-                 paste(paste0("{.field ", missing_params, "}"), collapse = ", "), ". ",
-                 "Provide all required parameter matrices or none.")
+          paste0(
+            "Family {.field ",
+            family$family,
+            "} requires ",
+            paste(paste0("{.field ", missing_params, "}"), collapse = ", "),
+            ". ",
+            "Provide all required parameter matrices or none."
+          )
         ))
       }
 
@@ -1547,8 +1702,13 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
       extra_params <- setdiff(provided_params, expected_params)
       if (length(extra_params) > 0) {
         stop(insight::format_error(
-          paste0("Family {.field ", family$family, "} does not use ",
-                 paste(paste0("{.field ", extra_params, "}"), collapse = ", "), ".")
+          paste0(
+            "Family {.field ",
+            family$family,
+            "} does not use ",
+            paste(paste0("{.field ", extra_params, "}"), collapse = ", "),
+            "."
+          )
         ))
       }
     }
@@ -1572,9 +1732,14 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
     } else {
       # Reason: extract linear predictors and apply inverse links for standard flow
       parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
-      par_predictions <- split_linear_predictors_by_lpi(linpreds, parameter_info)
-      fitted_parameters <- apply_distributional_inverse_links(par_predictions, family)
-
+      par_predictions <- split_linear_predictors_by_lpi(
+        linpreds,
+        parameter_info
+      )
+      fitted_parameters <- apply_distributional_inverse_links(
+        par_predictions,
+        family
+      )
     }
 
     # Matrix reshaping for rd function parameter compatibility
@@ -1591,9 +1756,12 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
     # Validate fitted_parameters structure
     checkmate::assert_list(fitted_parameters, min.len = 1)
     for (i in seq_along(fitted_parameters)) {
-      checkmate::assert_matrix(fitted_parameters[[i]],
-                               nrows = n_draws, ncols = n_cols,
-                               .var.name = paste0("fitted_parameters[[", i, "]]"))
+      checkmate::assert_matrix(
+        fitted_parameters[[i]],
+        nrows = n_draws,
+        ncols = n_cols,
+        .var.name = paste0("fitted_parameters[[", i, "]]")
+      )
     }
 
     # Reason: Process timepoint by timepoint to preserve posterior draw structure
@@ -1602,17 +1770,22 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
 
     for (t in seq_len(n_cols)) {
       # Reason: Extract parameter matrix for this timepoint (n_draws × n_parameters)
-      timepoint_matrix <- matrix(NA, nrow = n_draws,
-                                ncol = length(fitted_parameters))
+      timepoint_matrix <- matrix(
+        NA,
+        nrow = n_draws,
+        ncol = length(fitted_parameters)
+      )
 
       for (p in seq_along(fitted_parameters)) {
         timepoint_matrix[, p] <- fitted_parameters[[p]][, t]
       }
 
       # Validate timepoint matrix dimensions
-      checkmate::assert_matrix(timepoint_matrix, nrows = n_draws,
-                              ncols = length(fitted_parameters))
-
+      checkmate::assert_matrix(
+        timepoint_matrix,
+        nrows = n_draws,
+        ncols = length(fitted_parameters)
+      )
 
       # Reason: Generate samples preserving draw-level uncertainty structure
       timepoint_samples <- rd_fun(
@@ -1620,7 +1793,6 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
         wt = rep(1, n_draws),
         scale = 1
       )
-
 
       # Validate rd function output
       checkmate::assert_numeric(timepoint_samples, len = n_draws)
@@ -1639,9 +1811,6 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
 
     # Validate final result dimensions
     checkmate::assert_numeric(response_pred_vec, len = n_total)
-
-
-
   } else {
     invlink_fun <- get_family_invlink(object)
 
@@ -1757,7 +1926,8 @@ fix_family_rd <- function(family, ...) {
     # if we ever need to handle weights to scale V, see this post on CV
     # https://stats.stackexchange.com/a/162885/1390
     rd_mvn <- function(V) {
-      function(mu, wt, scale) { # function needs to take wt and scale
+      function(mu, wt, scale) {
+        # function needs to take wt and scale
         mgcv::rmvn(
           n = nrow(mu),
           mu = mu,
@@ -1799,8 +1969,10 @@ get_family_rd <- function(object) {
   ## mgcv stores data simulation funs in `rd`
   fam <- fix_family_rd(fam)
   if (is.null(fam[["rd"]])) {
-    stop("Don't yet know how to simulate from family <",
-      fam[["family"]], ">",
+    stop(
+      "Don't yet know how to simulate from family <",
+      fam[["family"]],
+      ">",
       call. = FALSE
     )
   }
@@ -1817,8 +1989,10 @@ get_family_invlink <- function(object) {
   ## mgcv stores data simulation funs in `rd`
   fam <- fix_family_rd(fam)
   if (is.null(fam[["rd"]])) {
-    stop("Don't yet know how to simulate from family <",
-      fam[["family"]], ">",
+    stop(
+      "Don't yet know how to simulate from family <",
+      fam[["family"]],
+      ">",
       call. = FALSE
     )
   }

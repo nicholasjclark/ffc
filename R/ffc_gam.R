@@ -56,21 +56,21 @@
 #' sim_data <- data.frame(
 #'   time = 1:n,
 #'   x = rnorm(n),
-#'   y = rnorm(n, mean = sin(2 * pi * (1:n) / 20), 
+#'   y = rnorm(n, mean = sin(2 * pi * (1:n) / 20),
 #'             sd = 0.5 + 0.3 * cos(2 * pi * (1:n) / 15))
 #' )
-#' 
+#'
 #' # Fit distributional model with time-varying parameters
 #' dist_mod <- ffc_gam(
 #'   list(
 #'     y ~ fts(x, k = 5),      # Location parameter
-#'     ~ fts(x, k = 3)         # Scale parameter  
+#'     ~ fts(x, k = 3)         # Scale parameter
 #'   ),
 #'   family = gaulss(),
 #'   data = sim_data,
 #'   time = "time"
 #' )
-#' 
+#'
 #' # Extract parameter-specific coefficients
 #' coefs <- fts_coefs(dist_mod)
 #' print(unique(coefs$.parameter))  # Shows "location" and "scale"
@@ -95,17 +95,21 @@
 #'
 #' @export
 ffc_gam <- function(
-    formula,
-    family = gaussian(),
-    data = list(),
-    time,
-    engine = c("gam", "bam"),
-    ...) {
-  
+  formula,
+  family = gaussian(),
+  data = list(),
+  time,
+  engine = c("gam", "bam"),
+  ...
+) {
   # Parameter validation
   if (is.list(formula)) {
-    checkmate::assert_list(formula, types = "formula", min.len = 1,
-                          .var.name = "formula")
+    checkmate::assert_list(
+      formula,
+      types = "formula",
+      min.len = 1,
+      .var.name = "formula"
+    )
   } else {
     checkmate::assert_class(formula, "formula", .var.name = "formula")
   }
@@ -117,55 +121,81 @@ ffc_gam <- function(
     family <- family()
   }
   if (!inherits(family, "family")) {
-    stop(insight::format_error(
-      "Family must be a family object or valid family name"
-    ), call. = FALSE)
+    stop(
+      insight::format_error(
+        "Family must be a family object or valid family name"
+      ),
+      call. = FALSE
+    )
   }
   checkmate::assert_data_frame(data, min.rows = 2, .var.name = "data")
   checkmate::assert_string(time, min.chars = 1, .var.name = "time")
-  
+
   engine <- match.arg(engine)
   orig_call <- match.call()
   orig_formula <- formula
-  
+
   # Detect if this is a distributional model and validate compatibility
   is_list_formula <- is.list(formula)
-  
+
   # Validate formula/family compatibility for distributional regression
   if (is_list_formula) {
     # Check if family supports multiple linear predictors
     if (is.null(family$nlp)) {
-      stop(insight::format_error(
-        paste0("List formulae require a multi-parameter family. ",
-               "Family {.field ", family$family, "} does not support ", 
-               "multiple linear predictors. Use single formula instead.")
-      ), call. = FALSE)
+      stop(
+        insight::format_error(
+          paste0(
+            "List formulae require a multi-parameter family. ",
+            "Family {.field ",
+            family$family,
+            "} does not support ",
+            "multiple linear predictors. Use single formula instead."
+          )
+        ),
+        call. = FALSE
+      )
     }
-    
+
     # Validate list length matches family requirements
     if (length(formula) != family$nlp) {
-      stop(insight::format_error(
-        paste0("Formula list length (", length(formula), ") must match ",
-               "family requirements (", family$nlp, ") for ",
-               "{.field ", family$family, "}. Provide exactly ", family$nlp, 
-               " formulae.")
-      ), call. = FALSE)
+      stop(
+        insight::format_error(
+          paste0(
+            "Formula list length (",
+            length(formula),
+            ") must match ",
+            "family requirements (",
+            family$nlp,
+            ") for ",
+            "{.field ",
+            family$family,
+            "}. Provide exactly ",
+            family$nlp,
+            " formulae."
+          )
+        ),
+        call. = FALSE
+      )
     }
   } else {
     # Single formula with multi-parameter family should warn
     if (!is.null(family$nlp) && family$nlp > 1) {
       if (!identical(Sys.getenv("TESTTHAT"), "true")) {
         rlang::warn(
-          paste0("Using single formula with multi-parameter family ",
-                 family$family, " (expects ", family$nlp, 
-                 " linear predictors). Consider using list formulae for ",
-                 "full distributional modeling."),
+          paste0(
+            "Using single formula with multi-parameter family ",
+            family$family,
+            " (expects ",
+            family$nlp,
+            " linear predictors). Consider using list formulae for ",
+            "full distributional modeling."
+          ),
           .frequency = "once"
         )
       }
     }
   }
-  
+
   if (!exists(time, data)) {
     stop(
       paste0(
@@ -202,7 +232,6 @@ ffc_gam <- function(
   if (length(interpreted$fts_smooths) > 0 && nrow(data) >= 2) {
     fts_by_vars <- extract_fts_by_variables(interpreted$fts_smooths)
     if (length(fts_by_vars) > 0) {
-
       # Validate that by variables exist in data
       validate_vars_in_data(fts_by_vars, data, "fts() by variable")
 
@@ -220,91 +249,120 @@ ffc_gam <- function(
     ...
   )
   # Wrap mgcv fitting with intelligent error handling
-  out <- tryCatch({
-    do.call(engine, fit_args)
-  }, error = function(e) {
-    
-    # Extract diagnostic information
-    n_obs <- nrow(interpreted$data)
-    family_info <- if (is.function(family)) family()$family else family$family
-    engine_title <- paste0(toupper(substring(engine, 1, 1)), substring(engine, 2))
-    
-    # Detect QR decomposition errors
-    if (grepl("qr.*y.*same number of rows|arguments imply differing number of rows", 
-              e$message, ignore.case = TRUE)) {
-      
-      stop(insight::format_error(c(
-        "Model fitting failed due to matrix dimension mismatch.",
-        "x" = paste("mgcv error:", e$message),
-        "",
-        "This typically occurs with distributional families when:",
-        "*" = "Model complexity is too high for the available data",
-        "*" = "Sample size is insufficient for the chosen family",
-        "*" = "Formula specification doesn't match family requirements",
-        "",
-        "Current setup:",
-        "!" = paste("Family:", family_info),
-        "!" = paste("Sample size:", n_obs, "observations"), 
-        "!" = paste("Engine:", engine),
-        "",
-        "Solutions to try:",
-        "1" = "Reduce model complexity: lower k= values in fts() and s() terms",
-        "2" = "Increase sample size: collect more data if possible",
-        "3" = paste("Use simpler family: try gaussian() instead of", family_info),
-        "4" = "Check data quality: remove outliers or perfect correlations",
-        "5" = "For distributional families: ensure n >= 50 observations"
-      )), call. = FALSE)
+  out <- tryCatch(
+    {
+      do.call(engine, fit_args)
+    },
+    error = function(e) {
+      # Extract diagnostic information
+      n_obs <- nrow(interpreted$data)
+      family_info <- if (is.function(family)) family()$family else family$family
+      engine_title <- paste0(
+        toupper(substring(engine, 1, 1)),
+        substring(engine, 2)
+      )
+
+      # Detect QR decomposition errors
+      if (
+        grepl(
+          "qr.*y.*same number of rows|arguments imply differing number of rows",
+          e$message,
+          ignore.case = TRUE
+        )
+      ) {
+        stop(
+          insight::format_error(c(
+            "Model fitting failed due to matrix dimension mismatch.",
+            "x" = paste("mgcv error:", e$message),
+            "",
+            "This typically occurs with distributional families when:",
+            "*" = "Model complexity is too high for the available data",
+            "*" = "Sample size is insufficient for the chosen family",
+            "*" = "Formula specification doesn't match family requirements",
+            "",
+            "Current setup:",
+            "!" = paste("Family:", family_info),
+            "!" = paste("Sample size:", n_obs, "observations"),
+            "!" = paste("Engine:", engine),
+            "",
+            "Solutions to try:",
+            "1" = "Reduce model complexity: lower k= values in fts() and s() terms",
+            "2" = "Increase sample size: collect more data if possible",
+            "3" = paste(
+              "Use simpler family: try gaussian() instead of",
+              family_info
+            ),
+            "4" = "Check data quality: remove outliers or perfect correlations",
+            "5" = "For distributional families: ensure n >= 50 observations"
+          )),
+          call. = FALSE
+        )
+      }
+
+      # Detect smoothing parameter initialization errors
+      if (
+        grepl(
+          "initial.*sp|pen\\.reg|smoothing.*parameter",
+          e$message,
+          ignore.case = TRUE
+        )
+      ) {
+        stop(
+          insight::format_error(c(
+            "Smoothing parameter initialization failed.",
+            "x" = paste("mgcv error:", e$message),
+            "",
+            "This is often caused by:",
+            "*" = "Overly complex smooth terms for the available data",
+            "*" = "Numerical instability in penalty matrix calculations",
+            "*" = "Insufficient data for distributional family estimation",
+            "",
+            "Solutions:",
+            "1" = "Reduce smooth complexity: use smaller k= values",
+            "2" = "Try fixed smoothing parameters: add sp= argument",
+            "3" = "Use bam() engine instead of gam() for large datasets",
+            "4" = "For distributional families: try gaussian() first"
+          )),
+          call. = FALSE
+        )
+      }
+
+      # Detect general mgcv fitting failures
+      if (grepl("gam|bam", e$message, ignore.case = TRUE)) {
+        stop(
+          insight::format_error(c(
+            paste(engine_title, "model fitting failed."),
+            "x" = paste("mgcv error:", e$message),
+            "",
+            "General troubleshooting:",
+            ">" = "Check that all variables exist in your data",
+            ">" = "Ensure sufficient data for model complexity",
+            ">" = "Try simpler model structure or different family",
+            ">" = "For distributional families, consider using gaussian() first"
+          )),
+          call. = FALSE
+        )
+      }
+
+      # If we don't recognize the error, provide general guidance
+      stop(
+        insight::format_error(c(
+          "Model fitting failed with an unrecognized error.",
+          "x" = paste("mgcv error:", e$message),
+          "",
+          "Debugging steps:",
+          "1" = "Check data for missing values, outliers, or correlations",
+          "2" = "Try simpler model structure (fewer terms, smaller k= values)",
+          "3" = "For distributional families: try gaussian() family first",
+          "4" = "Increase sample size if possible",
+          "",
+          "If the error persists, this may be a limitation of mgcv with your",
+          "specific data/model combination. Consider alternative approaches."
+        )),
+        call. = FALSE
+      )
     }
-    
-    # Detect smoothing parameter initialization errors
-    if (grepl("initial.*sp|pen\\.reg|smoothing.*parameter", 
-              e$message, ignore.case = TRUE)) {
-      stop(insight::format_error(c(
-        "Smoothing parameter initialization failed.",
-        "x" = paste("mgcv error:", e$message),
-        "",
-        "This is often caused by:",
-        "*" = "Overly complex smooth terms for the available data",
-        "*" = "Numerical instability in penalty matrix calculations", 
-        "*" = "Insufficient data for distributional family estimation",
-        "",
-        "Solutions:",
-        "1" = "Reduce smooth complexity: use smaller k= values",
-        "2" = "Try fixed smoothing parameters: add sp= argument",
-        "3" = "Use bam() engine instead of gam() for large datasets",
-        "4" = "For distributional families: try gaussian() first"
-      )), call. = FALSE)
-    }
-    
-    # Detect general mgcv fitting failures  
-    if (grepl("gam|bam", e$message, ignore.case = TRUE)) {
-      stop(insight::format_error(c(
-        paste(engine_title, "model fitting failed."),
-        "x" = paste("mgcv error:", e$message),
-        "",
-        "General troubleshooting:",
-        ">" = "Check that all variables exist in your data",
-        ">" = "Ensure sufficient data for model complexity", 
-        ">" = "Try simpler model structure or different family",
-        ">" = "For distributional families, consider using gaussian() first"
-      )), call. = FALSE)
-    }
-    
-    # If we don't recognize the error, provide general guidance
-    stop(insight::format_error(c(
-      "Model fitting failed with an unrecognized error.",
-      "x" = paste("mgcv error:", e$message),
-      "",
-      "Debugging steps:",
-      "1" = "Check data for missing values, outliers, or correlations",
-      "2" = "Try simpler model structure (fewer terms, smaller k= values)",
-      "3" = "For distributional families: try gaussian() family first",
-      "4" = "Increase sample size if possible",
-      "",
-      "If the error persists, this may be a limitation of mgcv with your",
-      "specific data/model combination. Consider alternative approaches."
-    )), call. = FALSE)
-  })
+  )
 
   # Update the object and return
   out$call <- orig_call
@@ -331,15 +389,16 @@ ffc_gam <- function(
 #' Ensure all terms are included in the stored model data
 #' @noRd
 update_mod_data <- function(
-    gam_object,
-    fts_smooths,
-    data,
-    time_var = NULL) {
+  gam_object,
+  fts_smooths,
+  data,
+  time_var = NULL
+) {
   # Response variable(s) for omitting NAs in data
   # Use helper function to extract response variables robustly
   resp_terms <- extract_response_vars(gam_object$formula, return_all = TRUE)
   out_name <- resp_terms[1]
-  
+
   # Check that response terms are in the data using centralized validation
   validate_response_in_data(gam_object$formula, data)
 
@@ -372,9 +431,13 @@ update_mod_data <- function(
       # Use all.vars() to get actual variable names, not function calls
       formula_vars <- all.vars(gam_object$formula[[i]])
       # Remove response variables (keep only predictors)
-      has_response <- attr(terms.formula(gam_object$formula[[i]]), "response") == 1
+      has_response <- attr(
+        terms.formula(gam_object$formula[[i]]),
+        "response"
+      ) ==
+        1
       if (has_response) {
-        response_vars <- all.vars(gam_object$formula[[i]][[2]])  # LHS
+        response_vars <- all.vars(gam_object$formula[[i]][[2]]) # LHS
         predictors <- setdiff(formula_vars, response_vars)
       } else {
         predictors <- formula_vars
@@ -382,7 +445,7 @@ update_mod_data <- function(
       all_vars_list <- c(all_vars_list, predictors)
     }
     all_terms <- c(all_terms, unique(all_vars_list))
-    
+
     # Keep original term.labels for offset detection only
     termlabs <- character(0)
     for (i in seq_along(gam_object$formula)) {
@@ -397,13 +460,13 @@ update_mod_data <- function(
     formula_vars <- all.vars(gam_object$formula)
     has_response <- attr(terms.formula(gam_object$formula), "response") == 1
     if (has_response) {
-      response_vars <- all.vars(gam_object$formula[[2]])  # LHS
+      response_vars <- all.vars(gam_object$formula[[2]]) # LHS
       predictors <- setdiff(formula_vars, response_vars)
     } else {
       predictors <- formula_vars
     }
     all_terms <- c(all_terms, predictors)
-    
+
     # Keep original term.labels for offset detection only
     termlabs <- attr(
       terms.formula(gam_object$formula, keep.order = TRUE),
@@ -416,7 +479,10 @@ update_mod_data <- function(
     # For list formulae, check factors from all formulae
     all_factors <- character(0)
     for (i in seq_along(gam_object$formula)) {
-      formula_factors <- rownames(attr(terms.formula(gam_object$formula[[i]]), "factors"))
+      formula_factors <- rownames(attr(
+        terms.formula(gam_object$formula[[i]]),
+        "factors"
+      ))
       all_factors <- c(all_factors, formula_factors)
     }
     off_names <- grep("offset", all_factors, value = TRUE)
@@ -436,13 +502,12 @@ update_mod_data <- function(
     all_terms,
     c("NA", colnames(gam_object$model))
   )
-  
 
   # Add time variable if specified and not already included
   if (!is.null(time_var) && !time_var %in% colnames(gam_object$model)) {
     vars_to_add <- c(vars_to_add, time_var)
   }
-  
+
   # Check if this is a tsibble; if so, add the index var
   # but only if it's not already in the model
   if (inherits(data, "tbl_ts")) {
@@ -513,10 +578,11 @@ strip_offset <- function(x) {
 #' @importFrom utils data
 #' @noRd
 ffc_gam_setup <- function(
-    formula,
-    knots = NULL,
-    family = gaussian(),
-    dat = list()) {
+  formula,
+  knots = NULL,
+  family = gaussian(),
+  dat = list()
+) {
   if (is.null(knots)) {
     out <- init_gam(
       formula(formula),
@@ -564,19 +630,26 @@ rmvn <- function(n, mu, sig) {
 #' @author Simon N Wood with modifications by Nicholas Clark
 #' @noRd
 init_gam <- function(
-    formula,
-    family = gaussian(),
-    data = list(),
-    na.action = na.omit,
-    knots = NULL,
-    drop.unused.levels = TRUE,
-    control = mgcv::gam.control(),
-    centred = TRUE,
-    diagonalize = FALSE,
-    sp = NULL) {
-  if (is.character(family)) family <- eval(parse(text = family))
-  if (is.function(family)) family <- family()
-  if (is.null(family$family)) stop("family not recognized")
+  formula,
+  family = gaussian(),
+  data = list(),
+  na.action = na.omit,
+  knots = NULL,
+  drop.unused.levels = TRUE,
+  control = mgcv::gam.control(),
+  centred = TRUE,
+  diagonalize = FALSE,
+  sp = NULL
+) {
+  if (is.character(family)) {
+    family <- eval(parse(text = family))
+  }
+  if (is.function(family)) {
+    family <- family()
+  }
+  if (is.null(family$family)) {
+    stop("family not recognized")
+  }
   gp <- mgcv::interpret.gam(formula) # interpret the formula
   cl <- match.call() # call needed in gam object for update to work
   mf <- match.call(expand.dots = FALSE)
@@ -593,14 +666,18 @@ init_gam <- function(
   rm(pmf)
 
   mf <- eval(mf, parent.frame())
-  if (nrow(mf) < 2) stop("Not enough (non-NA) data to do anything meaningful")
+  if (nrow(mf) < 2) {
+    stop("Not enough (non-NA) data to do anything meaningful")
+  }
   terms <- attr(mf, "terms")
 
   ## summarize the *raw* input variables
   ## note can't use get_all_vars here -- buggy with matrices
   vars <- all.vars(gp$fake.formula[-2]) ## drop response here
   inp <- parse(text = paste("list(", paste(vars, collapse = ","), ")"))
-  if (!is.list(data) && !is.data.frame(data)) data <- as.data.frame(data)
+  if (!is.list(data) && !is.data.frame(data)) {
+    data <- as.data.frame(data)
+  }
 
   dl <- eval(inp, data, parent.frame())
   if (!control$keepData) {
@@ -674,36 +751,37 @@ init_gam <- function(
 #' @importFrom methods cbind2
 #' @noRd
 gam_setup <- function(
-    formula,
-    pterms,
-    data = stop("No data supplied to gam_setup"),
-    knots = NULL,
-    sp = NULL,
-    min.sp = NULL,
-    H = NULL,
-    absorb.cons = TRUE,
-    sparse.cons = 0,
-    select = FALSE,
-    idLinksBases = TRUE,
-    scale.penalty = TRUE,
-    paraPen = NULL,
-    gamm.call = FALSE,
-    drop.intercept = FALSE,
-    diagonal.penalty = FALSE,
-    apply.by = TRUE,
-    list.call = FALSE,
-    modCon = 0) {
+  formula,
+  pterms,
+  data = stop("No data supplied to gam_setup"),
+  knots = NULL,
+  sp = NULL,
+  min.sp = NULL,
+  H = NULL,
+  absorb.cons = TRUE,
+  sparse.cons = 0,
+  select = FALSE,
+  idLinksBases = TRUE,
+  scale.penalty = TRUE,
+  paraPen = NULL,
+  gamm.call = FALSE,
+  drop.intercept = FALSE,
+  diagonal.penalty = FALSE,
+  apply.by = TRUE,
+  list.call = FALSE,
+  modCon = 0
+) {
   if (inherits(formula, "split.gam.formula")) {
     split <- formula
-  } else if (
-    inherits(formula, "formula")
-  ) {
+  } else if (inherits(formula, "formula")) {
     split <- mgcv::interpret.gam(formula)
   } else {
     stop("First argument is no sort of formula!")
   }
   if (length(split$smooth.spec) == 0) {
-    if (split$pfok == 0) stop("You've got no model....")
+    if (split$pfok == 0) {
+      stop("You've got no model....")
+    }
     m <- 0
   } else {
     m <- length(split$smooth.spec)
@@ -731,8 +809,12 @@ gam_setup <- function(
   } else {
     G$offset <- model.offset(mf)
   }
-  if (!is.null(G$offset)) G$offset <- as.numeric(G$offset)
-  if (drop.intercept) attr(pterms, "intercept") <- 1
+  if (!is.null(G$offset)) {
+    G$offset <- as.numeric(G$offset)
+  }
+  if (drop.intercept) {
+    attr(pterms, "intercept") <- 1
+  }
   X <- model.matrix(pterms, mf)
   if (drop.intercept) {
     xat <- attributes(X)
@@ -752,7 +834,9 @@ gam_setup <- function(
   PP <- parametric_penalty(pterms, G$assign, paraPen, sp)
   if (!is.null(PP)) {
     ind <- 1:length(PP$sp)
-    if (!is.null(sp)) sp <- sp[-ind]
+    if (!is.null(sp)) {
+      sp <- sp[-ind]
+    }
     if (!is.null(min.sp)) {
       PP$min.sp <- min.sp[ind]
       min.sp <- min.sp[-ind]
@@ -761,7 +845,11 @@ gam_setup <- function(
   G$smooth <- list()
   G$S <- list()
   if (gamm.call) {
-    if (m > 0) for (i in 1:m) attr(split$smooth.spec[[i]], "gamm") <- TRUE
+    if (m > 0) {
+      for (i in 1:m) {
+        attr(split$smooth.spec[[i]], "gamm") <- TRUE
+      }
+    }
   }
   if (m > 0 && idLinksBases) {
     id.list <- list()
@@ -923,7 +1011,9 @@ gam_setup <- function(
       if (is.null(sm[[i]]$Xp)) {
         if (!is.null(Xp)) Xp <- cbind2(Xp, sm[[i]]$X)
       } else {
-        if (is.null(Xp)) Xp <- X
+        if (is.null(Xp)) {
+          Xp <- X
+        }
         Xp <- cbind2(Xp, sm[[i]]$Xp)
         sm[[i]]$Xp <- NULL
       }
@@ -976,7 +1066,11 @@ gam_setup <- function(
   if (m > 0) {
     for (i in 1:m) {
       id <- sm[[i]]$id
-      if (is.null(sm[[i]]$L)) Li <- diag(length(sm[[i]]$S)) else Li <- sm[[i]]$L
+      if (is.null(sm[[i]]$L)) {
+        Li <- diag(length(sm[[i]]$S))
+      } else {
+        Li <- sm[[i]]$L
+      }
       if (is.null(id)) {
         spi <- sm[[i]]$sp
         if (!is.null(spi)) {
@@ -1006,7 +1100,11 @@ gam_setup <- function(
     }
   }
   k <- 1
-  if (length(idx)) for (i in 1:length(idx)) idx[[i]]$sp.done <- FALSE
+  if (length(idx)) {
+    for (i in 1:length(idx)) {
+      idx[[i]]$sp.done <- FALSE
+    }
+  }
   if (m > 0) {
     for (i in 1:m) {
       id <- sm[[i]]$id
@@ -1028,15 +1126,23 @@ gam_setup <- function(
         } else {
           nc <- ncol(sm[[i]]$L)
         }
-        if (nc > 0) G$smooth[[i]]$sp <- G$sp[k:(k + nc - 1)]
+        if (nc > 0) {
+          G$smooth[[i]]$sp <- G$sp[k:(k + nc - 1)]
+        }
         k <- k + nc
       }
     }
   }
   if (!is.null(min.sp)) {
-    if (length(min.sp) < nrow(L)) stop("length of min.sp is wrong.")
-    if (nrow(L) > 0) min.sp <- min.sp[1:nrow(L)]
-    if (sum(is.na(min.sp))) stop("NA's in min.sp.")
+    if (length(min.sp) < nrow(L)) {
+      stop("length of min.sp is wrong.")
+    }
+    if (nrow(L) > 0) {
+      min.sp <- min.sp[1:nrow(L)]
+    }
+    if (sum(is.na(min.sp))) {
+      stop("NA's in min.sp.")
+    }
     if (sum(min.sp < 0)) stop("elements of min.sp must be non negative.")
   }
   k.sp <- 0
@@ -1051,7 +1157,9 @@ gam_setup <- function(
           G$S[[k.sp]] <- sm$S[[j]]
           G$rank[k.sp] <- sm$rank[j]
           if (!is.null(min.sp)) {
-            if (is.null(H)) H <- matrix(0, n.p, n.p)
+            if (is.null(H)) {
+              H <- matrix(0, n.p, n.p)
+            }
             H[sm$first.para:sm$last.para, sm$first.para:sm$last.para] <- H[
               sm$first.para:sm$last.para,
               sm$first.para:sm$last.para
@@ -1075,7 +1183,9 @@ gam_setup <- function(
     lsp.names <- c(PP$full.sp.names, lsp.names)
     G$n.paraPen <- length(PP$off)
     if (!is.null(PP$min.sp)) {
-      if (is.null(H)) H <- matrix(0, n.p, n.p)
+      if (is.null(H)) {
+        H <- matrix(0, n.p, n.p)
+      }
       for (i in 1:length(PP$S)) {
         ind <- PP$off[i]:(PP$off[i] + ncol(PP$S[[i]]) - 1)
         H[ind, ind] <- H[ind, ind] + PP$min.sp[i] * PP$S[[i]]
@@ -1107,7 +1217,9 @@ gam_setup <- function(
     lsp0 <- rep(0, nrow(L))
   }
   G$H <- H
-  if (ncol(L) == nrow(L) && !sum(L != diag(ncol(L)))) L <- NULL
+  if (ncol(L) == nrow(L) && !sum(L != diag(ncol(L)))) {
+    L <- NULL
+  }
   G$L <- L
   G$lsp0 <- lsp0
   names(G$lsp0) <- lsp.names
@@ -1130,9 +1242,15 @@ gam_setup <- function(
   }
   G$y <- drop(data[[split$response]])
   ydim <- dim(G$y)
-  if (!is.null(ydim) && length(ydim) < 2) dim(G$y) <- NULL
+  if (!is.null(ydim) && length(ydim) < 2) {
+    dim(G$y) <- NULL
+  }
   G$n <- nrow(data)
-  if (is.null(data$"(weights)")) G$w <- rep(1, G$n) else G$w <- data$"(weights)"
+  if (is.null(data$"(weights)")) {
+    G$w <- rep(1, G$n)
+  } else {
+    G$w <- data$"(weights)"
+  }
   if (G$nsdf > 0) {
     term.names <- colnames(G$X)[1:G$nsdf]
   } else {
@@ -1161,7 +1279,9 @@ gam_setup <- function(
         n.sp0 <- G$smooth[[i]]$last.sp <- n.sp0 + n.sp
       }
       if (!is.null(G$smooth[[i]]$g.index)) {
-        if (is.null(G$g.index)) G$g.index <- rep(FALSE, n.p)
+        if (is.null(G$g.index)) {
+          G$g.index <- rep(FALSE, n.p)
+        }
         G$g.index[jj] <- G$smooth[[i]]$g.index
       }
     }
@@ -1221,8 +1341,12 @@ parametric_penalty <- function(pterms, assign, paraPen, sp0) {
             }
           }
           if (np) {
-            if (is.null(Li)) Li <- diag(np)
-            if (nrow(Li) != np) stop("L has wrong dimension in `paraPen'")
+            if (is.null(Li)) {
+              Li <- diag(np)
+            }
+            if (nrow(Li) != np) {
+              stop("L has wrong dimension in `paraPen'")
+            }
             L <- rbind(
               cbind(L, matrix(0, nrow(L), ncol(Li))),
               cbind(matrix(0, nrow(Li), ncol(L)), Li)
@@ -1266,7 +1390,9 @@ parametric_penalty <- function(pterms, assign, paraPen, sp0) {
     return(NULL)
   }
   if (!is.null(sp0)) {
-    if (length(sp0) < length(sp)) stop("`sp' too short")
+    if (length(sp0) < length(sp)) {
+      stop("`sp' too short")
+    }
     sp0 <- sp0[1:length(sp)]
     sp[sp < 0] <- sp0[sp < 0]
   }
@@ -1341,7 +1467,11 @@ variable_summary <- function(pf, dl, n) {
   v.n <- length(v.name)
   if (v.n > 0) {
     for (i in 1:v.n) {
-      if (v.name[i] %in% p.name) para <- TRUE else para <- FALSE
+      if (v.name[i] %in% p.name) {
+        para <- TRUE
+      } else {
+        para <- FALSE
+      }
       if (para && is.matrix(dl[[v.name[i]]]) && ncol(dl[[v.name[i]]]) > 1) {
         x <- matrix(
           apply(
@@ -1357,7 +1487,9 @@ variable_summary <- function(pf, dl, n) {
         )
       } else {
         x <- dl[[v.name[i]]]
-        if (is.character(x)) x <- as.factor(x)
+        if (is.character(x)) {
+          x <- as.factor(x)
+        }
         if (is.factor(x)) {
           x <- x[!is.na(x)]
           lx <- levels(x)
@@ -1387,27 +1519,32 @@ variable_summary <- function(pf, dl, n) {
 #' @importFrom stats lm
 #' @noRd
 initial_spg <- function(
-    x,
-    y,
-    weights,
-    family,
-    S,
-    rank,
-    off,
-    offset = NULL,
-    L = NULL,
-    lsp0 = NULL,
-    type = 1,
-    start = NULL,
-    mustart = NULL,
-    etastart = NULL,
-    E = NULL,
-    ...) {
+  x,
+  y,
+  weights,
+  family,
+  S,
+  rank,
+  off,
+  offset = NULL,
+  L = NULL,
+  lsp0 = NULL,
+  type = 1,
+  start = NULL,
+  mustart = NULL,
+  etastart = NULL,
+  E = NULL,
+  ...
+) {
   if (length(S) == 0) {
     return(rep(0, 0))
   }
   nobs <- nrow(x)
-  if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart
+  if (is.null(mustart)) {
+    mukeep <- NULL
+  } else {
+    mukeep <- mustart
+  }
   eval(family$initialize)
   if (inherits(family, "general.family")) {
     lbb <- family$ll(
@@ -1470,7 +1607,9 @@ initial_spg <- function(
     }
   } else {
     if (is.null(mukeep)) {
-      if (!is.null(start)) etastart <- drop(x %*% start)
+      if (!is.null(start)) {
+        etastart <- drop(x %*% start)
+      }
       if (!is.null(etastart)) mustart <- family$linkinv(etastart)
     } else {
       mustart <- mukeep
@@ -1502,7 +1641,9 @@ initial_spg <- function(
   }
   if (!is.null(L)) {
     lsp <- log(lambda)
-    if (is.null(lsp0)) lsp0 <- rep(0, nrow(L))
+    if (is.null(lsp0)) {
+      lsp0 <- rep(0, nrow(L))
+    }
     lsp <- as.numeric(coef(lm(lsp ~ L - 1 + offset(lsp0))))
     lambda <- exp(lsp)
   }
@@ -1516,25 +1657,28 @@ initial_spg <- function(
 #' @author Simon N Wood with modifications by Nicholas Clark
 #' @noRd
 gam_setup.list <- function(
-    formula,
-    pterms,
-    data = stop("No data supplied to gam.setup"),
-    knots = NULL,
-    sp = NULL,
-    min.sp = NULL,
-    H = NULL,
-    absorb.cons = TRUE,
-    sparse.cons = 0,
-    select = FALSE,
-    idLinksBases = TRUE,
-    scale.penalty = TRUE,
-    paraPen = NULL,
-    gamm.call = FALSE,
-    drop.intercept = NULL,
-    apply.by = TRUE,
-    modCon = 0) {
+  formula,
+  pterms,
+  data = stop("No data supplied to gam.setup"),
+  knots = NULL,
+  sp = NULL,
+  min.sp = NULL,
+  H = NULL,
+  absorb.cons = TRUE,
+  sparse.cons = 0,
+  select = FALSE,
+  idLinksBases = TRUE,
+  scale.penalty = TRUE,
+  paraPen = NULL,
+  gamm.call = FALSE,
+  drop.intercept = NULL,
+  apply.by = TRUE,
+  modCon = 0
+) {
   d <- length(pterms)
-  if (is.null(drop.intercept)) drop.intercept <- rep(FALSE, d)
+  if (is.null(drop.intercept)) {
+    drop.intercept <- rep(FALSE, d)
+  }
   if (length(drop.intercept) != d) {
     stop("length(drop.intercept) should be equal to number of model formulas")
   }
@@ -1566,11 +1710,17 @@ gam_setup.list <- function(
   G$assign <- list(G$assign)
   used.sp <- length(G$lsp0)
 
-  if (!is.null(sp) && used.sp > 0) sp <- sp[-(1:used.sp)]
-  if (!is.null(min.sp) && nrow(G$L) > 0) min.sp <- min.sp[-(1:nrow(G$L))]
+  if (!is.null(sp) && used.sp > 0) {
+    sp <- sp[-(1:used.sp)]
+  }
+  if (!is.null(min.sp) && nrow(G$L) > 0) {
+    min.sp <- min.sp[-(1:nrow(G$L))]
+  }
 
   flpi <- lpi <- list()
-  for (i in 1:formula$nlp) lpi[[i]] <- rep(0, 0)
+  for (i in 1:formula$nlp) {
+    lpi[[i]] <- rep(0, 0)
+  }
   lpi[[1]] <- 1:ncol(G$X)
   flpi[[1]] <- formula[[1]]$lpi
 
@@ -1607,19 +1757,27 @@ gam_setup.list <- function(
         modCon = modCon
       )
       used.sp <- length(um$lsp0)
-      if (!is.null(sp) && used.sp > 0) sp <- sp[-(1:used.sp)]
-      if (!is.null(min.sp) && nrow(um$L) > 0) min.sp <- min.sp[-(1:nrow(um$L))]
+      if (!is.null(sp) && used.sp > 0) {
+        sp <- sp[-(1:used.sp)]
+      }
+      if (!is.null(min.sp) && nrow(um$L) > 0) {
+        min.sp <- min.sp[-(1:nrow(um$L))]
+      }
 
       flpi[[i]] <- formula[[i]]$lpi
       for (j in formula[[i]]$lpi) {
         lpi[[j]] <- c(lpi[[j]], pof + 1:ncol(um$X))
       }
-      if (mv.response) G$y <- cbind(G$y, um$y)
+      if (mv.response) {
+        G$y <- cbind(G$y, um$y)
+      }
       if (i > formula$nlp && !is.null(um$offset)) {
         stop("shared offsets not allowed")
       }
       G$offset[[i]] <- um$offset
-      if (!is.null(um$contrasts)) G$contrasts <- c(G$contrasts, um$contrasts)
+      if (!is.null(um$contrasts)) {
+        G$contrasts <- c(G$contrasts, um$contrasts)
+      }
       G$xlevels[[i]] <- um$xlevels
       G$assign[[i]] <- um$assign
       G$rank <- c(G$rank, um$rank)
@@ -1638,8 +1796,12 @@ gam_setup.list <- function(
       M <- length(um$S)
 
       if (!is.null(um$L) || !is.null(G$L)) {
-        if (is.null(G$L)) G$L <- diag(1, nrow = ks)
-        if (is.null(um$L)) um$L <- diag(1, nrow = M)
+        if (is.null(G$L)) {
+          G$L <- diag(1, nrow = ks)
+        }
+        if (is.null(um$L)) {
+          um$L <- diag(1, nrow = M)
+        }
         G$L <- rbind(
           cbind(G$L, matrix(0, nrow(G$L), ncol(um$L))),
           cbind(matrix(0, nrow(um$L), ncol(G$L)), um$L)
@@ -1657,9 +1819,13 @@ gam_setup.list <- function(
       G$m <- G$m + um$m
       G$nsdf[i] <- um$nsdf
       if (!is.null(um$P) || !is.null(G$P)) {
-        if (is.null(G$P)) G$P <- diag(1, nrow = pof)
+        if (is.null(G$P)) {
+          G$P <- diag(1, nrow = pof)
+        }
         k <- ncol(um$X)
-        if (is.null(um$P)) um$P <- diag(1, nrow = k)
+        if (is.null(um$P)) {
+          um$P <- diag(1, nrow = k)
+        }
         G$P <- rbind(
           cbind(G$P, matrix(0, pof, k)),
           cbind(matrix(0, k, pof), um$P)
@@ -1695,7 +1861,9 @@ gam_setup.list <- function(
         G$smooth[[i]]$first.para <- G$smooth[[i]]$first.para - k
         G$smooth[[i]]$last.para <- G$smooth[[i]]$last.para - k
       }
-      for (i in 1:length(G$off)) G$off[i] <- G$off[i] - sum(rt$dind < G$off[i])
+      for (i in 1:length(G$off)) {
+        G$off[i] <- G$off[i] - sum(rt$dind < G$off[i])
+      }
       attr(G$nsdf, "drop.ind") <- rt$dind
     }
   }
@@ -1719,7 +1887,9 @@ gam_setup.list <- function(
       }
     }
   }
-  if (!any(G$g.index)) G$g.index <- NULL
+  if (!any(G$g.index)) {
+    G$g.index <- NULL
+  }
 
   G
 }
@@ -1775,7 +1945,9 @@ olid <- function(X, nsdf, pstart, flpi, lpi) {
     for (d in dind) {
       for (i in 1:nlp) {
         k <- which(d == lpi[[i]])
-        if (length(k) > 0) lpi[[i]] <- lpi[[i]][-k]
+        if (length(k) > 0) {
+          lpi[[i]] <- lpi[[i]][-k]
+        }
         k <- which(lpi[[i]] > d)
         if (length(k) > 0) lpi[[i]][k] <- lpi[[i]][k] - 1
       }

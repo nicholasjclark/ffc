@@ -1,7 +1,7 @@
 #' Berkeley growth study data
 #'
-#' A dataset containing the heights of 39 boys measured at ages 3 to 15 years with 
-#' regular yearly intervals. This is a subset of the original Berkeley Growth Study 
+#' A dataset containing the heights of 39 boys measured at ages 3 to 15 years with
+#' regular yearly intervals. This is a subset of the original Berkeley Growth Study
 #' data filtered to contain only regular time intervals suitable for time series modeling.
 #'
 #' @format A `data.frame` with 507 observations and 3 variables:

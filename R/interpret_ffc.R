@@ -3,16 +3,21 @@
 #' @importFrom stats formula terms as.formula terms.formula
 #' @noRd
 interpret_ffc <- function(
-    formula,
-    data,
-    time_var = "time",
-    gam_init = list(),
-    newdata = NULL,
-    knots = NULL) {
+  formula,
+  data,
+  time_var = "time",
+  gam_init = list(),
+  newdata = NULL,
+  knots = NULL
+) {
   # Input validation
   if (is.list(formula)) {
-    checkmate::assert_list(formula, types = "formula", min.len = 1,
-                          .var.name = "formula")
+    checkmate::assert_list(
+      formula,
+      types = "formula",
+      min.len = 1,
+      .var.name = "formula"
+    )
   } else {
     checkmate::assert_class(formula, "formula", .var.name = "formula")
   }
@@ -23,36 +28,42 @@ interpret_ffc <- function(
     checkmate::assert_data_frame(newdata, .var.name = "newdata")
   }
   # Knots validation deferred to downstream ffc_gam_setup() following mgcv patterns
-  
+
   # Save original data before adding row identifiers
   orig_data <- data
-  
+
   # Add row identifiers for tracking through pipeline
   data <- add_row_identifiers(data)
   if (inherits(data, "tbl_df")) {
     data <- as.data.frame(data)
   }
-  
+
   # Handle list formulae by processing each element
   if (is.list(formula)) {
     processed_formulae <- vector("list", length = length(formula))
     all_fts_smooths <- list()
     # Initialize parameter-aware structure for distributional models
     combined_gam_init <- vector("list", length = length(formula))
-    
+
     # Ensure gam_init is properly structured for multiple formulae
     if (length(gam_init) == 0) {
       gam_init <- vector("list", length = length(formula))
     } else {
       # Validate existing structure for forecasting
       if (!validate_gam_init_structure(gam_init, length(formula))) {
-        stop(insight::format_error(
-          paste0("Invalid gam_init structure for distributional model with ",
-                 length(formula), " parameters. Expected list of lists of GAM objects.")
-        ), call. = FALSE)
+        stop(
+          insight::format_error(
+            paste0(
+              "Invalid gam_init structure for distributional model with ",
+              length(formula),
+              " parameters. Expected list of lists of GAM objects."
+            )
+          ),
+          call. = FALSE
+        )
       }
     }
-    
+
     # Process each formula element
     for (i in seq_along(formula)) {
       current_formula <- formula[[i]]
@@ -61,14 +72,16 @@ interpret_ffc <- function(
       } else {
         list()
       }
-      
+
       # Process this formula element inline
       # Check if formula has an intercept
       keep_intercept <- attr(terms(current_formula), "intercept") == 1
 
       # Extract term labels
-      termlabs <- attr(terms.formula(current_formula, keep.order = TRUE), 
-                      "term.labels")
+      termlabs <- attr(
+        terms.formula(current_formula, keep.order = TRUE),
+        "term.labels"
+      )
 
       # Check for offsets as well
       off_names <- grep(
@@ -129,8 +142,10 @@ interpret_ffc <- function(
           c(termlabs[-which_dynamics], fts_labs),
           rlang::f_lhs(current_formula)
         )
-        attr(updated_formula, ".Environment") <- attr(current_formula, 
-                                                     ".Environment")
+        attr(updated_formula, ".Environment") <- attr(
+          current_formula,
+          ".Environment"
+        )
       } else {
         updated_formula <- current_formula
       }
@@ -141,11 +156,11 @@ interpret_ffc <- function(
         fts_smooths = fts_smooths,
         gam_init = current_gam_init
       )
-      
+
       # Store results
       processed_formulae[[i]] <- single_result$formula
       data <- single_result$data
-      
+
       # Collect fts smooths with parameter indices
       if (length(single_result$fts_smooths) > 0) {
         param_smooths <- lapply(single_result$fts_smooths, function(smooth) {
@@ -154,7 +169,7 @@ interpret_ffc <- function(
         })
         all_fts_smooths <- c(all_fts_smooths, param_smooths)
       }
-      
+
       # Collect gam_init objects - maintain parameter structure for distributional models
       if (length(single_result$gam_init) > 0) {
         # Ensure combined_gam_init has proper parameter slots
@@ -165,7 +180,7 @@ interpret_ffc <- function(
         combined_gam_init[[i]] <- single_result$gam_init
       }
     }
-    
+
     return(
       list(
         formula = processed_formulae,
@@ -261,7 +276,7 @@ get_parameter_prefix <- function(parameter_id) {
   if (is.null(parameter_id)) {
     return(NULL)
   }
-  
+
   semantic_names <- c("location", "scale", "shape")
   if (parameter_id <= length(semantic_names)) {
     return(semantic_names[parameter_id])
@@ -280,7 +295,7 @@ normalize_gam_init_structure <- function(obj) {
     checkmate::check_list(obj),
     checkmate::check_null(obj)
   )
-  
+
   if (inherits(obj, "gam")) {
     list(obj)
   } else if (is.list(obj)) {
@@ -295,15 +310,16 @@ normalize_gam_init_structure <- function(obj) {
 #' coefficients of basis functions
 #' @noRd
 dyn_to_spline <- function(
-    term,
-    term_id,
-    data,
-    formula,
-    time_var = "time",
-    gam_init = NULL,
-    newdata = newdata,
-    knots = NULL,
-    parameter_id = NULL) {
+  term,
+  term_id,
+  data,
+  formula,
+  time_var = "time",
+  gam_init = NULL,
+  newdata = newdata,
+  knots = NULL,
+  parameter_id = NULL
+) {
   # Extract key basis information
   label <- term$label
   time_k <- term$time_k
@@ -311,15 +327,15 @@ dyn_to_spline <- function(
   time_m <- term$time_m
   mean_only <- term$mean_only
   share_penalty <- term$share_penalty
-  
+
   # For distributional families, default share_penalty to FALSE
-  # Reason: shared penalties may cause fitting issues with mgcv 
+  # Reason: shared penalties may cause fitting issues with mgcv
   # distributional families
   if (!is.null(parameter_id) && share_penalty) {
     if (!identical(Sys.getenv("TESTTHAT"), "true")) {
       rlang::warn(
         "Shared penalties may cause fitting issues with distributional families. Setting {.field share_penalty} = FALSE.",
-        .frequency = "once", 
+        .frequency = "once",
         .frequency_id = "distributional_share_penalty"
       )
     }
@@ -331,7 +347,8 @@ dyn_to_spline <- function(
   # is the predictor design matrix, with no column of 1s for intercepts
   if (is.null(newdata)) {
     data$my_fake_y <- rnorm(length(data[[1]]))
-    myform <- formula(paste("my_fake_y ~ 0 + ", term$call),
+    myform <- formula(
+      paste("my_fake_y ~ 0 + ", term$call),
       env = attr(formula, ".Environment")
     )
     gam_init <- ffc_gam_setup(
@@ -352,19 +369,26 @@ dyn_to_spline <- function(
       type = "lpmatrix"
     )
   }
-  
+
   # Validate basis matrix dimensions match data structure for row tracking
   expected_rows <- if (is.null(newdata)) nrow(data) else nrow(newdata)
   actual_rows <- nrow(X)
-  
+
   if (actual_rows != expected_rows) {
-    stop(insight::format_error(
-      paste0("Basis matrix dimensions mismatch: got ", actual_rows, 
-             " rows but expected ", expected_rows, 
-             " rows to match data structure")
-    ), call. = FALSE)
+    stop(
+      insight::format_error(
+        paste0(
+          "Basis matrix dimensions mismatch: got ",
+          actual_rows,
+          " rows but expected ",
+          expected_rows,
+          " rows to match data structure"
+        )
+      ),
+      call. = FALSE
+    )
   }
-  
+
   # Validate row count consistency for proper row ID mapping
   # Only warn if we expect 1:1 correspondence in training data
   if (!is.null(newdata) && ".original_row_id" %in% names(newdata)) {
@@ -372,16 +396,26 @@ dyn_to_spline <- function(
     # Only validate if expecting direct correspondence
     if (actual_rows != unique_ids && actual_rows == nrow(newdata)) {
       warning(insight::format_warning(
-        paste0("Basis matrix rows (", actual_rows, 
-               ") may not correspond to unique row IDs (", unique_ids, ")")
+        paste0(
+          "Basis matrix rows (",
+          actual_rows,
+          ") may not correspond to unique row IDs (",
+          unique_ids,
+          ")"
+        )
       ))
     }
   } else if (is.null(newdata) && ".row_id" %in% names(data)) {
     unique_ids <- length(unique(data$.row_id))
     if (actual_rows != unique_ids) {
       warning(insight::format_warning(
-        paste0("Basis matrix rows (", actual_rows, 
-               ") may not correspond to unique row IDs (", unique_ids, ")")
+        paste0(
+          "Basis matrix rows (",
+          actual_rows,
+          ") may not correspond to unique row IDs (",
+          unique_ids,
+          ")"
+        )
       ))
     }
   }
@@ -391,13 +425,13 @@ dyn_to_spline <- function(
     "fts_bs_",
     clean_sm_names(names(coef(gam_init)))
   )
-  
+
   # Add parameter prefix for distributional models
   param_prefix <- get_parameter_prefix(parameter_id)
   if (!is.null(param_prefix)) {
     base_names <- paste0(param_prefix, "_", base_names)
   }
-  
+
   colnames(X) <- base_names
 
   if (mean_only) {
@@ -414,16 +448,20 @@ dyn_to_spline <- function(
       if (!is.null(param_prefix)) {
         mean_name <- paste0(param_prefix, "_", mean_name)
       }
-      
+
       colnames(X) <- c(orig_names, mean_name)
     }
 
-    X <- X[, grepl(paste0(
-      label,
-      term_id,
-      "_mean"
-    ), colnames(X)),
-    drop = FALSE
+    X <- X[,
+      grepl(
+        paste0(
+          label,
+          term_id,
+          "_mean"
+        ),
+        colnames(X)
+      ),
+      drop = FALSE
     ]
   }
 

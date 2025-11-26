@@ -23,13 +23,7 @@ test_that("MRF basis setup works correctly", {
   expect_error(
     ffc_gam(
       crime ~
-        fts(district,
-          bs = "mrf",
-          xt = xt,
-          k = 6,
-          time_bs = "cr",
-          time_k = 10
-        ),
+        fts(district, bs = "mrf", xt = xt, k = 6, time_bs = "cr", time_k = 10),
       time = "time",
       data = fake_dat,
       family = "gaussian"
@@ -39,13 +33,7 @@ test_that("MRF basis setup works correctly", {
   # Reduce to a usable time_k and try again
   mod <- ffc_gam(
     crime ~
-      fts(district,
-        bs = "mrf",
-        xt = xt,
-        k = 6,
-        time_k = 3,
-        time_bs = "cr"
-      ),
+      fts(district, bs = "mrf", xt = xt, k = 6, time_k = 3, time_bs = "cr"),
     time = "time",
     data = fake_dat,
     family = "gaussian"
@@ -70,8 +58,8 @@ test_that("by variables work correctly in regular smooths with numeric variables
   n <- 50
   x1 <- runif(n, 0, 1)
   x2 <- runif(n, 0, 1)
-  z <- runif(n, -1, 1)  # numeric by variable
-  time <- rep(seq(1, 5, by = 1), each = 10)  # regular intervals
+  z <- runif(n, -1, 1) # numeric by variable
+  time <- rep(seq(1, 5, by = 1), each = 10) # regular intervals
 
   # Generate y with interaction between smooth of x1 and z
   y <- sin(2 * pi * x1) * z + rnorm(n, 0, 0.2)
@@ -107,13 +95,17 @@ test_that("by variables work correctly in regular smooths with factor variables"
 
   test_data$x1 <- runif(n, 0, 1)
   test_data$x2 <- runif(n, 0, 1)
-  test_data$fac <- factor(test_data$fac)  # factor by variable
+  test_data$fac <- factor(test_data$fac) # factor by variable
 
   # Generate y with different smooth relationships for each factor level
-  test_data$y <- with(test_data,
-    ifelse(fac == "A", sin(2 * pi * x1),
-           ifelse(fac == "B", cos(2 * pi * x1),
-                  x1^2)) + rnorm(n, 0, 0.2)
+  test_data$y <- with(
+    test_data,
+    ifelse(
+      fac == "A",
+      sin(2 * pi * x1),
+      ifelse(fac == "B", cos(2 * pi * x1), x1^2)
+    ) +
+      rnorm(n, 0, 0.2)
   )
 
   # Fit model with factor by variable (parametric term + by smooth)
@@ -143,12 +135,22 @@ test_that("id arguments work correctly in regular smooths", {
   x2 <- runif(n, 0, 1)
   x3 <- runif(n, 0, 1)
   x4 <- runif(n, 0, 1)
-  time <- rep(seq(1, 4, by = 1), each = 20)  # regular intervals
+  time <- rep(seq(1, 4, by = 1), each = 20) # regular intervals
 
   # Generate y as combination of smooth functions
-  y <- sin(2 * pi * x1) + cos(2 * pi * x2) +
-       sin(2 * pi * x3) + cos(2 * pi * x4) + rnorm(n, 0, 0.2)
-  test_data <- data.frame(x1 = x1, x2 = x2, x3 = x3, x4 = x4, time = time, y = y)
+  y <- sin(2 * pi * x1) +
+    cos(2 * pi * x2) +
+    sin(2 * pi * x3) +
+    cos(2 * pi * x4) +
+    rnorm(n, 0, 0.2)
+  test_data <- data.frame(
+    x1 = x1,
+    x2 = x2,
+    x3 = x3,
+    x4 = x4,
+    time = time,
+    y = y
+  )
 
   # Fit model with id argument to force same smoothing parameters
   mod <- ffc_gam(
@@ -162,7 +164,9 @@ test_that("id arguments work correctly in regular smooths", {
   expect_true(length(mod$smooth) == 4)
 
   # Check that smooths with same id have same smoothing parameters
-  id_smooths <- which(sapply(mod$smooth, function(s) !is.null(s$id) && s$id == 1))
+  id_smooths <- which(sapply(mod$smooth, function(s) {
+    !is.null(s$id) && s$id == 1
+  }))
   if (length(id_smooths) >= 2) {
     # If mgcv successfully processed id arguments, these should have linked smoothing
     expect_true(length(id_smooths) >= 2)
@@ -188,14 +192,19 @@ test_that("combined by variables and id arguments work correctly", {
   test_data$z <- runif(n, -1, 1)
 
   # Generate y with complex interaction structure
-  test_data$y <- with(test_data,
+  test_data$y <- with(
+    test_data,
     ifelse(fac == "A", sin(2 * pi * x1) * z, cos(2 * pi * x1) * z) +
-    sin(2 * pi * x2) + rnorm(n, 0, 0.2)
+      sin(2 * pi * x2) +
+      rnorm(n, 0, 0.2)
   )
 
   # Fit model with both by variables and id arguments
   mod <- ffc_gam(
-    y ~ fac + s(x1, by = fac, id = 1) + s(x2, id = 1) + s(x1, by = z) +
+    y ~ fac +
+      s(x1, by = fac, id = 1) +
+      s(x2, id = 1) +
+      s(x1, by = z) +
       fts(time, mean_only = TRUE, time_bs = "bs"),
     time = "time",
     data = test_data,

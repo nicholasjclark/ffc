@@ -3,7 +3,8 @@ devtools::document()
 devtools::load_all()
 
 library(fable)
-library(ggplot2); theme_set(theme_classic())
+library(ggplot2)
+theme_set(theme_classic())
 
 # Define transformations that avoid distributional
 # assumptions so that ffc is not unfairly advantaged
@@ -31,7 +32,8 @@ binary = function(x) {
 }
 
 # Simulation setup
- transform <- posreal; gam_fam <- tw()
+transform <- posreal
+gam_fam <- tw()
 # transform <- count; gam_fam <- nb()
 # transform <- proportional; gam_fam <- betar()
 # transform <- binary; gam_fam <- binomial()
@@ -66,10 +68,11 @@ dat_tsibble <- rbind(
   tsibble::as_tsibble(
     index = yearmon
   ) %>%
-  dplyr::mutate(y = do.call(
-    transform,
-    list(y)
-  )
+  dplyr::mutate(
+    y = do.call(
+      transform,
+      list(y)
+    )
   )
 
 # Create tsibbles of training and testing data
@@ -168,7 +171,8 @@ fc_arima <- train_tsibble %>%
   ) %>%
   forecast(
     h = max(test_tsibble$time) -
-      min(test_tsibble$time) + 1
+      min(test_tsibble$time) +
+      1
   )
 
 fc_ets <- train_tsibble %>%
@@ -177,7 +181,8 @@ fc_ets <- train_tsibble %>%
   ) %>%
   forecast(
     h = max(test_tsibble$time) -
-      min(test_tsibble$time) + 1
+      min(test_tsibble$time) +
+      1
   )
 
 # Plot the resulting forecasts
@@ -263,21 +268,18 @@ fc <- forecast(
 )
 
 # Plot true out of sample occurrences
-ggplot(data_test,
-       aes(x = lat,
-           y = lon,
-           colour = as.factor(present))) +
+ggplot(data_test, aes(x = lat, y = lon, colour = as.factor(present))) +
   facet_wrap(~year) +
   geom_point() +
   scale_colour_viridis_d() +
   theme_bw()
 
 # Plot predicted probability of occurrence
-ggplot(fc %>%
-         dplyr::bind_cols(data_test),
-       aes(x = lat,
-           y = lon,
-           colour = .estimate)) +
+ggplot(
+  fc %>%
+    dplyr::bind_cols(data_test),
+  aes(x = lat, y = lon, colour = .estimate)
+) +
   facet_wrap(~year) +
   geom_point() +
   scale_colour_viridis_c() +
@@ -286,11 +288,7 @@ ggplot(fc %>%
 # A seasonal forecasting example
 # Load the AirPassengers dataset and plot the time series
 data("AirPassengers")
-plot(AirPassengers,
-     bty = "l",
-     lwd = 2,
-     col = "darkred"
-)
+plot(AirPassengers, bty = "l", lwd = 2, col = "darkred")
 
 # This plot suggests that the seasonal pattern changes over time,
 # not just in magnitude but also perhaps a bit in shape. Convert
@@ -310,10 +308,8 @@ mvgam::plot_mvgam_series(
 # Now fit a model that allows both the level and
 # the seasonal shape to change over time
 mod <- ffc_gam(
-  y ~ fts(year, mean_only = TRUE,
-          time_k = 25) +
-    fts(season, bs = 'cc', k = 12,
-        time_k = 10, share_penalty = FALSE),
+  y ~ fts(year, mean_only = TRUE, time_k = 25) +
+    fts(season, bs = 'cc', k = 12, time_k = 10, share_penalty = FALSE),
   data = airdat$data_train,
   family = nb(),
   time = 'time'
@@ -333,18 +329,15 @@ fc <- forecast(
 
 # Plot forecasts
 plot_dat <- airdat$data_train %>%
-  dplyr::bind_rows(airdat$data_test %>%
-                     dplyr::bind_cols(fc))
+  dplyr::bind_rows(
+    airdat$data_test %>%
+      dplyr::bind_cols(fc)
+  )
 
 ggplot(
   plot_dat,
-  aes(x = time,
-      y = y)
+  aes(x = time, y = y)
 ) +
-  geom_ribbon(aes(ymax = .q97.5,
-                  ymin = .q2.5),
-              alpha = 0.15) +
-  geom_ribbon(aes(ymax = .q90,
-                  ymin = .q10),
-              alpha = 0.2) +
+  geom_ribbon(aes(ymax = .q97.5, ymin = .q2.5), alpha = 0.15) +
+  geom_ribbon(aes(ymax = .q90, ymin = .q10), alpha = 0.2) +
   geom_line()

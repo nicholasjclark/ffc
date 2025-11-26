@@ -4,10 +4,12 @@ test_that("forecast.fts_ts() works with ARIMA model", {
   functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 3)
 
   # Test basic ARIMA forecasting
-  fc_arima <- SW(forecast(functional_coefs,
-                          model = "ARIMA",
-                          h = 2,
-                          n_samples = 3))
+  fc_arima <- SW(forecast(
+    functional_coefs,
+    model = "ARIMA",
+    h = 2,
+    n_samples = 3
+  ))
 
   # Check basic structure
   expect_true(inherits(fc_arima, "tbl_df"))
@@ -26,26 +28,22 @@ test_that("forecast.fts_ts() works with different fable models", {
   functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
 
   # Test ENS ensemble model
-  fc_ens <- SW(forecast(functional_coefs,
-                        model = "ENS",
-                        h = 2,
-                        n_samples = 2))
+  fc_ens <- SW(forecast(functional_coefs, model = "ENS", h = 2, n_samples = 2))
   expect_true(inherits(fc_ens, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_ens)))
 
   # Test NAIVE model
-  fc_naive <- SW(forecast(functional_coefs,
-                          model = "NAIVE",
-                          h = 2,
-                          n_samples = 2))
+  fc_naive <- SW(forecast(
+    functional_coefs,
+    model = "NAIVE",
+    h = 2,
+    n_samples = 2
+  ))
   expect_true(inherits(fc_naive, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_naive)))
 
   # Test random walk
-  fc_rw <- SW(forecast(functional_coefs,
-                       model = "RW",
-                       h = 2,
-                       n_samples = 2))
+  fc_rw <- SW(forecast(functional_coefs, model = "RW", h = 2, n_samples = 2))
   expect_true(inherits(fc_rw, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_rw)))
 })
@@ -71,11 +69,13 @@ test_that("forecast.fts_ts() handles stationary ARIMA correctly", {
   functional_coefs <- fts_coefs(example_mod, summary = FALSE, n_samples = 2)
 
   # Test stationary ARIMA
-  fc_stationary <- SW(forecast(functional_coefs,
-                               model = "ARIMA",
-                               stationary = TRUE,
-                               h = 2,
-                               n_samples = 2))
+  fc_stationary <- SW(forecast(
+    functional_coefs,
+    model = "ARIMA",
+    stationary = TRUE,
+    h = 2,
+    n_samples = 2
+  ))
 
   expect_true(inherits(fc_stationary, "tbl_df"))
   expect_true(all(c(".basis", ".sim", ".rep") %in% names(fc_stationary)))
@@ -89,10 +89,12 @@ test_that("forecast.ffc_gam() works with basic newdata", {
   )
 
   # Test basic forecasting with ETS model
-  fc <- SW(forecast(example_mod,
-                    newdata = newdata,
-                    model = "ETS",
-                    summary = TRUE))
+  fc <- SW(forecast(
+    example_mod,
+    newdata = newdata,
+    model = "ETS",
+    summary = TRUE
+  ))
 
   # Check structure when summary = TRUE
   expect_true(inherits(fc, "tbl_df"))
@@ -114,18 +116,24 @@ test_that("forecast.ffc_gam() works with different prediction types", {
   )
 
   # Test different types
-  fc_link <- SW(forecast(example_mod,
-                         newdata = newdata,
-                         type = "link",
-                         model = "ETS"))
-  fc_expected <- SW(forecast(example_mod,
-                             newdata = newdata,
-                             type = "expected",
-                             model = "ETS"))
-  fc_response <- SW(forecast(example_mod,
-                             newdata = newdata,
-                             type = "response",
-                             model = "ETS"))
+  fc_link <- SW(forecast(
+    example_mod,
+    newdata = newdata,
+    type = "link",
+    model = "ETS"
+  ))
+  fc_expected <- SW(forecast(
+    example_mod,
+    newdata = newdata,
+    type = "expected",
+    model = "ETS"
+  ))
+  fc_response <- SW(forecast(
+    example_mod,
+    newdata = newdata,
+    type = "response",
+    model = "ETS"
+  ))
 
   # All should have same structure
   expect_true(inherits(fc_link, "tbl_df"))
@@ -143,9 +151,7 @@ test_that("forecast.ffc_gam() handles summary = FALSE correctly", {
     time = c(76, 77)
   )
 
-  fc_raw <- SW(forecast(example_mod,
-                        newdata = newdata,
-                        summary = FALSE))
+  fc_raw <- SW(forecast(example_mod, newdata = newdata, summary = FALSE))
 
   # Should return distributional object
   expect_true(inherits(fc_raw, "distribution"))
@@ -159,14 +165,10 @@ test_that("forecast.ffc_gam() handles robust vs non-robust summaries", {
   )
 
   # Test robust = TRUE (default)
-  fc_robust <- SW(forecast(example_mod,
-                           newdata = newdata,
-                           robust = TRUE))
+  fc_robust <- SW(forecast(example_mod, newdata = newdata, robust = TRUE))
 
   # Test robust = FALSE
-  fc_nonrobust <- SW(forecast(example_mod,
-                              newdata = newdata,
-                              robust = FALSE))
+  fc_nonrobust <- SW(forecast(example_mod, newdata = newdata, robust = FALSE))
 
   # Both should have same structure
   expect_true(all(c(".estimate", ".error") %in% names(fc_robust)))
@@ -183,9 +185,7 @@ test_that("forecast.ffc_gam() validates type parameter", {
   )
 
   # Test invalid type
-  expect_error(forecast(example_mod,
-                        newdata = newdata,
-                        type = "invalid"))
+  expect_error(forecast(example_mod, newdata = newdata, type = "invalid"))
 })
 
 test_that("forecast.ffc_gam() handles custom quantiles", {
@@ -195,13 +195,11 @@ test_that("forecast.ffc_gam() handles custom quantiles", {
   )
 
   custom_probs <- c(0.1, 0.5, 0.9)
-  fc <- SW(forecast(example_mod,
-                    newdata = newdata,
-                    probs = custom_probs))
+  fc <- SW(forecast(example_mod, newdata = newdata, probs = custom_probs))
 
   # Check that custom quantile columns exist
   expect_true(all(paste0(".q", 100 * custom_probs) %in% names(fc)))
-  expect_equal(ncol(fc), 2 + length(custom_probs))  # .estimate, .error, + quantiles
+  expect_equal(ncol(fc), 2 + length(custom_probs)) # .estimate, .error, + quantiles
 })
 
 test_that("forecast methods preserve object attributes", {
@@ -279,11 +277,19 @@ test_that("as_fable.ffc_gam() works with pre-computed forecasts", {
   )
 
   # Pre-compute forecasts as matrix
-  forecasts <- SW(forecast(example_mod, newdata = newdata, model = "ETS", summary = FALSE))
+  forecasts <- SW(forecast(
+    example_mod,
+    newdata = newdata,
+    model = "ETS",
+    summary = FALSE
+  ))
 
   # Convert to fable using pre-computed forecasts
-  fc_fable <- SW(as_fable(example_mod, newdata = newdata,
-                          forecasts = forecasts))
+  fc_fable <- SW(as_fable(
+    example_mod,
+    newdata = newdata,
+    forecasts = forecasts
+  ))
 
   expect_true(inherits(fc_fable, "fbl_ts"))
   expect_equal(nrow(fc_fable), nrow(newdata))
@@ -386,8 +392,11 @@ test_that("as_fable.ffc_gam() handles custom key variables", {
   )
 
   # Specify custom key variables
-  fc_fable <- SW(as_fable(example_mod, newdata = newdata,
-                          key_vars = "custom_key"))
+  fc_fable <- SW(as_fable(
+    example_mod,
+    newdata = newdata,
+    key_vars = "custom_key"
+  ))
 
   expect_true(inherits(fc_fable, "fbl_ts"))
   expect_equal(nrow(fc_fable), nrow(newdata))
@@ -406,14 +415,20 @@ test_that("as_fable.ffc_gam() handles different forecast formats", {
 
   # Test with matrix forecasts
   forecasts_matrix <- matrix(c(10, 12, 14, 16), nrow = 2, ncol = 2)
-  fc_matrix <- SW(as_fable(example_mod, newdata = newdata,
-                           forecasts = forecasts_matrix))
+  fc_matrix <- SW(as_fable(
+    example_mod,
+    newdata = newdata,
+    forecasts = forecasts_matrix
+  ))
   expect_true(inherits(fc_matrix, "fbl_ts"))
 
   # Test with numeric forecasts
   forecasts_numeric <- c(10, 15)
-  fc_numeric <- SW(as_fable(example_mod, newdata = newdata,
-                            forecasts = forecasts_numeric))
+  fc_numeric <- SW(as_fable(
+    example_mod,
+    newdata = newdata,
+    forecasts = forecasts_numeric
+  ))
   expect_true(inherits(fc_numeric, "fbl_ts"))
 })
 
@@ -527,7 +542,11 @@ test_that("as_fable.ffc_gam() error cases are properly handled", {
   forecasts_good <- matrix(c(10, 12, 14, 16), nrow = 2, ncol = 2)
 
   expect_error(
-    as_fable(example_mod, newdata = newdata_bad_time, forecasts = forecasts_good),
+    as_fable(
+      example_mod,
+      newdata = newdata_bad_time,
+      forecasts = forecasts_good
+    ),
     "must be Date.*POSIXct.*yearquarter.*yearmonth.*numeric.*integer"
   )
 })
@@ -539,7 +558,7 @@ test_that("as_fable.ffc_gam() handles character time variable conversion", {
   newdata <- data.frame(
     y = c(10),
     season = c(1),
-    time = c("76")  # single character time point
+    time = c("76") # single character time point
   )
 
   # Pre-compute forecasts to avoid forecast generation issues
@@ -547,7 +566,11 @@ test_that("as_fable.ffc_gam() handles character time variable conversion", {
 
   # Should warn about conversion and convert to numeric
   expect_warning(
-    fc_fable <- as_fable(example_mod, newdata = newdata, forecasts = forecasts_good),
+    fc_fable <- as_fable(
+      example_mod,
+      newdata = newdata,
+      forecasts = forecasts_good
+    ),
     "Converting character time variable to numeric"
   )
 
@@ -584,9 +607,12 @@ test_that("forecast.ffc_gam() validates time intervals correctly", {
     age_yr = c(16, 16.5, 17, 17.5)
   )
 
-  expect_warning({
-    fc_warn <- forecast(mod_growth, newdata = newdata_warn, model = "ETS")
-  }, "differ from training interval")
+  expect_warning(
+    {
+      fc_warn <- forecast(mod_growth, newdata = newdata_warn, model = "ETS")
+    },
+    "differ from training interval"
+  )
   expect_true(inherits(fc_warn, "tbl_df"))
   expect_equal(nrow(fc_warn), nrow(newdata_warn))
 })
@@ -604,25 +630,35 @@ test_that("forecast.ffc_gam() handles overlapping time points", {
   # Test with some overlapping time points (should warn and filter)
   newdata_overlap <- data.frame(
     id = "boy_11",
-    age_yr = c(14, 15, 16, 17)  # 14, 15 overlap with training data
+    age_yr = c(14, 15, 16, 17) # 14, 15 overlap with training data
   )
 
-  expect_warning({
-    fc_overlap <- forecast(mod_growth, newdata = newdata_overlap, model = "ETS")
-  }, "overlap with training data")
+  expect_warning(
+    {
+      fc_overlap <- forecast(
+        mod_growth,
+        newdata = newdata_overlap,
+        model = "ETS"
+      )
+    },
+    "overlap with training data"
+  )
 
   expect_true(inherits(fc_overlap, "tbl_df"))
-  expect_equal(nrow(fc_overlap), 2)  # Should only forecast for 16, 17
+  expect_equal(nrow(fc_overlap), 2) # Should only forecast for 16, 17
 
   # Test with all overlapping time points (should error)
   newdata_all_overlap <- data.frame(
     id = "boy_11",
-    age_yr = c(13, 14, 15)  # All overlap with training data
+    age_yr = c(13, 14, 15) # All overlap with training data
   )
 
-  expect_error({
-    forecast(mod_growth, newdata = newdata_all_overlap, model = "ETS")
-  }, "No future time points found")
+  expect_error(
+    {
+      forecast(mod_growth, newdata = newdata_all_overlap, model = "ETS")
+    },
+    "No future time points found"
+  )
 })
 
 test_that("ENS ensemble works with Quarter time index (tourism example)", {
@@ -710,12 +746,15 @@ test_that("forecast.ffc_gam() handles grouped data time validation", {
   # Test with mismatched intervals (should warn)
   newdata_bad <- data.frame(
     group = c("A", "A", "A"),
-    time = c(11, 11.5, 12)  # 0.5 intervals vs training 1.0 intervals
+    time = c(11, 11.5, 12) # 0.5 intervals vs training 1.0 intervals
   )
 
-  expect_warning({
-    fc_bad <- forecast(mod_grouped, newdata = newdata_bad, model = "RW")
-  }, "differ from training interval")
+  expect_warning(
+    {
+      fc_bad <- forecast(mod_grouped, newdata = newdata_bad, model = "RW")
+    },
+    "differ from training interval"
+  )
 })
 
 test_that("adjust_forecast_uncertainty works correctly", {
@@ -751,7 +790,9 @@ test_that("adjust_forecast_uncertainty works correctly", {
 
   # Check that result has expected structure
   expect_true(inherits(result, "tbl_df"))
-  expect_true(all(c(".basis", ".realisation", ".sim", ".rep") %in% names(result)))
+  expect_true(all(
+    c(".basis", ".realisation", ".sim", ".rep") %in% names(result)
+  ))
 
   # Check dimensions - should have n_samples * h rows for each basis/realisation combination
   expected_rows <- nrow(forecast_df) * n_samples * h
@@ -981,7 +1022,7 @@ test_that("distributional forecasting maintains correct matrix dimensions", {
   )
 
   # Create newdata for prediction
-  newdata <- data.frame(time = (n+1):(n+5), x = rnorm(5))
+  newdata <- data.frame(time = (n + 1):(n + 5), x = rnorm(5))
 
   # Test that forecast matrix dimensions match expected parameter structure
   fc_raw <- SW(forecast(model, newdata = newdata, summary = FALSE))
@@ -996,7 +1037,7 @@ test_that("distributional forecasting maintains correct matrix dimensions", {
 
   # Should have lpi attribute preserved
   expect_true(!is.null(attr(pred_lpmat, "lpi")))
-  expect_length(attr(pred_lpmat, "lpi"), 2)  # gaulss has 2 parameters
+  expect_length(attr(pred_lpmat, "lpi"), 2) # gaulss has 2 parameters
 })
 
 test_that("prediction works consistently across family types", {
@@ -1009,13 +1050,21 @@ test_that("prediction works consistently across family types", {
     x = rnorm(n),
     y = rnorm(n)
   )
-  newdata <- data.frame(time = (n+1):(n+3), x = rnorm(3))
+  newdata <- data.frame(time = (n + 1):(n + 3), x = rnorm(3))
 
-  model_single <- SW(ffc_gam(y ~ fts(x, k = 3), data = test_data,
-                             family = gaussian(), time = "time"))
+  model_single <- SW(ffc_gam(
+    y ~ fts(x, k = 3),
+    data = test_data,
+    family = gaussian(),
+    time = "time"
+  ))
 
-  model_multi <- SW(ffc_gam(list(y ~ fts(x, k = 3), ~ fts(x, k = 3)),
-                            data = test_data, family = gaulss(), time = "time"))
+  model_multi <- SW(ffc_gam(
+    list(y ~ fts(x, k = 3), ~ fts(x, k = 3)),
+    data = test_data,
+    family = gaulss(),
+    time = "time"
+  ))
 
   # Both should produce valid predictions
   pred_single <- predict(model_single, newdata = newdata, type = "response")
@@ -1052,7 +1101,7 @@ test_that("forecast matrices preserve distributional lpi structure", {
     time = "time"
   )
 
-  newdata <- data.frame(time = (n+1):(n+3), x = rnorm(3))
+  newdata <- data.frame(time = (n + 1):(n + 3), x = rnorm(3))
 
   # Test internal forecast matrix structure
   # Use summary = FALSE to get matrix output
@@ -1086,16 +1135,23 @@ test_that("twlss distributional forecasting with cyclic splines works", {
   test_data <- data.frame(
     time = 1:n_total,
     month = rep(1:n_months, n_years),
-    y = rTweedie(exp(2 + 1.5 * cos(2 * pi * rep(1:n_months, n_years) / 12) +
-                     0.8 * sin(2 * pi * rep(1:n_months, n_years) / 12) +
-                     0.05 * (1:n_total)), p = 1.5, phi = 1)
+    y = rTweedie(
+      exp(
+        2 +
+          1.5 * cos(2 * pi * rep(1:n_months, n_years) / 12) +
+          0.8 * sin(2 * pi * rep(1:n_months, n_years) / 12) +
+          0.05 * (1:n_total)
+      ),
+      p = 1.5,
+      phi = 1
+    )
   )
 
   model <- SW(ffc_gam(
     list(
       y ~ fts(month, bs = "cc", k = 4, time_k = 5),
       ~ fts(time, k = 4, time_k = 3),
-      ~ 1
+      ~1
     ),
     data = test_data,
     family = twlss(),

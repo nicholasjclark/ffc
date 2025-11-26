@@ -7,8 +7,9 @@
 #' @noRd
 get_stan_defaults <- function(type = "sampling") {
   checkmate::assert_choice(type, choices = c("sampling", "forecast", "basis"))
-  
-  switch(type,
+
+  switch(
+    type,
     "sampling" = list(
       chains = 4,
       cores = 1,
@@ -36,7 +37,7 @@ get_stan_defaults <- function(type = "sampling") {
 get_stan_param <- function(param, type = "sampling", default_value = NULL) {
   checkmate::assert_string(param)
   checkmate::assert_choice(type, choices = c("sampling", "forecast", "basis"))
-  
+
   defaults <- get_stan_defaults(type)
   if (param %in% names(defaults)) {
     return(defaults[[param]])
@@ -57,8 +58,18 @@ get_stan_param <- function(param, type = "sampling", default_value = NULL) {
 #' @param ... Additional arguments passed to rstan::sampling()
 #' @return rstan fit object
 #' @noRd
-run_stan_sampling <- function(model_name, model_data, chains, cores, iter, 
-                              warmup, adapt_delta, max_treedepth, silent, ...) {
+run_stan_sampling <- function(
+  model_name,
+  model_data,
+  chains,
+  cores,
+  iter,
+  warmup,
+  adapt_delta,
+  max_treedepth,
+  silent,
+  ...
+) {
   # Comprehensive parameter validation
   checkmate::assert_choice(model_name, choices = c("ardf", "vardf", "gpdf"))
   checkmate::assert_list(model_data, min.len = 1)
@@ -69,13 +80,13 @@ run_stan_sampling <- function(model_name, model_data, chains, cores, iter,
   checkmate::assert_number(adapt_delta, lower = 0, upper = 1)
   checkmate::assert_count(max_treedepth, positive = TRUE)
   checkmate::assert_logical(silent, len = 1)
-  
+
   # Temporarily override rstan options and environment when silent
   if (silent) {
     old_messages <- getOption("rstan.show_messages", TRUE)
     options(rstan.show_messages = FALSE)
     on.exit(options(rstan.show_messages = old_messages), add = TRUE)
-    
+
     # Temporarily disable RStudio detection by modifying environment
     old_rstudio <- Sys.getenv("RSTUDIO", unset = NA)
     if (!is.na(old_rstudio)) {
@@ -83,7 +94,7 @@ run_stan_sampling <- function(model_name, model_data, chains, cores, iter,
       on.exit(Sys.setenv(RSTUDIO = old_rstudio), add = TRUE)
     }
   }
-  
+
   # Build sampling arguments
   sampling_args <- list(
     object = stanmodels[[model_name]],
@@ -95,18 +106,17 @@ run_stan_sampling <- function(model_name, model_data, chains, cores, iter,
     verbose = !silent,
     refresh = if (silent) 0 else max(1, iter %/% 10),
     show_messages = !silent,
-    control = list(adapt_delta = adapt_delta,
-                   max_treedepth = max_treedepth)
+    control = list(adapt_delta = adapt_delta, max_treedepth = max_treedepth)
   )
-  
+
   # Only set open_progress when we want to disable it
   # Let rstan handle progress automatically when silent = FALSE
   if (silent) {
     sampling_args$open_progress <- FALSE
   }
-  
+
   # Add any additional arguments
   sampling_args <- c(sampling_args, list(...))
-  
+
   suppressWarnings(do.call(rstan::sampling, sampling_args))
 }

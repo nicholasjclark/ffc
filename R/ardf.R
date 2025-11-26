@@ -44,18 +44,19 @@
 #' fc <- forecast(mod, newdata = test_data, model = "ARDF",
 #'                chains = 1, iter = 300)
 #' @export
-ARDF = function(formula,
-                family = gaussian(),
-                h = get_stan_param("h", "forecast"),
-                chains = get_stan_param("chains"),
-                cores = get_stan_param("cores"),
-                iter = get_stan_param("iter"),
-                warmup = floor(iter / 2),
-                adapt_delta = get_stan_param("adapt_delta"),
-                max_treedepth = get_stan_param("max_treedepth"),
-                silent = get_stan_param("silent"),
-                ...){
-
+ARDF = function(
+  formula,
+  family = gaussian(),
+  h = get_stan_param("h", "forecast"),
+  chains = get_stan_param("chains"),
+  cores = get_stan_param("cores"),
+  iter = get_stan_param("iter"),
+  warmup = floor(iter / 2),
+  adapt_delta = get_stan_param("adapt_delta"),
+  max_treedepth = get_stan_param("max_treedepth"),
+  silent = get_stan_param("silent"),
+  ...
+) {
   ardf_model <- new_model_class(
     "ARDF",
     train = train_ardf,
@@ -83,22 +84,24 @@ ARDF = function(formula,
 #' @return a tsibble containing forecast draws
 #'
 train_ardf = function(
-    .data,
-    specials,
-    family = gaussian(),
-    h = get_stan_param("h", "forecast"),
-    chains = get_stan_param("chains"),
-    cores = get_stan_param("cores"),
-    iter = get_stan_param("iter"),
-    warmup = floor(get_stan_param("iter") / 2),
-    adapt_delta = get_stan_param("adapt_delta"),
-    max_treedepth = get_stan_param("max_treedepth"),
-    silent = get_stan_param("silent"),
-    ...){
-
+  .data,
+  specials,
+  family = gaussian(),
+  h = get_stan_param("h", "forecast"),
+  chains = get_stan_param("chains"),
+  cores = get_stan_param("cores"),
+  iter = get_stan_param("iter"),
+  warmup = floor(get_stan_param("iter") / 2),
+  adapt_delta = get_stan_param("adapt_delta"),
+  max_treedepth = get_stan_param("max_treedepth"),
+  silent = get_stan_param("silent"),
+  ...
+) {
   # Extract arguments from specials
-  if(length(specials$K) > 1 || length(specials$p) > 1){
-    rlang::warn("Only one special for `K()` and `p()` is allowed, defaulting to the first usage")
+  if (length(specials$K) > 1 || length(specials$p) > 1) {
+    rlang::warn(
+      "Only one special for `K()` and `p()` is allowed, defaulting to the first usage"
+    )
   }
   K <- specials$K[[1]]
   p <- specials$p[[1]]
@@ -114,8 +117,18 @@ train_ardf = function(
   )
 
   # Fit the model
-  stanfit <- run_stan_sampling("ardf", model_data, chains, cores, iter, warmup,
-                               adapt_delta, max_treedepth, silent, ...)
+  stanfit <- run_stan_sampling(
+    "ardf",
+    model_data,
+    chains,
+    cores,
+    iter,
+    warmup,
+    adapt_delta,
+    max_treedepth,
+    silent,
+    ...
+  )
 
   # Extract forecasts as a tsibble
   out <- extract_stan_fc(
