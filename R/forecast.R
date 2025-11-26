@@ -14,13 +14,13 @@
 #' the chosen method must have an associated
 #' `generate()` method in order to simulate forecast realisations. Valid models
 #' currently include: `'ENS'`, `'ARDF'`, `'GPDF'`, '`VARDF`,
-#' `'ETS'`, `'ARIMA'`, `'AR'`, `'RW'`, `'NAIVE'`, and `'NNETAR'`. 
+#' `'ETS'`, `'ARIMA'`, `'AR'`, `'RW'`, `'NAIVE'`, and `'NNETAR'`.
 #' The `'ENS'` option combines ETS and Random Walk forecasts with equal weights,
 #' hedging bets between exponential smoothing and random walk assumptions
 #' to provide more robust predictions when model uncertainty is high.
 #' @param h A positive `integer` specifying the length of the forecast
 #' horizon
-#' @param times A positive `integer` specifying the number of forecast
+#' @param n_samples A positive `integer` specifying the number of forecast
 #' realisation paths to simulate from the fitted forecast `model`
 #' @param stationary If `TRUE`, the fitted time series models are
 #' constrained to be stationary. Default is `FALSE`. This option
@@ -45,7 +45,7 @@
 #'   family = poisson(),
 #'   engine = "bam"
 #' )
-#' coefs <- fts_coefs(mod, summary = FALSE, times = 5)
+#' coefs <- fts_coefs(mod, summary = FALSE, n_samples = 5)
 #'
 #' # Generate ETS forecasts
 #' forecast(coefs, model = "ETS", h = 3)
@@ -54,7 +54,7 @@ forecast.fts_ts <- function(
     object,
     model = "ARIMA",
     h = get_stan_param("h", "forecast"),
-    times = 25,
+    n_samples = 25,
     stationary = FALSE,
     ...
 ) {
@@ -63,7 +63,7 @@ forecast.fts_ts <- function(
 
   # Validate forecast horizon and simulation count
   checkmate::assert_count(h, positive = TRUE)
-  checkmate::assert_count(times, positive = TRUE)
+  checkmate::assert_count(n_samples, positive = TRUE)
 
   # Stationarity check for ARIMA model
   if (stationary & !identical(model, "ARIMA")) {
@@ -95,7 +95,7 @@ forecast.fts_ts <- function(
       object_tsbl = object_tsbl,
       model = model,
       h = h,
-      times = times,
+      n_samples = n_samples,
       stationary = stationary,
       object_sds = object_sds
     )
@@ -120,7 +120,7 @@ extract_model_params <- function(...) {
   adapt_delta <- if ("adapt_delta" %in% names(dots)) dots$adapt_delta else get_stan_param("adapt_delta")
   max_treedepth <- if ("max_treedepth" %in% names(dots)) dots$max_treedepth else get_stan_param("max_treedepth")
   silent <- if ("silent" %in% names(dots)) dots$silent else get_stan_param("silent")
-  times <- if ("times" %in% names(dots)) dots$times else get_stan_param("times", "forecast")
+  n_samples <- if ("n_samples" %in% names(dots)) dots$n_samples else get_stan_param("n_samples", "forecast")
 
   # Validate parameters using checkmate
   checkmate::assert_count(K, positive = TRUE)
@@ -132,7 +132,7 @@ extract_model_params <- function(...) {
   checkmate::assert_number(adapt_delta, lower = 0, upper = 1)
   checkmate::assert_count(max_treedepth, positive = TRUE)
   checkmate::assert_logical(silent, len = 1)
-  checkmate::assert_count(times, positive = TRUE)
+  checkmate::assert_count(n_samples, positive = TRUE)
 
   # Additional logic checks
   if (warmup >= iter) {
@@ -170,7 +170,7 @@ extract_model_params <- function(...) {
     adapt_delta = adapt_delta,
     max_treedepth = max_treedepth,
     silent = silent,
-    times = times
+    n_samples = n_samples
   )
 }
 
@@ -232,7 +232,7 @@ stan_forecast <- function(object_tsbl, model, h, ...) {
 adjust_forecast_uncertainty <- function(
     forecast_df,
     object_sds,
-    times,
+    n_samples,
     h
 ) {
   forecast_df |>
@@ -251,7 +251,7 @@ adjust_forecast_uncertainty <- function(
                 distributional::parameters(x)$sigma^2 + y^2
               )
             ),
-            times = times
+            times = n_samples
           )
         ),
         class = "distribution"
@@ -261,7 +261,7 @@ adjust_forecast_uncertainty <- function(
     tidyr::unnest(cols = .estimate) |>
     dplyr::rename(".sim" = ".estimate") |>
     dplyr::group_by(.basis, .realisation) |>
-    dplyr::mutate(.rep = rep(1:times, h)) |>
+    dplyr::mutate(.rep = rep(1:n_samples, h)) |>
     dplyr::ungroup()
 }
 
@@ -273,7 +273,7 @@ fable_forecast <- function(
     object_tsbl,
     model,
     h,
-    times,
+    n_samples,
     stationary = FALSE,
     object_sds = NULL
 ) {
@@ -281,12 +281,12 @@ fable_forecast <- function(
   checkmate::assert_data_frame(object_tsbl, min.rows = 1)
   checkmate::assert_string(model)
   checkmate::assert_count(h, positive = TRUE)
-  checkmate::assert_count(times, positive = TRUE)
+  checkmate::assert_count(n_samples, positive = TRUE)
   checkmate::assert_logical(stationary, len = 1)
   if (!is.null(object_sds)) {
     checkmate::assert_data_frame(object_sds, min.rows = 1)
   }
-  
+
   # Handle ENS ensemble forecasting
   if (model == "ENS") {
     # Generate ETS forecasts
@@ -294,43 +294,43 @@ fable_forecast <- function(
       object_tsbl = object_tsbl,
       model = "ETS",
       h = h,
-      times = times,
+      n_samples = n_samples,
       stationary = FALSE,
       object_sds = object_sds
     )
-    
-    # Generate RW forecasts  
+
+    # Generate RW forecasts
     rw_fc <- fable_forecast(
       object_tsbl = object_tsbl,
       model = "RW",
       h = h,
-      times = times,
+      n_samples = n_samples,
       stationary = FALSE,
       object_sds = object_sds
     )
-    
+
     # Detect the actual time index column from the tsibble
     # This handles cases where the time column isn't named ".time"
     time_index <- tsibble::index_var(object_tsbl)
-    
+
     # Validate forecast compatibility
     if (!identical(dim(ets_fc), dim(rw_fc))) {
       stop(insight::format_error(
         "ETS and RW forecasts have incompatible dimensions: ETS = {paste(dim(ets_fc), collapse='x')}, RW = {paste(dim(rw_fc), collapse='x')}"
       ))
     }
-    
+
     # Check required columns exist with flexible time index
     required_cols <- c(".basis", ".realisation", time_index, ".sim", ".rep")
-    
+
     # Validate ETS forecast structure
-    checkmate::assert_subset(required_cols, names(ets_fc), 
+    checkmate::assert_subset(required_cols, names(ets_fc),
       .var.name = paste("ETS forecast columns (time index:", time_index, ")"))
-    
-    # Validate RW forecast structure  
+
+    # Validate RW forecast structure
     checkmate::assert_subset(required_cols, names(rw_fc),
       .var.name = paste("RW forecast columns (time index:", time_index, ")"))
-    
+
     # Combine forecasts with equal weights (arithmetic mean)
     # Use dynamic time index column name in join
     ensemble_fc <- ets_fc |>
@@ -345,10 +345,10 @@ fable_forecast <- function(
         .model = "ENS"
       ) |>
       dplyr::select(-.sim_rw)
-    
+
     return(ensemble_fc)
   }
-  
+
   # Construct model call with optional constraints
   model_call <- if (stationary) {
     do.call(
@@ -376,14 +376,14 @@ fable_forecast <- function(
       adjust_forecast_uncertainty(
         forecast_df = forecast_df,
         object_sds = object_sds,
-        times = times,
+        times = n_samples,
         h = h
       )
     )
   } else {
     forecast_df <- object_tsbl |>
       fabletools::model(model_call) |>
-      fabletools::generate(h = h, times = times) |>
+      fabletools::generate(h = h, times = n_samples) |>
       dplyr::mutate(.model = model)
 
     return(forecast_df)
@@ -394,7 +394,7 @@ fable_forecast <- function(
 #'
 #' @importFrom stats median quantile setNames
 #' @param model A character string specifying the forecasting model to use.
-#' Default is "ENS" (ensemble). Options include "ENS", "ETS", "ARIMA", "RW", 
+#' Default is "ENS" (ensemble). Options include "ENS", "ETS", "ARIMA", "RW",
 #' "NAIVE", and Stan dynamic factor models ("ARDF", "VARDF", "GPDF").
 #' "ENS" combines ETS and Random Walk forecasts with equal weights,
 #' hedging bets between different forecasting assumptions to improve robustness.
@@ -426,8 +426,9 @@ fable_forecast <- function(
 #' This is only used when forecasting mixed mean/non-mean basis functions with
 #' Stan factor models.
 #' @param ... Additional arguments for Stan dynamic factor models (ARDF, VARDF, GPDF).
-#'   Key arguments include: K (number of factors, default: 2), lag (AR order, default: 1),
-#'   chains (MCMC chains, default: 4), iter (iterations, default: 500), 
+#'   Key arguments include: n_samples (number of forecast samples, default: 200),
+#'   K (number of factors, default: 2), lag (AR order, default: 1),
+#'   chains (MCMC chains, default: 4), iter (iterations, default: 500),
 #'   silent (suppress progress, default: TRUE), cores, adapt_delta, max_treedepth.
 #' @details
 #' \strong{Distributional Family Support:}
@@ -435,9 +436,9 @@ fable_forecast <- function(
 #' Full support for distributional regression models using mgcv families:
 #' \itemize{
 #'   \item \strong{gaulss:} Gaussian location-scale (normal distribution with varying mean and variance)
-#'   \item \strong{twlss:} Tweedie location-scale-shape 
+#'   \item \strong{twlss:} Tweedie location-scale-shape
 #' }
-#' 
+#'
 #' For distributional families, forecasting operates on all parameters simultaneously,
 #' producing forecasts that capture both mean and variance dynamics over time.
 #'
@@ -452,7 +453,7 @@ fable_forecast <- function(
 #'   \item \strong{Extract basis coefficients:} Time-varying functional coefficients
 #'     \eqn{\beta_j(t)} are extracted from the fitted GAM as time series
 #'   \item \strong{Forecast coefficients:} These coefficient time series are forecast
-#'     using ensemble methods (ENS), Stan dynamic factor models (ARDF/VARDF/GPDF), 
+#'     using ensemble methods (ENS), Stan dynamic factor models (ARDF/VARDF/GPDF),
 #'     or individual fable models (ETS, ARIMA, etc.)
 #'   \item \strong{Reconstruct forecasts:} Forecasted coefficients are combined:
 #'     \deqn{\hat{y}_{t+h} = \sum_{j=1}^{J} \hat{\beta}_j(t+h) B_j(x)}
@@ -494,11 +495,11 @@ fable_forecast <- function(
 #'     at non-zero levels). Default is ENS ensemble, controlled by `mean_model` parameter.
 #' }
 #'
-#' \strong{Important Note on `times` Parameter:}
+#' \strong{Important Note on `n_samples` Parameter:}
 #'
-#' For Stan dynamic factor models, the `times` parameter is automatically set to
+#' For Stan dynamic factor models, the `n_samples` parameter is automatically set to
 #' `(iter - warmup) * chains` to ensure dimensional consistency. Any user-specified
-#' `times` value will be ignored with a warning. For ARIMA models, `times` can be
+#' `n_samples` value will be ignored with a warning. For ARIMA models, `n_samples` can be
 #' specified freely and controls the number of posterior draws.
 #' @examples
 #' # Basic forecasting example with growth data
@@ -506,14 +507,14 @@ fable_forecast <- function(
 #' mod <- ffc_gam(
 #'   height_cm ~ s(id, bs = "re") +
 #'     fts(age_yr, k = 8, bs = "cr", time_k = 10),
-#'   time = "age_yr", 
+#'   time = "age_yr",
 #'   data = growth_data,
 #'   family = Gamma()
 #' )
 #'
 #' # Forecast with ETS model
 #' newdata <- data.frame(
-#'   id = "boy_11", 
+#'   id = "boy_11",
 #'   age_yr = c(16, 17, 18)
 #' )
 #' fc <- forecast(mod, newdata = newdata)  # Uses ENS ensemble by default
@@ -524,6 +525,33 @@ fable_forecast <- function(
 #'
 #' # Get raw forecast matrix without summary
 #' fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
+#'
+#' # Distributional regression forecasting example
+#' library(mgcv)
+#' set.seed(123)
+#' n <- 50
+#' dist_data <- data.frame(
+#'   time = 1:n,
+#'   x = rnorm(n),
+#'   y = rnorm(n, mean = sin(2 * pi * (1:n) / 10))
+#' )
+#'
+#' # Fit distributional model
+#' dist_mod <- ffc_gam(
+#'   list(
+#'     y ~ fts(x, k = 4),
+#'     ~ fts(x, k = 3)
+#'   ),
+#'   family = gaulss(),
+#'   data = dist_data,
+#'   time = "time"
+#' )
+#'
+#' # Forecast distributional model
+#' new_dist_data <- data.frame(time = (n+1):(n+3), x = rnorm(3))
+#' dist_fc <- forecast(dist_mod, newdata = new_dist_data)
+#' # Contains prediction intervals accounting for both parameters
+#' print(dist_fc)
 #' @seealso [ffc_gam()], [fts()], [forecast.fts_ts()]
 #' @return Predicted values on the appropriate scale.
 #' If `summary == FALSE`, the output is a matrix. If `summary == TRUE`, the output
@@ -549,46 +577,45 @@ forecast.ffc_gam <- function(
       "response"
     )
   )
-  
+
   # Store original row order before any processing
   # This will be used to restore the original ordering at the end
   original_newdata_rows <- nrow(newdata)
   if (!".original_row_id" %in% names(newdata)) {
     newdata$.original_row_id <- seq_len(original_newdata_rows)
   }
-  
+
   # Initialize surviving_rows for row order restoration
   surviving_rows <- NULL
 
   # Take full draws of beta coefficients
-  # Get times parameter for beta draws - need to check for Stan models first
+  # Get n_samples parameter for beta draws - need to check for Stan models first
   temp_params <- extract_model_params(...)
 
   # For Stan models, ensure times matches posterior samples to avoid dimension mismatches
   if (model %in% c('ARDF', 'GPDF', 'VARDF')) {
     stan_post_samples <- (temp_params$iter - temp_params$warmup) * temp_params$chains
-    if (temp_params$times != stan_post_samples) {
+    if (temp_params$n_samples != stan_post_samples) {
       if (!identical(Sys.getenv("TESTTHAT"), "true")) {
-        rlang::warn(paste0("For Stan models, setting times = ", stan_post_samples, " to match posterior samples. ",
-                          "Requested times = ", temp_params$times, " would cause dimension mismatch."),
+        rlang::warn(paste0("For Stan models, setting n_samples = ", stan_post_samples, " to match posterior samples. ",
+                          "Requested n_samples = ", temp_params$n_samples, " would cause dimension mismatch."),
                     .frequency = "once", .frequency_id = "stan_times_mismatch")
       }
-      temp_params$times <- stan_post_samples
+      temp_params$n_samples <- stan_post_samples
     }
   }
 
   orig_betas <- mgcv::rmvn(
-    n = temp_params$times,
+    n = temp_params$n_samples,
     mu = coef(object),
     V = vcov(object)
   )
 
   if (length(object$gam_init) == 0) {
-    # No fts() terms - still need to track row IDs for restoration
+    # No fts() terms - create predictions directly
+    # Both paths (with/without fts) need to reach prediction logic below
     surviving_rows <- newdata$.original_row_id
-    
-    # No need to modify lpmatrix if there were no
-    # fts() terms in the model
+
     # Extract the full linear predictor matrix
     orig_lpmat <- predict(
       object,
@@ -596,19 +623,16 @@ forecast.ffc_gam <- function(
       type = "lpmatrix"
     )
 
-    full_linpreds <- matrix(
-      as.vector(
-        t(apply(
-          as.matrix(orig_betas),
-          1,
-          function(row) {
-            orig_lpmat %*% row +
-              attr(orig_lpmat, "model.offset")
-          }
-        ))
-      ),
-      nrow = NROW(orig_betas)
-    )
+    # Compute linear predictors: n_draws × n_timepoints
+    # Each row of orig_betas is one draw, multiply with transposed lpmat
+    full_linpreds <- orig_betas %*% t(orig_lpmat)
+
+    # Add model offset if present
+    model_offset <- attr(orig_lpmat, "model.offset")
+    if (!is.null(model_offset) && !all(model_offset == 0)) {
+      full_linpreds <- sweep(full_linpreds, 2, model_offset, "+")
+    }
+
   } else {
     # Determine horizon (assuming equal time gaps)
     time_var <- object$time_var
@@ -617,7 +641,7 @@ forecast.ffc_gam <- function(
     # This may filter out rows and reorder data
     newdata_validated <- validate_forecast_newdata(newdata, object)
     validated_newdata_size <- nrow(newdata_validated)
-    
+
     # Extract which original rows survived validation
     if (".original_row_id" %in% names(newdata_validated)) {
       surviving_rows <- newdata_validated$.original_row_id
@@ -625,10 +649,10 @@ forecast.ffc_gam <- function(
       # Fallback if validation didn't preserve IDs
       surviving_rows <- NULL
     }
-    
+
     # Use validated data for forecasting
     newdata <- newdata_validated
-    
+
     # Predict by fixing time to its last training value; this allows
     # us to later add the uncertainty from the zero-centred time-varying
     # basis coefficient time series
@@ -641,8 +665,9 @@ forecast.ffc_gam <- function(
       newdata = newdata_shift,
       type = "lpmatrix"
     )
+
     rm(newdata_shift, last_train)
-    
+
     # Now create basis coefficient data for forecasting using filtered newdata
     interpreted <- interpret_ffc(
       formula = object$orig_formula,
@@ -663,7 +688,7 @@ forecast.ffc_gam <- function(
     intermed_coefs <- fts_coefs(
       object,
       summary = FALSE,
-      times = temp_params$times
+      n_samples = temp_params$n_samples
     )
 
     # Optimized functional coefficient processing
@@ -671,16 +696,16 @@ forecast.ffc_gam <- function(
     aggregated <- intermed_coefs |>
       dplyr::group_by(.basis, .time, !!time_var) |>
       dplyr::summarise(.mean = mean(.estimate), .groups = "drop")
-    
+
     # Validate aggregation structure
     checkmate::assert_data_frame(aggregated, min.rows = 1)
-    
+
     # Vectorized tail subtraction (compute last value per basis)
     tail_values <- aggregated |>
       dplyr::group_by(.basis) |>
       dplyr::slice_tail(n = 1) |>
       dplyr::select(.basis, tail_mean = .mean)
-    
+
     # Join and compute shifted values (subtract tail from each group)
     functional_coefs <- aggregated |>
       dplyr::left_join(tail_values, by = ".basis") |>
@@ -742,7 +767,7 @@ forecast.ffc_gam <- function(
           object = functional_coefs |>
             dplyr::filter(!grepl('_mean', .basis)),
           h = max_horizon,
-          times = temp_params$times,
+          n_samples = temp_params$n_samples,
           model = model,
           stationary = stationary,
           ...
@@ -760,7 +785,7 @@ forecast.ffc_gam <- function(
           object = functional_coefs |>
             dplyr::filter(grepl('_mean', .basis)),
           h = max_horizon,
-          times = temp_params$times,
+          n_samples = temp_params$n_samples,
           model = mean_model,
           stationary = FALSE,
           ...
@@ -790,7 +815,7 @@ forecast.ffc_gam <- function(
         forecast(
           object = functional_coefs,
           h = max_horizon,
-          times = temp_params$times,
+          n_samples = temp_params$n_samples,
           model = if(has_mean_basis & !has_non_mean_basis) mean_model else model,
           stationary = if(has_mean_basis & !has_non_mean_basis) FALSE else stationary,
           ...
@@ -811,7 +836,7 @@ forecast.ffc_gam <- function(
             dplyr::distinct(),
           by = dplyr::join_by(!!index_var)
         )
-      
+
       # Handle duplicate .time column
       if (".time" %in% colnames(functional_fc)) {
         # Remove duplicate time_var column since .time already exists
@@ -842,15 +867,15 @@ forecast.ffc_gam <- function(
       dplyr::distinct(!!rlang::sym(time_var)) |>
       dplyr::arrange(!!rlang::sym(time_var)) |>
       dplyr::pull(!!rlang::sym(time_var))
-    
+
     forecast_times <- functional_fc |>
       dplyr::distinct(.time) |>
       dplyr::arrange(.time) |>
       dplyr::pull(.time)
-    
+
     # Floating point tolerance for numeric time comparisons
     TIME_TOLERANCE <- 1e-10
-    
+
     # Create time mapping based on sorted temporal order
     if (length(forecast_times) == length(target_times)) {
       # Direct 1:1 mapping when counts match
@@ -862,12 +887,12 @@ forecast.ffc_gam <- function(
       # Forecast times are subset of target times - map by temporal value
       if (is.numeric(forecast_times) && is.numeric(target_times)) {
         # Use tolerance for floating point comparison
-        available_targets <- target_times[sapply(target_times, function(t) 
+        available_targets <- target_times[sapply(target_times, function(t)
           any(abs(forecast_times - t) < TIME_TOLERANCE))]
       } else {
         available_targets <- target_times[target_times %in% forecast_times]
       }
-      
+
       if (length(available_targets) == length(forecast_times)) {
         time_mapping <- data.frame(
           .time = forecast_times,
@@ -876,7 +901,7 @@ forecast.ffc_gam <- function(
       } else {
         stop(insight::format_error(
           paste0("Cannot map forecast times to target times. ",
-                 "Forecast generated {.field ", length(forecast_times), 
+                 "Forecast generated {.field ", length(forecast_times),
                  "} time steps but only {.field ", length(available_targets),
                  "} match target times.")
         ), call. = FALSE)
@@ -884,12 +909,12 @@ forecast.ffc_gam <- function(
     } else {
       # More forecast times than target times - internal error
       stop(insight::format_error(
-        paste0("Generated {.field ", length(forecast_times), 
-               "} forecast times but found {.field ", length(target_times), 
+        paste0("Generated {.field ", length(forecast_times),
+               "} forecast times but found {.field ", length(target_times),
                "} target times. This suggests an internal forecasting error.")
       ), call. = FALSE)
     }
-    
+
     # Remap the .time values using the mapping table
     functional_fc <- functional_fc |>
       tsibble::as_tibble() |>
@@ -897,7 +922,7 @@ forecast.ffc_gam <- function(
       dplyr::mutate(.time = .time_target) |>
       dplyr::select(-.time_target)
 
-    # Calculate intermediate linear predictors  
+    # Calculate intermediate linear predictors
     model_offset <- attr(orig_lpmat, "model.offset")
 
     # Handle multi-parameter offset expansion for distributional models
@@ -910,20 +935,20 @@ forecast.ffc_gam <- function(
           "Multi-parameter model missing {.field lpi} attribute in lpmatrix for offset expansion"
         ), call. = FALSE)
       }
-      
+
       checkmate::assert_list(model_offset, types = "numeric", min.len = 1)
       checkmate::assert_list(lpi, types = "numeric", min.len = 1)
-      
+
       # Validate that offset list length matches lpi list length
       if (length(model_offset) != length(lpi)) {
         stop(insight::format_error(
-          paste0("Offset list length {.field ", length(model_offset), 
+          paste0("Offset list length {.field ", length(model_offset),
                  "} doesn't match parameter count {.field ", length(lpi), "}")
         ), call. = FALSE)
       }
-      
+
       expanded_offset <- numeric(ncol(orig_lpmat))
-      
+
       # Expand each parameter's offset to its coefficient indices
       for (i in seq_along(model_offset)) {
         if (!is.null(model_offset[[i]]) && length(model_offset[[i]]) > 0) {
@@ -933,7 +958,7 @@ forecast.ffc_gam <- function(
         }
       }
       model_offset <- expanded_offset
-      
+
     } else if (is.null(model_offset)) {
       model_offset <- rep(0, nrow(orig_lpmat))
     } else {
@@ -954,10 +979,10 @@ forecast.ffc_gam <- function(
     # Compute linear predictors using matrix multiplication
     # For distributional families, compute parameter-specific linear predictors
     lpi_attr <- attr(orig_lpmat, "lpi")
-    
+
     if (!is.null(lpi_attr) && is_distributional_family(object$family)) {
       # Distributional family: compute parameter-specific linear predictors
-      
+
       # Apply offset if needed
       lpmat_to_use <- orig_lpmat
       if (!is.null(model_offset) && !all(model_offset == 0)) {
@@ -965,31 +990,32 @@ forecast.ffc_gam <- function(
           lpmat_to_use[i, ] <- orig_lpmat[i, ] + model_offset
         }
       }
-      
+
       # Compute parameter-specific linear predictors
       n_params <- object$family$nlp
       n_time_points <- nrow(lpmat_to_use)
       n_draws <- nrow(orig_betas)
-      
+
       # Result matrix: rows = draws, cols = (n_params * n_time_points)
       intermed_linpreds <- matrix(0, nrow = n_draws, ncol = n_params * n_time_points)
-      
+
       for (p in seq_len(n_params)) {
         param_coef_indices <- lpi_attr[[p]]
-        
+
+
         # Extract parameter-specific coefficients and design matrix
         param_betas <- orig_betas[, param_coef_indices, drop = FALSE]
         param_lpmat <- lpmat_to_use[, param_coef_indices, drop = FALSE]
-        
-        # Compute linear predictors for this parameter  
+
+        # Compute linear predictors for this parameter
         param_linpreds <- param_betas %*% t(param_lpmat)
-        
+
         # Store in appropriate columns
         col_start <- (p - 1) * n_time_points + 1
         col_end <- p * n_time_points
         intermed_linpreds[, col_start:col_end] <- param_linpreds
       }
-      
+
     } else {
       # Single parameter family: use existing computation
       if (is.null(model_offset) || all(model_offset == 0)) {
@@ -1008,8 +1034,8 @@ forecast.ffc_gam <- function(
 
     # Compute functional coefficient predictions using matrix operations
     fts_fc <- compute_functional_predictions(
-      interpreted$data, 
-      functional_fc, 
+      interpreted$data,
+      functional_fc,
       time_var
     )
 
@@ -1030,91 +1056,91 @@ forecast.ffc_gam <- function(
     # For distributional families, need to separate by parameter
     original_row_indices <- fts_fc$.row
     unique_draws <- unique(fts_fc$.draw)
-    
+
     # Input validation
     checkmate::assert_data_frame(fts_fc, min.rows = 1)
     checkmate::assert_true(all(c(".draw", ".row") %in% names(fts_fc)))
-    
+
     if (is_distributional_family(object$family)) {
       # Parameter-specific functional coefficient computation
       n_params <- object$family$nlp
       n_time_points <- length(unique(original_row_indices))
       n_draws <- length(unique_draws)
-      
+
       # Validation
       checkmate::assert_count(n_params, positive = TRUE)
       checkmate::assert_count(n_time_points, positive = TRUE)
       checkmate::assert_count(n_draws, positive = TRUE)
-      
+
       # Initialize parameter-specific fc_matrix: draws × (params * time_points)
       fc_matrix <- matrix(0, nrow = n_draws, ncol = n_params * n_time_points)
-      
+
       # Parameter names for column identification
       param_names <- c("location", "scale", "shape")
-      
+
       for (p in seq_len(n_params)) {
         param_name <- param_names[p]
-        
-        # Select columns for this parameter using established pattern
-        param_cols <- grep(paste0("^", param_name, "_fts_"), names(fts_fc), 
-                          value = TRUE)
-        
-        # Validation: ensure parameter columns exist
-        if (length(param_cols) == 0) {
-          stop(insight::format_error(
-            paste0("No functional coefficient columns found for parameter ", 
-                   "{.field ", param_name, "}. Expected columns matching ", 
-                   "pattern {.field ", param_name, "_fts_*}")
-          ), call. = FALSE)
+
+        # Identify parameter-specific functional coefficient columns by pattern
+        param_pattern <- paste0("^", param_name, "_fts_")
+        param_cols <- grep(param_pattern, names(fts_fc), value = TRUE)
+
+        if (length(param_cols) > 0) {
+          # Extract parameter-specific coefficient columns and compute row sums
+          # Each row represents one draw-time combination, summed across basis functions
+          param_matrix <- fts_fc |>
+            dplyr::select(dplyr::all_of(param_cols)) |>
+            as.matrix()
+
+          # Compute row sums to get single value per draw-time combination
+          param_sums <- rowSums(param_matrix)
+
+          # Reshape to draws × time_points matrix
+          # fts_fc is ordered by .row then .draw, so we need to transpose the arrangement
+          param_fc_matrix <- matrix(param_sums, nrow = n_draws, ncol = n_time_points, byrow = TRUE)
+
+          # Place coefficients in appropriate columns of fc_matrix
+          start_col <- (p - 1) * n_time_points + 1
+          end_col <- p * n_time_points
+          fc_matrix[, start_col:end_col] <- param_fc_matrix
         }
-        
-        # Compute rowsums for this parameter only
-        param_fc_data <- fts_fc |>
-          dplyr::select(dplyr::all_of(c(param_cols, ".draw", ".row")))
-        
-        param_fc_linpreds <- param_fc_data |>
-          dplyr::select(-c(.draw, .row)) |>
-          rowSums()
-        
-        # Reshape to matrix form for this parameter
-        param_fc_matrix <- optimized_fc_matrix_reshape(
-          fc_linpreds = param_fc_linpreds,
-          draw_ids = param_fc_data$.draw,
-          unique_draws = unique_draws
-        )
-        
-        # Validation: ensure matrix dimensions are correct
-        checkmate::assert_matrix(param_fc_matrix, nrows = n_draws, 
-                                ncols = n_time_points)
-        
-        # Store in layout: [param1_times, param2_times, ...]
-        col_start <- (p - 1) * n_time_points + 1
-        col_end <- p * n_time_points
-        fc_matrix[, col_start:col_end] <- param_fc_matrix
       }
+
+      full_linpreds <- intermed_linpreds + fc_matrix
     } else {
-      # Single parameter: use existing logic unchanged
-      fc_linpreds <- fts_fc |>
-        dplyr::select(-c(.draw, .row)) |>
-        rowSums()
-      
-      fc_matrix <- optimized_fc_matrix_reshape(
-        fc_linpreds = fc_linpreds,
-        draw_ids = fts_fc$.draw,
-        unique_draws = unique_draws
-      )
+      # Single parameter case - sum basis functions and add to intermed_linpreds
+      # This follows the same pattern as distributional models for consistency
+
+      # Extract functional basis columns (exclude .draw and .row)
+      basis_cols <- names(fts_fc)[!names(fts_fc) %in% c(".draw", ".row")]
+
+      if (length(basis_cols) > 0) {
+        # Sum basis functions for each draw-timepoint combination
+        fc_values <- rowSums(fts_fc[, basis_cols, drop = FALSE])
+
+        # Determine dimensions
+        n_time_points <- length(unique(fts_fc$.row))
+        n_draws <- length(unique(fts_fc$.draw))
+
+        # Reshape to draws × timepoints matrix
+        # fts_fc is ordered by .row then .draw, so use byrow=TRUE
+        fc_matrix <- matrix(fc_values, nrow = n_draws, ncol = n_time_points, byrow = TRUE)
+
+        # Add functional coefficients to intermediate predictions
+        full_linpreds <- intermed_linpreds + fc_matrix
+      } else {
+        # No functional coefficients, use intermediate predictions directly
+        full_linpreds <- intermed_linpreds
+      }
     }
 
-    
-    full_linpreds <- fc_matrix + intermed_linpreds
-    
     # Preserve lpi attribute for distributional families
-    # For distributional families, the lpi structure needs to match the new matrix layout
-    if (is_distributional_family(object$family) && !is.null(attr(orig_lpmat, "lpi"))) {
+    if (is_distributional_family(object$family)) {
       # Reconstruct lpi for the new matrix structure: [param1_times, param2_times, ...]
+      # Each parameter gets n_time_points consecutive columns
       n_params <- object$family$nlp
       n_time_points <- ncol(full_linpreds) %/% n_params
-      
+
       forecast_lpi <- vector("list", n_params)
       for (p in seq_len(n_params)) {
         col_start <- (p - 1) * n_time_points + 1
@@ -1122,8 +1148,6 @@ forecast.ffc_gam <- function(
         forecast_lpi[[p]] <- col_start:col_end
       }
       attr(full_linpreds, "lpi") <- forecast_lpi
-    } else if (!is.null(attr(orig_lpmat, "lpi"))) {
-      attr(full_linpreds, "lpi") <- attr(orig_lpmat, "lpi")
     }
   }
 
@@ -1141,14 +1165,15 @@ forecast.ffc_gam <- function(
   if (type == "response") {
     # Distributional families need parameter-specific fitted values
     if (is_distributional_family(object$family)) {
+
       # Validate lpi attribute required for parameter extraction
       if (is.null(attr(full_linpreds, "lpi"))) {
         stop(insight::format_error(
-          "Linear predictors missing {.field lpi} attribute 
+          "Linear predictors missing {.field lpi} attribute
           required for distributional families"
         ), call. = FALSE)
       }
-      
+
       # Extract parameter indices and split linear predictors
       parameter_info <- extract_parameter_info_from_lpmat(
         full_linpreds, object$family
@@ -1156,42 +1181,27 @@ forecast.ffc_gam <- function(
       par_linpreds <- split_linear_predictors_by_lpi(
         full_linpreds, parameter_info
       )
-      
+
+
       # Convert linear predictors to response scale
       fitted_parameters <- apply_distributional_inverse_links(
         par_linpreds, object$family
       )
-      
-      # Prepare validated parameter matrices
+
+      # Prepare parameter matrices for posterior_predict
       location_matrix <- fitted_parameters[[1]]
-      checkmate::assert_matrix(location_matrix, 
-                               nrows = nrow(full_linpreds))
-      
+
       scale_matrix <- NULL
       if (length(fitted_parameters) >= 2) {
         scale_matrix <- fitted_parameters[[2]]
-        checkmate::assert_matrix(scale_matrix, 
-                                nrows = nrow(full_linpreds))
+
       }
-      
+
       shape_matrix <- NULL
       if (length(fitted_parameters) >= 3) {
         shape_matrix <- fitted_parameters[[3]]
-        checkmate::assert_matrix(shape_matrix, 
-                                nrows = nrow(full_linpreds))
       }
-      
-      # Debug output for forecast pipeline
-      if (Sys.getenv("DEBUG_FFC") == "TRUE") {
-        cat("DEBUG forecast (distributional path):\n")
-        cat("  full_linpreds dim:", dim(full_linpreds), "\n")
-        cat("  par_linpreds[[1]] dim:", dim(par_linpreds[[1]]), "\n")
-        cat("  location_matrix dim:", dim(location_matrix), "\n")
-        if (!is.null(scale_matrix))
-          cat("  scale_matrix dim:", dim(scale_matrix), "\n")
-        cat("  n_parameters:", length(fitted_parameters), "\n")
-      }
-      
+
       # Reason: parameter matrices provide fitted values directly,
       # avoiding redundant inverse link computation in posterior_predict
       preds <- posterior_predict(
@@ -1201,6 +1211,7 @@ forecast.ffc_gam <- function(
         scale_matrix = scale_matrix,
         shape_matrix = shape_matrix
       )
+
     } else {
       # Single parameter families use standard path
       preds <- posterior_predict(
@@ -1212,7 +1223,7 @@ forecast.ffc_gam <- function(
 
   # Summarise if necessary
   if (summary) {
-    Qs <- apply(preds, 2, quantile, probs = probs, na.rm = TRUE)
+    Qs <- apply(preds, 2, stats::quantile, probs = probs, na.rm = TRUE)
 
     if (robust) {
       estimates <- apply(preds, 2, median, na.rm = TRUE)
@@ -1236,14 +1247,14 @@ forecast.ffc_gam <- function(
       lapply(seq_len(NCOL(preds)), function(i) preds[, i])
     )
   }
-  
+
   # Restore original row order if we have tracking information
   # Check that surviving_rows exists and has the right length
   if (!is.null(surviving_rows)) {
     if (length(surviving_rows) == NROW(out)) {
       # Create mapping to restore original order
       row_order <- order(surviving_rows)
-      
+
       if (summary) {
         out <- out[row_order, , drop = FALSE]
       } else {
@@ -1291,11 +1302,11 @@ is_distributional_family <- function(family) {
 #' @param linpreds Linear predictor matrix from predict() call
 #' @param family mgcv family object
 #' @return List with parameter information and indices
-#' @noRd  
+#' @noRd
 extract_parameter_info_from_lpmat <- function(linpreds, family) {
   checkmate::assert_matrix(linpreds)
   checkmate::assert_class(family, "family")
-  
+
   if (is_distributional_family(family)) {
     # Get parameter indices from lpmatrix attributes (correct mgcv pattern)
     lpi <- attr(linpreds, "lpi")
@@ -1304,16 +1315,16 @@ extract_parameter_info_from_lpmat <- function(linpreds, family) {
         "Multi-parameter model missing {.field lpi} attribute in lpmatrix"
       ), call. = FALSE)
     }
-    
+
     checkmate::assert_list(lpi, types = "numeric", min.len = 1)
     checkmate::assert_true(length(lpi) == family$nlp)
-    
+
     # Create parameter names based on standard distributional conventions
     par_names <- c("location", "scale", "shape")[seq_len(family$nlp)]
     if (family$nlp > 3) {
       par_names <- c(par_names, paste0("parameter_", 4:family$nlp))
     }
-    
+
     list(
       n_parameters = family$nlp,
       parameter_names = par_names,
@@ -1321,8 +1332,8 @@ extract_parameter_info_from_lpmat <- function(linpreds, family) {
     )
   } else {
     list(
-      n_parameters = 1L, 
-      parameter_names = "location", 
+      n_parameters = 1L,
+      parameter_names = "location",
       parameter_indices = NULL
     )
   }
@@ -1336,18 +1347,18 @@ extract_parameter_info_from_lpmat <- function(linpreds, family) {
 split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
   checkmate::assert_matrix(linpreds)
   checkmate::assert_list(parameter_info, names = "strict")
-  checkmate::assert_names(names(parameter_info), 
+  checkmate::assert_names(names(parameter_info),
                          must.include = c("n_parameters", "parameter_indices"))
-  
+
   if (parameter_info$n_parameters == 1L) {
     return(list(location = linpreds))
   }
-  
+
   # Multi-parameter: split using lpi indices
   par_predictions <- vector("list", parameter_info$n_parameters)
   for (i in seq_len(parameter_info$n_parameters)) {
     indices <- parameter_info$parameter_indices[[i]]
-    checkmate::assert_integerish(indices, lower = 1, 
+    checkmate::assert_integerish(indices, lower = 1,
                                 upper = ncol(linpreds))
     par_predictions[[i]] <- linpreds[, indices, drop = FALSE]
   }
@@ -1363,36 +1374,37 @@ split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
 apply_distributional_inverse_links <- function(par_predictions, family) {
   checkmate::assert_list(par_predictions, min.len = 1)
   checkmate::assert_class(family, "family")
-  
+
   fitted_pars <- vector("list", length(par_predictions))
-  
+
   if (!is.null(family$linfo)) {
     # Distributional families - use parameter-specific inverse links
     checkmate::assert_true(
       length(par_predictions) <= family$nlp,
       .var.name = "par_predictions length vs family parameters"
     )
-    
+
     for (i in seq_along(par_predictions)) {
       # Defensive check for parameter bounds
       checkmate::assert_true(i <= length(family$linfo))
+
       fitted_pars[[i]] <- family$linfo[[i]]$linkinv(par_predictions[[i]])
     }
   } else {
     # Standard families - use single inverse link
     checkmate::assert_true(!is.null(family$linkinv))
-    
+
     for (i in seq_along(par_predictions)) {
       fitted_pars[[i]] <- family$linkinv(par_predictions[[i]])
     }
   }
-  
+
   names(fitted_pars) <- names(par_predictions)
   return(fitted_pars)
 }
 
 #' Posterior expectations with distributional family support
-#' @param object Fitted model object  
+#' @param object Fitted model object
 #' @param linpreds Linear predictor matrix from predict() call
 #' @return Matrix of expectations (location parameter only)
 #' @noRd
@@ -1400,35 +1412,49 @@ posterior_epred <- function(object, linpreds) {
   checkmate::assert_matrix(linpreds)
   family <- object$family
   checkmate::assert_class(family, "family")
-  
+
   # For distributional families, expectation = location parameter only
   # gaulss: E[Y] = μ, twlss: E[Y] = μ, betar: E[Y] = μ
   if (is_distributional_family(family)) {
+    cat("Family:", family$family, "\n")
+    cat("family$linkinv is NULL:", is.null(family$linkinv), "\n")
+    cat("family$linfo length:", length(family$linfo), "\n")
+    if (length(family$linfo) > 0) {
+      cat("family$linfo[[1]]$linkinv is NULL:", is.null(family$linfo[[1]]$linkinv), "\n")
+    }
+
     # Extract parameter information using correct mgcv pattern
     parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
-    
+
     # Get location parameter (first parameter) indices
     location_indices <- parameter_info$parameter_indices[[1]]
-    checkmate::assert_integerish(location_indices, lower = 1, 
+    checkmate::assert_integerish(location_indices, lower = 1,
                                 upper = ncol(linpreds))
-    
+
+    cat("Location indices:", paste(location_indices, collapse = ", "), "\n")
+
     # Extract location linear predictors
     location_linpreds <- linpreds[, location_indices, drop = FALSE]
-    
+
     # Apply inverse link to location parameter only
     expectations <- family$linkinv(location_linpreds)
-    
+    cat("After family$linkinv - expectations is NULL:", is.null(expectations), "\n")
+    if (!is.null(expectations)) {
+      cat("Expectations range:", round(range(expectations), 3), "\n")
+      cat("Expectations sample (first 3):", round(expectations[1:min(3, length(expectations))], 3), "\n")
+    }
+
   } else {
     # Single parameter family - standard approach
     expectations <- family$linkinv(linpreds)
   }
-  
+
   # Return as matrix
   return(expectations)
 }
 
 #' Generate posterior predictions with support for distributional families
-#' 
+#'
 #' @description
 #' Generates posterior predictions from fitted ffc_gam models, with specialized
 #' support for distributional families (gaulss, twlss, betar, etc.). For
@@ -1436,45 +1462,45 @@ posterior_epred <- function(object, linpreds) {
 #' and direct parameter matrix specification for improved performance.
 #'
 #' @param object Fitted ffc_gam model object
-#' @param linpreds Linear predictor matrix from predict() call. For distributional 
+#' @param linpreds Linear predictor matrix from predict() call. For distributional
 #'   families, this should include lpi attribute for parameter extraction.
 #' @param location_matrix Optional matrix of location parameter fitted values.
 #'   When provided for distributional families, bypasses lpi extraction. Should
 #'   have same dimensions as timepoints x draws. Default NULL.
-#' @param scale_matrix Optional matrix of scale parameter fitted values. 
+#' @param scale_matrix Optional matrix of scale parameter fitted values.
 #'   Required for 2+ parameter families when location_matrix provided. Default NULL.
 #' @param shape_matrix Optional matrix of shape parameter fitted values.
 #'   Required for 3+ parameter families when location_matrix provided. Default NULL.
-#'   
-#' @return Matrix of posterior predictions with nrow = number of draws, 
+#'
+#' @return Matrix of posterior predictions with nrow = number of draws,
 #'   ncol = number of timepoints/observations
-#'   
-#' @details 
+#'
+#' @details
 #' ## Parameter Matrix Mode (Distributional Families)
-#' When parameter matrices are provided, they should contain fitted values 
+#' When parameter matrices are provided, they should contain fitted values
 #' (already inverse-linked) rather than linear predictors. This mode is more
 #' efficient for forecasting as it avoids redundant inverse link computation.
-#' 
+#'
 #' ## Standard Mode
-#' When parameter matrices are NULL, the function extracts parameters from 
+#' When parameter matrices are NULL, the function extracts parameters from
 #' linpreds using the lpi attribute and applies appropriate inverse link functions.
-#' 
+#'
 #' ## Family Support
 #' - Single-parameter families (gaussian, poisson): Uses standard rd functions
 #' - Distributional families (gaulss, twlss, betar): Supports both modes
-#' 
+#'
 #' @examples
 #' # Internal function - called by forecast() methods
 #' # For distributional families in forecasting pipeline:
 #' # posterior_predict(model, linpreds, location_matrix, scale_matrix)
-#' 
+#'
 #' @noRd
 posterior_predict <- function(object, linpreds, location_matrix = NULL,
                              scale_matrix = NULL, shape_matrix = NULL) {
   checkmate::assert_matrix(linpreds)
   family <- object$family
   checkmate::assert_class(family, "family")
-  
+
   # Validate parameter matrices if provided
   if (!is.null(location_matrix)) {
     checkmate::assert_matrix(location_matrix, nrows = nrow(linpreds))
@@ -1485,7 +1511,7 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
   if (!is.null(shape_matrix)) {
     checkmate::assert_matrix(shape_matrix, nrows = nrow(linpreds))
   }
-  
+
   # Validate parameter matrix column consistency
   param_matrices <- list(location_matrix, scale_matrix, shape_matrix)
   provided_matrices <- param_matrices[!sapply(param_matrices, is.null)]
@@ -1494,19 +1520,19 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
     checkmate::assert_true(length(ncols) == 1,
       .var.name = "parameter matrices must have same number of columns")
   }
-  
+
   # Family-specific parameter matrix validation for distributional families
   if (is_distributional_family(family)) {
     required_params <- family$nlp
     provided_matrices <- list(location_matrix, scale_matrix, shape_matrix)
     provided_count <- sum(!sapply(provided_matrices, is.null))
-    
+
     # Check if any parameter matrices are provided (mixed mode validation)
     if (provided_count > 0) {
       # Get expected parameter names dynamically based on family$nlp
       expected_params <- c("location_matrix", "scale_matrix", "shape_matrix")[seq_len(required_params)]
       provided_params <- c("location_matrix", "scale_matrix", "shape_matrix")[!sapply(provided_matrices, is.null)]
-      
+
       # Validate required parameters are provided
       missing_params <- setdiff(expected_params, provided_params)
       if (length(missing_params) > 0) {
@@ -1516,7 +1542,7 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
                  "Provide all required parameter matrices or none.")
         ))
       }
-      
+
       # Validate no extra parameters are provided
       extra_params <- setdiff(provided_params, expected_params)
       if (length(extra_params) > 0) {
@@ -1527,20 +1553,20 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
       }
     }
   }
-  
+
   rd_fun <- get_family_rd(object)
-  
+
   if (is_distributional_family(family)) {
     # Check if parameter matrices are provided
     param_matrices <- list(location_matrix, scale_matrix, shape_matrix)
     has_param_matrices <- sum(!sapply(param_matrices, is.null)) > 0
-    
+
     if (has_param_matrices) {
       # Reason: parameter matrices contain fitted values, skip lpi extraction and inverse linking
       par_names <- c("location", "scale", "shape")[seq_len(family$nlp)]
       fitted_parameters <- param_matrices[seq_len(family$nlp)]
       names(fitted_parameters) <- par_names
-      
+
       # Validate fitted parameter structure
       checkmate::assert_true(length(fitted_parameters) == family$nlp)
     } else {
@@ -1548,84 +1574,100 @@ posterior_predict <- function(object, linpreds, location_matrix = NULL,
       parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
       par_predictions <- split_linear_predictors_by_lpi(linpreds, parameter_info)
       fitted_parameters <- apply_distributional_inverse_links(par_predictions, family)
+
     }
-    
+
     # Matrix reshaping for rd function parameter compatibility
     # rd expects each row to be one observation with parameters as columns
     n_draws <- nrow(fitted_parameters[[1]])
     n_cols <- ncol(fitted_parameters[[1]])
     n_total <- n_draws * n_cols
-    
+
     # Validate computed dimensions
     checkmate::assert_count(n_draws, positive = TRUE)
     checkmate::assert_count(n_cols, positive = TRUE)
     checkmate::assert_count(n_total, positive = TRUE)
-    
+
     # Validate fitted_parameters structure
     checkmate::assert_list(fitted_parameters, min.len = 1)
     for (i in seq_along(fitted_parameters)) {
-      checkmate::assert_matrix(fitted_parameters[[i]], 
+      checkmate::assert_matrix(fitted_parameters[[i]],
                                nrows = n_draws, ncols = n_cols,
                                .var.name = paste0("fitted_parameters[[", i, "]]"))
     }
-    
-    # Create matrix where each row represents one draw-timepoint combination
-    # Transpose first to ensure correct vectorization order
-    fitted_matrix <- matrix(NA, nrow = n_total, 
-                           ncol = length(fitted_parameters))
-    
-    # Efficient row-wise reshaping preserves draw-timepoint relationships
-    for (i in seq_along(fitted_parameters)) {
-      fitted_matrix[, i] <- as.vector(t(fitted_parameters[[i]]))
+
+    # Reason: Process timepoint by timepoint to preserve posterior draw structure
+    # Each timepoint gets n_draws samples using all parameter draws for that timepoint
+    response_pred_list <- vector("list", n_cols)
+
+    for (t in seq_len(n_cols)) {
+      # Reason: Extract parameter matrix for this timepoint (n_draws × n_parameters)
+      timepoint_matrix <- matrix(NA, nrow = n_draws,
+                                ncol = length(fitted_parameters))
+
+      for (p in seq_along(fitted_parameters)) {
+        timepoint_matrix[, p] <- fitted_parameters[[p]][, t]
+      }
+
+      # Validate timepoint matrix dimensions
+      checkmate::assert_matrix(timepoint_matrix, nrows = n_draws,
+                              ncols = length(fitted_parameters))
+
+
+      # Reason: Generate samples preserving draw-level uncertainty structure
+      timepoint_samples <- rd_fun(
+        mu = timepoint_matrix,
+        wt = rep(1, n_draws),
+        scale = 1
+      )
+
+
+      # Validate rd function output
+      checkmate::assert_numeric(timepoint_samples, len = n_draws)
+
+      # Reason: Store samples for this timepoint
+      response_pred_list[[t]] <- timepoint_samples
     }
-    
-    # Validate final matrix dimensions
-    checkmate::assert_matrix(fitted_matrix, nrows = n_total, 
-                            ncols = length(fitted_parameters))
-    
-    weights <- rep(1, n_total)
-    scale_p <- 1
-    
-    # Debug output for dimension tracking
-    if (Sys.getenv("DEBUG_FFC") == "TRUE") {
-      cat("DEBUG posterior_predict (distributional):\n")
-      cat("  n_draws:", n_draws, "n_cols:", n_cols, "\n")
-      cat("  fitted_matrix dim:", dim(fitted_matrix), "\n")
-      cat("  weights length:", length(weights), "\n")
-    }
-    
-    response_pred_vec <- rd_fun(
-      mu = fitted_matrix,
-      wt = weights,
-      scale = scale_p
-    )
-    
+
+    # Reason: Combine results maintaining matrix structure expected by caller
+    # Note: response_pred_matrix is n_draws × n_cols (draws × timepoints)
+    response_pred_matrix <- do.call(cbind, response_pred_list)
+
+    # Reason: Convert to vector using column-major order to match expected output
+    # This ensures draws are grouped by timepoint as expected by return statement
+    response_pred_vec <- as.vector(t(response_pred_matrix))
+
+    # Validate final result dimensions
+    checkmate::assert_numeric(response_pred_vec, len = n_total)
+
+
+
   } else {
     invlink_fun <- get_family_invlink(object)
-    
+
     scale_p <- object[["sig2"]]
     if (is.null(scale_p)) {
       scale_p <- summary(object)[["dispersion"]]
     }
-    
+
     if (!grepl("tweedie", family[["family"]], ignore.case = TRUE)) {
       scale_p <- rep(scale_p, length(linpreds))
     }
-    
+
     weights <- rep(1, length(linpreds))
     expected_pred_vec <- invlink_fun(eta = as.vector(linpreds))
-    
+
     if (grepl("tweedie", family[["family"]], ignore.case = TRUE)) {
       expected_pred_vec <- pmax(expected_pred_vec, 1e-8)
     }
-    
+
     response_pred_vec <- rd_fun(
       mu = expected_pred_vec,
       wt = weights,
       scale = scale_p
     )
   }
-  
+
   return(matrix(response_pred_vec, nrow = nrow(linpreds)))
 }
 
