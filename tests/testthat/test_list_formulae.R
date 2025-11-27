@@ -270,7 +270,7 @@ test_that("end-to-end coefficient extraction works with gaulss()", {
   # Model with too many formulae should also error
   expect_error(
     ffc_gam(
-      list(y ~ s(x, k = 5), ~x, ~ 1),
+      list(y ~ s(x, k = 5), ~x, ~1),
       data = test_data,
       family = gaulss(),
       engine = "gam",
@@ -713,7 +713,7 @@ test_that("offset handling in single and multi-parameter families", {
   library(mgcv)
   set.seed(1234)
   n <- 40
-  
+
   # Generate test data similar to existing working gaulss test
   test_data <- data.frame(
     time = 1:n,
@@ -726,16 +726,16 @@ test_that("offset handling in single and multi-parameter families", {
     offset1 = rnorm(n, 0, 0.1),
     offset2 = rnorm(n, 0, 0.1)
   )
-  
+
   # Multi-parameter family with offsets - replicate working gaulss pattern
   model_with_offset <- ffc_gam(
     list(y ~ offset(offset1) + s(x, k = 5), ~ offset(offset2) + x),
     data = test_data,
     family = gaulss(),
-    engine = "gam", 
+    engine = "gam",
     time = "time"
   )
-  
+
   expect_s3_class(model_with_offset, "ffc_gam")
   expect_s3_class(model_with_offset, "ffc_gam_multi")
   expect_equal(model_with_offset$family$nlp, 2)
