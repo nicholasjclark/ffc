@@ -206,14 +206,14 @@ data("growth_data")
 mod <- ffc_gam(
   height_cm ~ s(id, bs = "re") +
     fts(age_yr, k = 8, bs = "cr", time_k = 10),
-  time = "age_yr", 
+  time = "age_yr",
   data = growth_data,
   family = Gamma()
 )
 
 # Forecast with ETS model
 newdata <- data.frame(
-  id = "boy_11", 
+  id = "boy_11",
   age_yr = c(16, 17, 18)
 )
 fc <- forecast(mod, newdata = newdata)  # Uses ENS ensemble by default
@@ -225,7 +225,7 @@ fc_rw <- forecast(mod, newdata = newdata, model = "RW")
 # Get raw forecast matrix without summary
 fc_raw <- forecast(mod, newdata = newdata, summary = FALSE)
 
-# Distributional regression forecasting example  
+# Distributional regression forecasting example
 library(mgcv)
 set.seed(123)
 n <- 50
@@ -238,8 +238,8 @@ dist_data <- data.frame(
 # Fit distributional model
 dist_mod <- ffc_gam(
   list(
-    y ~ fts(x, k = 4),    
-    ~ fts(x, k = 3)       
+    y ~ fts(x, k = 4),
+    ~ fts(x, k = 3)
   ),
   family = gaulss(),
   data = dist_data,
