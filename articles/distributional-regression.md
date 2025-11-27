@@ -447,17 +447,17 @@ across all phases of the crash timeline.
 ### Rolling forecast parameters
 
 ``` r
-# Use 50 observations for each training window - enough data to estimate
+# Use 70 observations for each training window - enough data to estimate
 # time-varying parameters while allowing multiple forecast origins
-window_size <- 50
+window_size <- 70
 
-# Predict 10 steps ahead from each origin - tests short-term accuracy
+# Predict 5 steps ahead from each origin - tests short-term accuracy
 # relevant for crash dynamics without extending into highly uncertain territory  
-forecast_horizon <- 10
+forecast_horizon <- 5
 
-# Advance forecast origin by 10 steps between evaluations - balances
+# Advance forecast origin by 5 steps between evaluations - balances
 # computational cost with evaluation thoroughness
-step_size <- 10
+step_size <- 5
 
 # Calculate where each forecast origin will be positioned
 max_start <- nrow(mcycle) - forecast_horizon
@@ -589,19 +589,14 @@ horizon_stats <- rolling_forecasts |>
   )
 
 horizon_stats
-#> # A tibble: 10 × 8
-#>    horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95
-#>      <int>       <int> <dbl> <dbl>       <dbl>       <dbl>        <dbl>
-#>  1       1           8  28.7  40.0       0.75        0.75          139.
-#>  2       2           8  41.3  52.4       0.75        0.625         138.
-#>  3       3           8  24.2  31.5       0.875       0.875         135.
-#>  4       4           8  26.3  29.6       1           0.75          139.
-#>  5       5           8  26.6  36.4       0.875       0.875         141.
-#>  6       6           8  38.1  52.9       0.75        0.625         140.
-#>  7       7           8  27.0  50.0       0.875       0.75          144.
-#>  8       8           8  23.3  27.8       1           0.875         135.
-#>  9       9           8  44.8  56.5       0.75        0.5           138.
-#> 10      10           8  29.6  38.4       0.75        0.625         140.
+#> # A tibble: 5 × 8
+#>   horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95
+#>     <int>       <int> <dbl> <dbl>       <dbl>       <dbl>        <dbl>
+#> 1       1          12  27.0  35.3       0.833       0.667         114.
+#> 2       2          12  31.6  41.5       0.75        0.667         112.
+#> 3       3          12  26.0  32.4       0.833       0.833         114.
+#> 4       4          12  27.4  31.1       1           0.75          122.
+#> 5       5          12  23.0  29.6       0.917       0.833         122.
 #> # ℹ 1 more variable: avg_width_80 <dbl>
 
 # Overall performance summary  
@@ -615,9 +610,9 @@ overall_stats <- rolling_forecasts |>
   )
 
 cat("- 95% coverage:", round(overall_stats$overall_coverage_95 * 100, 1), "%\n")
-#> - 95% coverage: 83.8 %
+#> - 95% coverage: 86.7 %
 cat("- 80% coverage:", round(overall_stats$overall_coverage_80 * 100, 1), "%\n")
-#> - 80% coverage: 72.5 %
+#> - 80% coverage: 75 %
 ```
 
 ### Rolling forecast visualization
@@ -680,16 +675,17 @@ ggplot(coverage_data, aes(x = index)) +
   )
 ```
 
-![Cumulative coverage rates demonstrate well-calibrated prediction
+![Cumulative coverage rates demonstrate improved coverage of prediction
 intervals throughout the
 evaluation.](distributional-regression_files/figure-html/coverage-evolution-1.png)
 
-Cumulative coverage rates demonstrate well-calibrated prediction
+Cumulative coverage rates demonstrate improved coverage of prediction
 intervals throughout the evaluation.
 
 The cumulative coverage rates fluctuate across the time index, revealing
-periods where the model is overconfident or conservative, before
-stabilizing closer to nominal levels.
+how the forecasts did not anticipate the initial, major rise in both
+acceleration and the variance. Once the models had seen that period, the
+forecasts improved substantially.
 
 ## Key insights and best practices
 

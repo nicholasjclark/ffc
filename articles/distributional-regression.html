@@ -523,17 +523,17 @@ consistently across all phases of the crash timeline.</p>
 <h3 id="rolling-forecast-parameters">Rolling forecast parameters<a class="anchor" aria-label="anchor" href="#rolling-forecast-parameters"></a>
 </h3>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Use 50 observations for each training window - enough data to estimate</span></span>
+<code class="sourceCode R"><span><span class="co"># Use 70 observations for each training window - enough data to estimate</span></span>
 <span><span class="co"># time-varying parameters while allowing multiple forecast origins</span></span>
-<span><span class="va">window_size</span> <span class="op">&lt;-</span> <span class="fl">50</span></span>
+<span><span class="va">window_size</span> <span class="op">&lt;-</span> <span class="fl">70</span></span>
 <span></span>
-<span><span class="co"># Predict 10 steps ahead from each origin - tests short-term accuracy</span></span>
+<span><span class="co"># Predict 5 steps ahead from each origin - tests short-term accuracy</span></span>
 <span><span class="co"># relevant for crash dynamics without extending into highly uncertain territory  </span></span>
-<span><span class="va">forecast_horizon</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">forecast_horizon</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
 <span></span>
-<span><span class="co"># Advance forecast origin by 10 steps between evaluations - balances</span></span>
+<span><span class="co"># Advance forecast origin by 5 steps between evaluations - balances</span></span>
 <span><span class="co"># computational cost with evaluation thoroughness</span></span>
-<span><span class="va">step_size</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">step_size</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
 <span></span>
 <span><span class="co"># Calculate where each forecast origin will be positioned</span></span>
 <span><span class="va">max_start</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mcycle</span><span class="op">)</span> <span class="op">-</span> <span class="va">forecast_horizon</span></span>
@@ -663,19 +663,14 @@ unnecessarily conservative.</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="va">horizon_stats</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 8</span></span></span>
-<span><span class="co">#&gt;    horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95</span></span>
-<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>       1           8  28.7  40.0       0.75        0.75          139.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>       2           8  41.3  52.4       0.75        0.625         138.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>       3           8  24.2  31.5       0.875       0.875         135.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>       4           8  26.3  29.6       1           0.75          139.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>       5           8  26.6  36.4       0.875       0.875         141.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>       6           8  38.1  52.9       0.75        0.625         140.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>       7           8  27.0  50.0       0.875       0.75          144.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>       8           8  23.3  27.8       1           0.875         135.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>       9           8  44.8  56.5       0.75        0.5           138.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>      10           8  29.6  38.4       0.75        0.625         140.</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 8</span></span></span>
+<span><span class="co">#&gt;   horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95</span></span>
+<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       1          12  27.0  35.3       0.833       0.667         114.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>       2          12  31.6  41.5       0.75        0.667         112.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>       3          12  26.0  32.4       0.833       0.833         114.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>       4          12  27.4  31.1       1           0.75          122.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>       5          12  23.0  29.6       0.917       0.833         122.</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: avg_width_80 &lt;dbl&gt;</span></span></span>
 <span></span>
 <span><span class="co"># Overall performance summary  </span></span>
@@ -689,9 +684,9 @@ unnecessarily conservative.</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- 95% coverage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">overall_stats</span><span class="op">$</span><span class="va">overall_coverage_95</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - 95% coverage: 83.8 %</span></span>
+<span><span class="co">#&gt; - 95% coverage: 86.7 %</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- 80% coverage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">overall_stats</span><span class="op">$</span><span class="va">overall_coverage_80</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - 80% coverage: 72.5 %</span></span></code></pre></div>
+<span><span class="co">#&gt; - 80% coverage: 75 %</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="rolling-forecast-visualization">Rolling forecast visualization<a class="anchor" aria-label="anchor" href="#rolling-forecast-visualization"></a>
@@ -751,14 +746,15 @@ consistent model performance.</p>
 <span>    y <span class="op">=</span> <span class="st">"Cumulative Coverage Rate"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="distributional-regression_files/figure-html/coverage-evolution-1.png" class="r-plt" alt="Cumulative coverage rates demonstrate well-calibrated prediction intervals throughout the evaluation." width="672"><p class="caption">
-Cumulative coverage rates demonstrate well-calibrated prediction
+<img src="distributional-regression_files/figure-html/coverage-evolution-1.png" class="r-plt" alt="Cumulative coverage rates demonstrate improved coverage of prediction intervals throughout the evaluation." width="672"><p class="caption">
+Cumulative coverage rates demonstrate improved coverage of prediction
 intervals throughout the evaluation.
 </p>
 </div>
 <p>The cumulative coverage rates fluctuate across the time index,
-revealing periods where the model is overconfident or conservative,
-before stabilizing closer to nominal levels.</p>
+revealing how the forecasts did not anticipate the initial, major rise
+in both acceleration and the variance. Once the models had seen that
+period, the forecasts improved substantially.</p>
 </div>
 </div>
 <div class="section level2">
