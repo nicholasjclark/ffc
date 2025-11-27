@@ -342,14 +342,6 @@ validate_forecast_newdata <- function(newdata, model) {
   newdata <- add_row_identifiers(newdata, ".original_row_id")
 
   time_var <- model$time_var
-  if (is.null(time_var)) {
-    stop(
-      insight::format_error(
-        "Time variable not found in model object. Ensure model was fitted with time argument"
-      ),
-      call. = FALSE
-    )
-  }
 
   # Validate time variable exists in newdata
   validate_vars_in_data(time_var, newdata, "time variable")

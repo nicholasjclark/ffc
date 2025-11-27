@@ -28,9 +28,9 @@ print(summary(mcycle$accel))
 
 # Initial split for model development
 mcycle_train <- mcycle |>
-  dplyr::filter(index < 110)
+  dplyr::filter(index < 80)
 mcycle_test <- mcycle |>
-  dplyr::filter(index >= 110)
+  dplyr::filter(index >= 80)
 
 # Visualize the data
 p1 <- ggplot(mcycle, aes(x = index, y = accel)) +
