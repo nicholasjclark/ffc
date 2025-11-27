@@ -1517,3 +1517,99 @@ test_that("convert_re_to_factors handles warnings, errors and conversions", {
   expect_true(is.factor(result_mixed$char_var))
   expect_false(is.factor(result_mixed$num_var))
 })
+
+test_that("utils.R error messages are covered by tests", {
+  # Test compute_functional_predictions missing basis columns error
+  interpreted_data <- data.frame(
+    time = 1:3,
+    x = rnorm(3),
+    .row_id = 1:3
+  )
+  
+  functional_fc <- data.frame(
+    .time = 1:2,
+    .basis = c("fts_1", "fts_2"), 
+    .sim = rnorm(2),
+    .realisation = rep(1, 2),
+    .rep = rep(1, 2)
+  )
+  
+  expect_error(
+    ffc:::compute_functional_predictions(interpreted_data, functional_fc, "time"),
+    "No functional basis columns found"
+  )
+  
+  # Test compute_functional_predictions basis mismatch error
+  interpreted_data_mismatch <- data.frame(
+    time = 1:3,
+    fts_1 = rnorm(3),
+    fts_2 = rnorm(3),
+    .row_id = 1:3
+  )
+  
+  functional_fc_mismatch <- data.frame(
+    .time = 1:2,
+    .basis = c("fts_3", "fts_4"), 
+    .sim = rnorm(2),
+    .realisation = rep(1, 2),
+    .rep = rep(1, 2)
+  )
+  
+  expect_error(
+    ffc:::compute_functional_predictions(interpreted_data_mismatch, functional_fc_mismatch, "time"),
+    "Mismatch between basis columns in data"
+  )
+  
+  # Test all_tsbl_checks empty data error
+  library(tsibble)
+  empty_tsibble <- tsibble(time = integer(0), x = numeric(0), index = time)
+  
+  expect_error(
+    ffc:::all_tsbl_checks(empty_tsibble),
+    "There is no data to model"
+  )
+})
+
+test_that("additional utils.R validation functions work correctly", {
+  # Test extract_base_variables with various transformation functions
+  expect_equal(ffc:::extract_base_variables("sqrt(x)"), "x")
+  expect_equal(ffc:::extract_base_variables("log(y)"), "y")
+  expect_equal(ffc:::extract_base_variables("log10(z)"), "z")
+  expect_equal(ffc:::extract_base_variables("exp(a)"), "a")
+  expect_equal(ffc:::extract_base_variables("sin(b)"), "b")
+  expect_equal(ffc:::extract_base_variables("cos(c)"), "c")
+  
+  # Test validate_formula_input function
+  valid_formula <- y ~ x
+  expect_identical(ffc:::validate_formula_input(valid_formula), valid_formula)
+  
+  valid_list <- list(y ~ x, ~ z)
+  expect_identical(ffc:::validate_formula_input(valid_list), valid_list)
+  
+  # Test get_primary_formula function
+  expect_identical(ffc:::get_primary_formula(valid_formula), valid_formula)
+  expect_identical(ffc:::get_primary_formula(valid_list), valid_list[[1]])
+})
+
+test_that("utils.R helper functions work correctly", {
+  # Test nlist function
+  result <- ffc:::nlist(a = 1, b = 2)
+  expect_named(result, c("a", "b"))
+  expect_equal(result$a, 1)
+  expect_equal(result$b, 2)
+  
+  # Test c<- function  
+  x <- c(1, 2, 3)
+  result <- ffc:::`c<-`(x, 4)
+  expect_equal(result, c(1, 2, 3, 4))
+  
+  # Test add_row_identifiers validation mode
+  test_data <- data.frame(x = 1:3)
+  result <- ffc:::add_row_identifiers(test_data, ".test_id", validate_only = TRUE)
+  expect_equal(result, FALSE) # Column doesn't exist
+  
+  # Test add_row_identifiers normal mode
+  result_added <- ffc:::add_row_identifiers(test_data, ".test_id")
+  expect_true(".test_id" %in% names(result_added))
+  expect_equal(result_added$.test_id, 1:3)
+})

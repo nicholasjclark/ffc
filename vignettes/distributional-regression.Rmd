@@ -317,17 +317,17 @@ For distributional models like ours, rolling evaluation is particularly valuable
 ### Rolling forecast parameters
 
 ```{r rolling-setup}
-# Use 50 observations for each training window - enough data to estimate
+# Use 70 observations for each training window - enough data to estimate
 # time-varying parameters while allowing multiple forecast origins
-window_size <- 50
+window_size <- 70
 
-# Predict 10 steps ahead from each origin - tests short-term accuracy
+# Predict 5 steps ahead from each origin - tests short-term accuracy
 # relevant for crash dynamics without extending into highly uncertain territory  
-forecast_horizon <- 10
+forecast_horizon <- 5
 
-# Advance forecast origin by 10 steps between evaluations - balances
+# Advance forecast origin by 5 steps between evaluations - balances
 # computational cost with evaluation thoroughness
-step_size <- 10
+step_size <- 5
 
 # Calculate where each forecast origin will be positioned
 max_start <- nrow(mcycle) - forecast_horizon
@@ -481,7 +481,7 @@ The plot shows forecasts (red points) with 80% prediction intervals capturing th
 
 ### Coverage evolution analysis
 
-```{r coverage-evolution, fig.cap="Cumulative coverage rates demonstrate well-calibrated prediction intervals throughout the evaluation."}
+```{r coverage-evolution, fig.cap="Cumulative coverage rates demonstrate improved coverage of prediction intervals throughout the evaluation."}
 # Track coverage evolution over evaluation period
 coverage_data <- rolling_forecasts |>
   arrange(index) |>
@@ -503,7 +503,7 @@ ggplot(coverage_data, aes(x = index)) +
   )
 ```
 
-The cumulative coverage rates fluctuate across the time index, revealing periods where the model is overconfident or conservative, before stabilizing closer to nominal levels.
+The cumulative coverage rates fluctuate across the time index, revealing how the forecasts did not anticipate the initial, major rise in both acceleration and the variance. Once the models had seen that period, the forecasts improved substantially.
 
 ## Key insights and best practices
 
