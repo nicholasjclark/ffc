@@ -671,7 +671,7 @@ forecast.ffc_gam <- function(
     V = vcov(object)
   )
 
-  if (length(object$gam_init) == 0) {
+  if (is.null(object$fts_smooths) || length(object$fts_smooths) == 0) {
     # No fts() terms - create predictions directly
     # Both paths (with/without fts) need to reach prediction logic below
     surviving_rows <- newdata$.original_row_id
@@ -691,6 +691,11 @@ forecast.ffc_gam <- function(
     model_offset <- attr(orig_lpmat, "model.offset")
     if (!is.null(model_offset) && !all(model_offset == 0)) {
       full_linpreds <- sweep(full_linpreds, 2, model_offset, "+")
+    }
+    
+    # Reconstruct lpi attribute for distributional families
+    if (is_distributional_family(object$family)) {
+      attr(full_linpreds, "lpi") <- reconstruct_lpi_for_timepoints(full_linpreds, object$family)
     }
   } else {
     # Determine horizon (assuming equal time gaps)
@@ -1243,43 +1248,21 @@ forecast.ffc_gam <- function(
 
     # Preserve lpi attribute for distributional families
     if (is_distributional_family(object$family)) {
-      # Reconstruct lpi for the new matrix structure: [param1_times, param2_times, ...]
-      # Each parameter gets n_time_points consecutive columns
-      n_params <- object$family$nlp
-      n_time_points <- ncol(full_linpreds) %/% n_params
-
-      forecast_lpi <- vector("list", n_params)
-      for (p in seq_len(n_params)) {
-        col_start <- (p - 1) * n_time_points + 1
-        col_end <- p * n_time_points
-        forecast_lpi[[p]] <- col_start:col_end
-      }
-      attr(full_linpreds, "lpi") <- forecast_lpi
+      attr(full_linpreds, "lpi") <- reconstruct_lpi_for_timepoints(full_linpreds, object$family)
     }
   }
 
-  # Now can proceed to send full_linpreds to the relevant
-  # invlink and rng functions for outcome-level predictions
+  # Single prediction call handling all cases
   if (type == "link") {
     preds <- full_linpreds
-  }
-
-  if (type == "expected") {
-    preds <- posterior_epred(
-      object,
-      full_linpreds
-    )
-  }
-
-  if (type == "response") {
-    # Distributional families need parameter-specific fitted values
+  } else {
+    # Handle both "expected" and "response" types with unified call
     if (is_distributional_family(object$family)) {
       # Validate lpi attribute required for parameter extraction
       if (is.null(attr(full_linpreds, "lpi"))) {
         stop(
           insight::format_error(
-            "Linear predictors missing {.field lpi} attribute
-          required for distributional families"
+            "Linear predictors missing {.field lpi} attribute required for distributional families"
           ),
           call. = FALSE
         )
@@ -1290,12 +1273,14 @@ forecast.ffc_gam <- function(
         full_linpreds,
         object$family
       )
+      
+      
       par_linpreds <- split_linear_predictors_by_lpi(
         full_linpreds,
         parameter_info
       )
 
-      # Convert linear predictors to response scale
+      # Convert linear predictors to response scale for parameter matrices
       fitted_parameters <- apply_distributional_inverse_links(
         par_linpreds,
         object$family
@@ -1303,31 +1288,24 @@ forecast.ffc_gam <- function(
 
       # Prepare parameter matrices for posterior_predict
       location_matrix <- fitted_parameters[[1]]
+      scale_matrix <- if (length(fitted_parameters) >= 2) fitted_parameters[[2]] else NULL
+      shape_matrix <- if (length(fitted_parameters) >= 3) fitted_parameters[[3]] else NULL
 
-      scale_matrix <- NULL
-      if (length(fitted_parameters) >= 2) {
-        scale_matrix <- fitted_parameters[[2]]
-      }
-
-      shape_matrix <- NULL
-      if (length(fitted_parameters) >= 3) {
-        shape_matrix <- fitted_parameters[[3]]
-      }
-
-      # Reason: parameter matrices provide fitted values directly,
-      # avoiding redundant inverse link computation in posterior_predict
+      # Single call with parameter matrices and type
       preds <- posterior_predict(
         object,
         linpreds = par_linpreds[[1]], # Location linear predictors
         location_matrix = location_matrix,
         scale_matrix = scale_matrix,
-        shape_matrix = shape_matrix
+        shape_matrix = shape_matrix,
+        type = type
       )
     } else {
       # Single parameter families use standard path
       preds <- posterior_predict(
         object,
-        full_linpreds
+        full_linpreds,
+        type = type
       )
     }
   }
@@ -1394,19 +1372,6 @@ forecast.ffc_gam <- function(
   return(out)
 }
 
-#' Normalise quantiles into sampling weights
-#' @noRd
-norm_quantiles <- function(x) {
-  xhat <- vector(length = length(x))
-  for (i in seq_along(x)) {
-    if (x[i] < 50) {
-      xhat[i] <- (50 - x[i]) / 50
-    } else {
-      xhat[i] <- (x[i] - 50) / 50
-    }
-  }
-  1.1 - xhat
-}
 
 #' Check if family supports multiple parameters
 #' @param family mgcv family object
@@ -1482,6 +1447,8 @@ split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
   par_predictions <- vector("list", parameter_info$n_parameters)
   for (i in seq_len(parameter_info$n_parameters)) {
     indices <- parameter_info$parameter_indices[[i]]
+    
+    
     checkmate::assert_integerish(indices, lower = 1, upper = ncol(linpreds))
     par_predictions[[i]] <- linpreds[, indices, drop = FALSE]
   }
@@ -1526,69 +1493,6 @@ apply_distributional_inverse_links <- function(par_predictions, family) {
   return(fitted_pars)
 }
 
-#' Posterior expectations with distributional family support
-#' @param object Fitted model object
-#' @param linpreds Linear predictor matrix from predict() call
-#' @return Matrix of expectations (location parameter only)
-#' @noRd
-posterior_epred <- function(object, linpreds) {
-  checkmate::assert_matrix(linpreds)
-  family <- object$family
-  checkmate::assert_class(family, "family")
-
-  # For distributional families, expectation = location parameter only
-  # gaulss: E[Y] = μ, twlss: E[Y] = μ, betar: E[Y] = μ
-  if (is_distributional_family(family)) {
-    cat("Family:", family$family, "\n")
-    cat("family$linkinv is NULL:", is.null(family$linkinv), "\n")
-    cat("family$linfo length:", length(family$linfo), "\n")
-    if (length(family$linfo) > 0) {
-      cat(
-        "family$linfo[[1]]$linkinv is NULL:",
-        is.null(family$linfo[[1]]$linkinv),
-        "\n"
-      )
-    }
-
-    # Extract parameter information using correct mgcv pattern
-    parameter_info <- extract_parameter_info_from_lpmat(linpreds, family)
-
-    # Get location parameter (first parameter) indices
-    location_indices <- parameter_info$parameter_indices[[1]]
-    checkmate::assert_integerish(
-      location_indices,
-      lower = 1,
-      upper = ncol(linpreds)
-    )
-
-    cat("Location indices:", paste(location_indices, collapse = ", "), "\n")
-
-    # Extract location linear predictors
-    location_linpreds <- linpreds[, location_indices, drop = FALSE]
-
-    # Apply inverse link to location parameter only
-    expectations <- family$linkinv(location_linpreds)
-    cat(
-      "After family$linkinv - expectations is NULL:",
-      is.null(expectations),
-      "\n"
-    )
-    if (!is.null(expectations)) {
-      cat("Expectations range:", round(range(expectations), 3), "\n")
-      cat(
-        "Expectations sample (first 3):",
-        round(expectations[1:min(3, length(expectations))], 3),
-        "\n"
-      )
-    }
-  } else {
-    # Single parameter family - standard approach
-    expectations <- family$linkinv(linpreds)
-  }
-
-  # Return as matrix
-  return(expectations)
-}
 
 #' Generate posterior predictions with support for distributional families
 #'
@@ -1637,11 +1541,13 @@ posterior_predict <- function(
   linpreds,
   location_matrix = NULL,
   scale_matrix = NULL,
-  shape_matrix = NULL
+  shape_matrix = NULL,
+  type = "response"
 ) {
   checkmate::assert_matrix(linpreds)
   family <- object$family
   checkmate::assert_class(family, "family")
+  checkmate::assert_choice(type, c("response", "expected"))
 
   # Validate parameter matrices if provided
   if (!is.null(location_matrix)) {
@@ -1787,18 +1693,24 @@ posterior_predict <- function(
         ncols = length(fitted_parameters)
       )
 
-      # Reason: Generate samples preserving draw-level uncertainty structure
-      timepoint_samples <- rd_fun(
-        mu = timepoint_matrix,
-        wt = rep(1, n_draws),
-        scale = 1
-      )
+      if (type == "response") {
+        # Reason: Generate samples preserving draw-level uncertainty structure
+        timepoint_samples <- rd_fun(
+          mu = timepoint_matrix,
+          wt = rep(1, n_draws),
+          scale = 1
+        )
 
-      # Validate rd function output
-      checkmate::assert_numeric(timepoint_samples, len = n_draws)
+        # Validate rd function output
+        checkmate::assert_numeric(timepoint_samples, len = n_draws)
 
-      # Reason: Store samples for this timepoint
-      response_pred_list[[t]] <- timepoint_samples
+        # Reason: Store samples for this timepoint
+        response_pred_list[[t]] <- timepoint_samples
+      } else {
+        # type == "expected": Return location parameter (expectation) only
+        # For distributional families, expectation = location parameter
+        response_pred_list[[t]] <- timepoint_matrix[, 1]
+      }
     }
 
     # Reason: Combine results maintaining matrix structure expected by caller
@@ -1830,11 +1742,16 @@ posterior_predict <- function(
       expected_pred_vec <- pmax(expected_pred_vec, 1e-8)
     }
 
-    response_pred_vec <- rd_fun(
-      mu = expected_pred_vec,
-      wt = weights,
-      scale = scale_p
-    )
+    if (type == "response") {
+      response_pred_vec <- rd_fun(
+        mu = expected_pred_vec,
+        wt = weights,
+        scale = scale_p
+      )
+    } else {
+      # type == "expected": Return expectations (inverse link of linear predictors)
+      response_pred_vec <- expected_pred_vec
+    }
   }
 
   return(matrix(response_pred_vec, nrow = nrow(linpreds)))
@@ -1959,6 +1876,33 @@ fix_family_rd <- function(family, ...) {
 
 #' @importFrom mgcv fix.family.rd
 #' @importFrom stats family
+#' Reconstruct lpi attribute for timepoint-structured matrices
+#' 
+#' For distributional families, reconstructs lpi attribute where each parameter
+#' gets consecutive columns representing timepoints: [param1_times, param2_times, ...]
+#' 
+#' @param full_linpreds Matrix with timepoint-based column structure
+#' @param family mgcv family object with nlp property
+#' @return List of parameter indices for timepoint structure
+#' @noRd
+reconstruct_lpi_for_timepoints <- function(full_linpreds, family) {
+  checkmate::assert_matrix(full_linpreds)
+  checkmate::assert_class(family, "family")
+  checkmate::assert_true(is_distributional_family(family))
+  
+  n_params <- family$nlp
+  n_time_points <- ncol(full_linpreds) %/% n_params
+  
+  forecast_lpi <- vector("list", n_params)
+  for (p in seq_len(n_params)) {
+    col_start <- (p - 1) * n_time_points + 1
+    col_end <- p * n_time_points
+    forecast_lpi[[p]] <- col_start:col_end
+  }
+  
+  return(forecast_lpi)
+}
+
 #' @noRd
 get_family_rd <- function(object) {
   if (inherits(object, "glm")) {

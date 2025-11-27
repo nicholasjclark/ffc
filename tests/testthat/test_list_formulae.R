@@ -291,6 +291,22 @@ test_that("end-to-end coefficient extraction works with gaulss()", {
   # Should have coefficients for both parameters
   coefs <- coef(model)
   expect_true(all(is.finite(coefs)))
+
+  # Test predictions and forecast with expected type
+  pred_lpmatrix <- predict(model, type = "lpmatrix")
+  pred_response <- predict(model, type = "response")
+
+  # Create future data for forecasting
+  future_data <- data.frame(
+    time = (n + 1):(n + 5),
+    x = rnorm(5)
+  )
+  fc_expected <- forecast(model, newdata = future_data, type = "expected")
+
+  expect_true(is.matrix(pred_lpmatrix))
+  expect_true(is.numeric(pred_response))
+  expect_s3_class(fc_expected, "tbl_df")
+  expect_true(all(c(".estimate") %in% names(fc_expected)))
 })
 
 test_that("twlss() family works with list formulae", {

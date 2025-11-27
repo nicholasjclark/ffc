@@ -17,6 +17,13 @@ test_that("predict.ffc_gam() works without newdata", {
 
   # Response predictions should be non-negative for Poisson
   expect_range(pred_response, lower = 0)
+
+  # Test forecast with expected type (tests posterior_epred indirectly)
+  future_data <- data.frame(season = c(1, 6, 12), time = c(76, 77, 78))
+  fc_expected <- forecast(example_mod, newdata = future_data, type = "expected")
+  expect_s3_class(fc_expected, "tbl_df")
+  expect_true(all(c(".estimate") %in% names(fc_expected)))
+  expect_equal(nrow(fc_expected), 3)
 })
 
 test_that("predict.ffc_gam() works with newdata", {
@@ -42,6 +49,13 @@ test_that("predict.ffc_gam() works with newdata", {
 
   # Response predictions should be non-negative for Poisson
   expect_range(pred_response, lower = 0)
+
+  # Test forecast with expected type
+  future_data <- data.frame(season = c(3, 9), time = c(79, 80))
+  fc_expected <- forecast(example_mod, newdata = future_data, type = "expected")
+  expect_s3_class(fc_expected, "tbl_df")
+  expect_true(all(c(".estimate") %in% names(fc_expected)))
+  expect_equal(nrow(fc_expected), 2)
 })
 
 test_that("predict.ffc_gam() handles different prediction types", {
