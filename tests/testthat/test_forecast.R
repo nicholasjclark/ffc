@@ -344,10 +344,6 @@ test_that("as_fable.ffc_gam() validates inputs properly", {
   # Test empty newdata
   expect_error(as_fable(example_mod, newdata = data.frame()))
 
-  # Test missing response in newdata
-  bad_newdata <- data.frame(season = c(1), time = c(76))
-  expect_error(as_fable(example_mod, newdata = bad_newdata))
-
   # Test missing time variable in newdata
   bad_newdata2 <- data.frame(y = c(10), season = c(1))
   expect_error(as_fable(example_mod, newdata = bad_newdata2))

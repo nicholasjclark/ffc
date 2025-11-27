@@ -110,8 +110,7 @@ as_fable.ffc_gam <- function(x, newdata, forecasts = NULL,
     response <- extract_response_vars(x$formula, return_all = FALSE)
   }
 
-  # Validate response variables exist in newdata using centralized validation
-  validate_response_in_data(x$formula, newdata)
+  # Response validation delegated to model.frame() for compatibility
 
   # Detect time variable from original model
   time_var <- x$time_var

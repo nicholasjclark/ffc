@@ -35,19 +35,32 @@ validate_vars_in_data <- function(vars, data, var_type = "variable") {
   invisible(TRUE)
 }
 
-#' Validate that data contains no missing values
+#' Validate that data contains no missing values in specified variables
 #'
-#' Checks if any variables in a data frame contain missing values and provides
-#' helpful error messages identifying which variables have NAs
+#' Checks if specified variables in a data frame contain missing values and provides
+#' helpful error messages identifying which variables have NAs. If no variables
+#' are specified, checks all variables in the data frame.
 #'
 #' @param data Data frame to check for missing values
+#' @param vars Optional character vector of variable names to check. If NULL,
+#'   checks all variables in data
 #' @return Invisible TRUE if no missing values found, otherwise stops with error
 #' @noRd
-validate_no_missing_values <- function(data) {
+validate_no_missing_values <- function(data, vars = NULL) {
   checkmate::assert_data_frame(data)
+  checkmate::assert_character(vars, min.len = 1, any.missing = FALSE, null.ok = TRUE)
   
-  if (any(is.na(data))) {
-    na_vars <- sapply(data, function(x) any(is.na(x)))
+  # If no specific variables provided, check all columns (backward compatibility)
+  if (is.null(vars)) {
+    check_data <- data
+  } else {
+    # Validate that specified variables exist in data
+    validate_vars_in_data(vars, data, "variable")
+    check_data <- data[, vars, drop = FALSE]
+  }
+  
+  if (any(is.na(check_data))) {
+    na_vars <- sapply(check_data, function(x) any(is.na(x)))
     na_var_names <- names(na_vars)[na_vars]
     
     if (length(na_var_names) == 1) {
@@ -575,4 +588,39 @@ validate_gam_init_structure <- function(gam_init_list, n_parameters) {
   }
   
   return(TRUE)
+}
+
+#' Extract all variables used in model formula(e) and time variable
+#'
+#' Extracts variable names from formula(e) using all.vars() to get actual
+#' variable names rather than function calls, following established patterns
+#' in the codebase.
+#'
+#' @param formula Formula or list of formulae 
+#' @param time Character string specifying time variable
+#' @return Character vector of unique variable names used in the model
+#' @noRd
+extract_model_variables <- function(formula, time, data) {
+  checkmate::assert_string(time, min.chars = 1)
+  checkmate::assert_data_frame(data)
+  
+  # Handle list formulae for distributional regression
+  if (is.list(formula)) {
+    checkmate::assert_list(formula, types = "formula", min.len = 1)
+    model_vars <- character(0)
+    for (i in seq_along(formula)) {
+      formula_vars <- all.vars(formula[[i]])
+      model_vars <- c(model_vars, formula_vars)
+    }
+    model_vars <- unique(c(model_vars, time))
+  } else {
+    checkmate::assert_class(formula, "formula")
+    model_vars <- unique(c(all.vars(formula), time))
+  }
+  
+  # Filter to only variables that actually exist in the data frame
+  # This prevents errors from expressions like nrow(train_data) or constants
+  model_vars <- model_vars[model_vars %in% colnames(data)]
+  
+  return(model_vars)
 }

@@ -376,7 +376,7 @@ fable_forecast <- function(
       adjust_forecast_uncertainty(
         forecast_df = forecast_df,
         object_sds = object_sds,
-        times = n_samples,
+        n_samples = n_samples,
         h = h
       )
     )

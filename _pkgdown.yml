@@ -10,6 +10,7 @@ articles:
   contents:
   - starts_with("mortality")
   - elnino-forecasting
+  - distributional-regression
 
 template:
   bootstrap: 5

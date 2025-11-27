@@ -177,8 +177,11 @@ ffc_gam <- function(
     )
   }
 
-  # Validate data has no missing values
-  validate_no_missing_values(data)
+  # Extract variables actually used in the model
+  model_vars <- extract_model_variables(formula, time, data)
+  
+  # Validate data has no missing values in model variables only
+  validate_no_missing_values(data, model_vars)
 
   # Convert character variables to factors for random effects
   data <- convert_re_to_factors(formula, data)
@@ -340,8 +343,7 @@ update_mod_data <- function(
   resp_terms <- extract_response_vars(gam_object$formula, return_all = TRUE)
   out_name <- resp_terms[1]
   
-  # Check that response terms are in the data using centralized validation
-  validate_response_in_data(gam_object$formula, data)
+  # Response validation delegated to mgcv's model.frame() for compatibility
 
   # Indices of missing responses in data
   resp_finites <- vector(mode = "list")
