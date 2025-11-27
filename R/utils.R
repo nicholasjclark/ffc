@@ -102,7 +102,10 @@ check_ordered <- function(x) {
         paste0(
           deparse(substitute(x)),
           " is an unordered time series. To use this model, you first must sort the data in time order using `dplyr::arrange(",
-          paste(c(deparse(substitute(x)), tsibble::key_vars(x)), collapse = ", "),
+          paste(
+            c(deparse(substitute(x)), tsibble::key_vars(x)),
+            collapse = ", "
+          ),
           ", ",
           tsibble::index_var(x),
           ")`"
