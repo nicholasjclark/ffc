@@ -185,18 +185,18 @@
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; # Key:     Region, State, Purpose [1]</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt;   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model</span></span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt;     &lt;qtr&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;   &lt;dbl&gt;   &lt;int&gt; &lt;int&gt;      &lt;dist&gt; &lt;dbl&gt; &lt;chr&gt; </span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  850. FFC_E…</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  762. FFC_E…</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_E…</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  741. FFC_E…</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_E…</span></span></code></pre></div>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  839. FFC_E…</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  760. FFC_E…</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  774. FFC_E…</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  747. FFC_E…</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  836. FFC_E…</span></span></code></pre></div>
 <p>Leverage the fabletools ecosystem for forecast analysis</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Calculate accuracy metrics</span></span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">accuracy</span>(fc_ffc, test)</span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 13</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt;   .model  Region State Purpose .type    ME  RMSE   MAE     MPE  MAPE  MASE RMSSE</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 1 FFC_ETS Melbo… Vict… Visiti… Test   10.1  91.0  80.9 -0.0453  9.94   NaN   NaN</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt;   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 1 FFC_ETS Melbour… Vict… Visiti… Test   11.9  90.6  78.4 0.165  9.60   NaN   NaN</span></span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: ACF1 &lt;dbl&gt;</span></span>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a></span>
 <span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co"># Generate prediction intervals  </span></span>
@@ -206,11 +206,11 @@
 <span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; # Key:       Region, State, Purpose [1]</span></span>
 <span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt;   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model</span></span>
 <span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co">#&gt;     &lt;qtr&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;   &lt;dbl&gt;   &lt;int&gt; &lt;int&gt;      &lt;dist&gt; &lt;dbl&gt; &lt;chr&gt; </span></span>
-<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  850. FFC_E…</span></span>
-<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  762. FFC_E…</span></span>
-<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  773. FFC_E…</span></span>
-<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  741. FFC_E…</span></span>
-<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  840. FFC_E…</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co">#&gt; 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  839. FFC_E…</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="co">#&gt; 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  760. FFC_E…</span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a><span class="co">#&gt; 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  774. FFC_E…</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co">#&gt; 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  747. FFC_E…</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt; 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  836. FFC_E…</span></span>
 <span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="co">#&gt; # ℹ 2 more variables: `80%` &lt;hilo&gt;, `95%` &lt;hilo&gt;</span></span>
 <span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a></span>
 <span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="co"># Distribution summaries</span></span>
@@ -225,11 +225,11 @@
 <span id="cb11-32"><a href="#cb11-32" tabindex="-1"></a><span class="co">#&gt; # A tsibble: 5 x 5 [1Q]</span></span>
 <span id="cb11-33"><a href="#cb11-33" tabindex="-1"></a><span class="co">#&gt;   Quarter mean_forecast median_forecast   q25   q75</span></span>
 <span id="cb11-34"><a href="#cb11-34" tabindex="-1"></a><span class="co">#&gt;     &lt;qtr&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span id="cb11-35"><a href="#cb11-35" tabindex="-1"></a><span class="co">#&gt; 1 2016 Q4          850.            850.  795.  897.</span></span>
-<span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a><span class="co">#&gt; 2 2017 Q1          762.            759.  708.  810.</span></span>
-<span id="cb11-37"><a href="#cb11-37" tabindex="-1"></a><span class="co">#&gt; 3 2017 Q2          773.            768.  730.  818.</span></span>
-<span id="cb11-38"><a href="#cb11-38" tabindex="-1"></a><span class="co">#&gt; 4 2017 Q3          741.            738.  689.  789.</span></span>
-<span id="cb11-39"><a href="#cb11-39" tabindex="-1"></a><span class="co">#&gt; 5 2017 Q4          840.            842.  773.  907.</span></span></code></pre></div>
+<span id="cb11-35"><a href="#cb11-35" tabindex="-1"></a><span class="co">#&gt; 1 2016 Q4          839.            843.  778.  896.</span></span>
+<span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a><span class="co">#&gt; 2 2017 Q1          760.            758.  711.  815.</span></span>
+<span id="cb11-37"><a href="#cb11-37" tabindex="-1"></a><span class="co">#&gt; 3 2017 Q2          774.            770.  730.  822.</span></span>
+<span id="cb11-38"><a href="#cb11-38" tabindex="-1"></a><span class="co">#&gt; 4 2017 Q3          747.            743.  695.  802.</span></span>
+<span id="cb11-39"><a href="#cb11-39" tabindex="-1"></a><span class="co">#&gt; 5 2017 Q4          836.            831.  785.  898.</span></span></code></pre></div>
 <p>Next we can explore how to compare forecasts from <code>ffc</code> models to traditional time series models by again leveraging the simplicity and power of the <code>fable</code> ecosystem</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Generate FFC forecasts with different models</span></span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>fc_ffc_arima <span class="ot">&lt;-</span> <span class="fu">as_fable</span>(mod, <span class="at">newdata =</span> test, <span class="at">model =</span> <span class="st">"ARIMA"</span>)</span>

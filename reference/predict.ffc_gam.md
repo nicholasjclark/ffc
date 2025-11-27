@@ -93,9 +93,9 @@ Nicholas J Clark
 ``` r
 # Fit a model and generate predictions
 mod <- ffc_gam(
-  deaths ~ offset(log(population)) + sex + 
+  deaths ~ offset(log(population)) + sex +
     fts(age, k = 8, bs = "cr", time_k = 10),
-  time = "year", 
+  time = "year",
   data = qld_mortality,
   family = poisson(),
   engine = "bam"
@@ -108,12 +108,12 @@ set.seed(42)
 n <- 40
 sim_data <- data.frame(
   time = 1:n,
-  x = rnorm(n), 
+  x = rnorm(n),
   y = rnorm(n)
 )
 dist_mod <- ffc_gam(
   list(y ~ fts(x, k = 4), ~ fts(x, k = 3)),
-  family = gaulss(), 
+  family = gaulss(),
   data = sim_data,
   time = "time"
 )
