@@ -178,21 +178,24 @@ ffc_gam <- function(
       )
     }
   } else {
-    # Single formula with multi-parameter family should warn
+    # Single formula with multi-parameter family should error
     if (!is.null(family$nlp) && family$nlp > 1) {
-      if (!identical(Sys.getenv("TESTTHAT"), "true")) {
-        rlang::warn(
+      stop(
+        insight::format_error(
           paste0(
-            "Using single formula with multi-parameter family ",
-            family$family,
-            " (expects ",
+            "Formula must be a list",
+            " to match family requirements (",
             family$nlp,
-            " linear predictors). Consider using list formulae for ",
-            "full distributional modeling."
-          ),
-          .frequency = "once"
-        )
-      }
+            ") for ",
+            "{.field ",
+            family$family,
+            "}. Provide a list of exactly ",
+            family$nlp,
+            " formulae."
+          )
+        ),
+        call. = FALSE
+      )
     }
   }
 

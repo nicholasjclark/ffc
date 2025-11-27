@@ -18,9 +18,9 @@ Produces a time series plot of basis function coefficients from \code{fts_ts} ob
 \examples{
 # Extract and plot time-varying coefficients
 mod <- ffc_gam(
-  deaths ~ offset(log(population)) + sex + 
+  deaths ~ offset(log(population)) + sex +
     fts(age, k = 8, bs = "cr", time_k = 10),
-  time = "year", 
+  time = "year",
   data = qld_mortality,
   family = poisson(),
   engine = "bam"

@@ -9,6 +9,7 @@ test_that("fts() working correctly", {
   expect_true(fts_obj$by == "NA")
   expect_true(fts_obj$time_bs == "ts")
   expect_true(fts_obj$time_k == 10)
+  expect_no_error(print(fts_obj))
 
   smooth_obj <- eval(parse(text = fts_obj$call))
   expect_true(inherits(smooth_obj, "cr.smooth.spec"))

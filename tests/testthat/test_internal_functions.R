@@ -1478,3 +1478,42 @@ test_that("initial_spg numerical stability", {
   expect_true(sp_extreme >= 0)
   expect_false(is.na(sp_extreme))
 })
+
+test_that("convert_re_to_factors handles warnings, errors and conversions", {
+  # Character to factor conversion
+  char_data <- data.frame(char_var = c("A", "B", "C"))
+  result_char <- ffc:::convert_re_to_factors(~ s(char_var, bs = "re"), char_data)
+  expect_true(is.factor(result_char$char_var))
+
+  # Factor variables remain unchanged
+  factor_data <- data.frame(factor_var = factor(c("X", "Y", "Z")))
+  result_factor <- ffc:::convert_re_to_factors(~ s(factor_var, bs = "re"), factor_data)
+  expect_identical(result_factor$factor_var, factor_data$factor_var)
+
+  # Numeric variables in random effects should error
+  numeric_data <- data.frame(num_var = 1:3)
+  expect_error(
+    ffc:::convert_re_to_factors(~ s(num_var, bs = "re"), numeric_data),
+  )
+
+  # Empty formula returns data unchanged
+  test_data <- data.frame(x = 1:3, y = letters[1:3])
+  result_empty <- ffc:::convert_re_to_factors(~ 1, test_data)
+  expect_identical(result_empty, test_data)
+
+  # Multiple random effects
+  multi_data <- data.frame(var1 = c("A", "B"), var2 = c("X", "Y"))
+  result_multi <- ffc:::convert_re_to_factors(~ s(var1, bs = "re") + s(var2, bs = "re"), multi_data)
+  expect_true(all(sapply(result_multi[c("var1", "var2")], is.factor)))
+
+  # Formula list handling
+  list_data <- data.frame(char_var = c("P", "Q"))
+  result_list <- ffc:::convert_re_to_factors(list(~ s(char_var, bs = "re")), list_data)
+  expect_true(is.factor(result_list$char_var))
+
+  # Non-random effect terms ignored
+  mixed_data <- data.frame(char_var = c("A", "B"), num_var = 1:2)
+  result_mixed <- ffc:::convert_re_to_factors(~ s(char_var, bs = "re") + s(num_var, k = 3), mixed_data)
+  expect_true(is.factor(result_mixed$char_var))
+  expect_false(is.factor(result_mixed$num_var))
+})

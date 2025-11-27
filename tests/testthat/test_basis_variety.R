@@ -30,7 +30,18 @@ test_that("MRF basis setup works correctly", {
     )
   )
 
-  # Reduce to a usable time_k and try again
+  # Now try with an inappropriate family
+  expect_error(
+    ffc_gam(
+      crime ~
+        fts(district, bs = "mrf", xt = xt, k = 6, time_bs = "cr", time_k = 10),
+      time = "time",
+      data = fake_dat,
+      family = c()
+    )
+  )
+
+  # Reduce to a usable time_k and try again with a proper family
   mod <- ffc_gam(
     crime ~
       fts(district, bs = "mrf", xt = xt, k = 6, time_k = 3, time_bs = "cr"),

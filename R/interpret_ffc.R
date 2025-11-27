@@ -48,20 +48,6 @@ interpret_ffc <- function(
     # Ensure gam_init is properly structured for multiple formulae
     if (length(gam_init) == 0) {
       gam_init <- vector("list", length = length(formula))
-    } else {
-      # Validate existing structure for forecasting
-      if (!validate_gam_init_structure(gam_init, length(formula))) {
-        stop(
-          insight::format_error(
-            paste0(
-              "Invalid gam_init structure for distributional model with ",
-              length(formula),
-              " parameters. Expected list of lists of GAM objects."
-            )
-          ),
-          call. = FALSE
-        )
-      }
     }
 
     # Process each formula element

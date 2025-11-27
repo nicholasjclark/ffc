@@ -1830,6 +1830,7 @@ get_tw_ab <- function(family) {
   c(a, b)
 }
 
+#' @importFrom stats family
 #' @importFrom mgcv fix.family.rd
 #' @noRd
 fix_family_rd <- function(family, ...) {
@@ -1886,8 +1887,6 @@ fix_family_rd <- function(family, ...) {
   fam
 }
 
-#' @importFrom mgcv fix.family.rd
-#' @importFrom stats family
 #' Reconstruct lpi attribute for timepoint-structured matrices
 #'
 #' For distributional families, reconstructs lpi attribute where each parameter

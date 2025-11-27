@@ -20,24 +20,6 @@ test_that("family nlp property detection", {
   expect_equal(gaulss_family$nlp, 2)
 })
 
-test_that("basic input validation works", {
-  # Test basic checkmate validation - no model fitting
-  expect_error(
-    checkmate::assert_list("not a list", types = "formula"),
-    "Assertion on"
-  )
-
-  expect_error(
-    checkmate::assert_class("not a formula", "formula"),
-    "Assertion on"
-  )
-
-  # List of formulae should pass
-  expect_silent(
-    checkmate::assert_list(list(y ~ x, ~1), types = "formula")
-  )
-})
-
 test_that("interpret_ffc validates inputs correctly", {
   # Simple test data - no fts() terms to avoid heavy processing
   test_data <- data.frame(y = 1:10, x = 1:10, time = 1:10)
@@ -274,7 +256,40 @@ test_that("end-to-end coefficient extraction works with gaulss()", {
     )
   )
 
-  # Fit model with list formula and gaulss family
+  # Model with list formula and gaussian family should error
+  expect_error(
+    ffc_gam(
+      list(y ~ s(x, k = 5), ~x),
+      data = test_data,
+      family = gaussian(),
+      engine = "gam",
+      time = "time"
+    )
+  )
+
+  # Model with too many formulae should also error
+  expect_error(
+    ffc_gam(
+      list(y ~ s(x, k = 5), ~x, ~ 1),
+      data = test_data,
+      family = gaulss(),
+      engine = "gam",
+      time = "time"
+    )
+  )
+
+  # Model with too few formulae should also error
+  expect_error(
+    ffc_gam(
+      y ~ s(x, k = 5),
+      data = test_data,
+      family = gaulss(),
+      engine = "gam",
+      time = "time"
+    )
+  )
+
+  # Fit model with appropriate list formulae and gaulss family
   model <- ffc_gam(
     list(y ~ s(x, k = 5), ~x),
     data = test_data,
@@ -692,4 +707,38 @@ test_that("mixed share_penalty settings work correctly", {
   coefs <- fts_coefs(model_mixed)
   expect_true(is.data.frame(coefs))
   expect_true(".parameter" %in% names(coefs))
+})
+
+test_that("offset handling in single and multi-parameter families", {
+  library(mgcv)
+  set.seed(1234)
+  n <- 40
+  
+  # Generate test data similar to existing working gaulss test
+  test_data <- data.frame(
+    time = 1:n,
+    x = rnorm(n),
+    y = rnorm(
+      n,
+      mean = sin(2 * pi * (1:n) / 10),
+      sd = 0.5 + 0.3 * cos(2 * pi * (1:n) / 8)
+    ),
+    offset1 = rnorm(n, 0, 0.1),
+    offset2 = rnorm(n, 0, 0.1)
+  )
+  
+  # Multi-parameter family with offsets - replicate working gaulss pattern
+  model_with_offset <- ffc_gam(
+    list(y ~ offset(offset1) + s(x, k = 5), ~ offset(offset2) + x),
+    data = test_data,
+    family = gaulss(),
+    engine = "gam", 
+    time = "time"
+  )
+  
+  expect_s3_class(model_with_offset, "ffc_gam")
+  expect_s3_class(model_with_offset, "ffc_gam_multi")
+  expect_equal(model_with_offset$family$nlp, 2)
+  expect_true(is.list(model_with_offset$offset))
+  expect_equal(length(model_with_offset$offset), 2)
 })

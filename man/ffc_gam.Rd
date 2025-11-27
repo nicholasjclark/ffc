@@ -81,7 +81,7 @@ n <- 50
 sim_data <- data.frame(
   time = 1:n,
   x = rnorm(n),
-  y = rnorm(n, mean = sin(2 * pi * (1:n) / 20), 
+  y = rnorm(n, mean = sin(2 * pi * (1:n) / 20),
             sd = 0.5 + 0.3 * cos(2 * pi * (1:n) / 15))
 )
 
@@ -89,7 +89,7 @@ sim_data <- data.frame(
 dist_mod <- ffc_gam(
   list(
     y ~ fts(x, k = 5),      # Location parameter
-    ~ fts(x, k = 3)         # Scale parameter  
+    ~ fts(x, k = 3)         # Scale parameter
   ),
   family = gaulss(),
   data = sim_data,
