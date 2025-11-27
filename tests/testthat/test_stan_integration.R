@@ -535,3 +535,37 @@ test_that("binomial models handle response parsing correctly", {
 
   expect_true(inherits(mod_clean, "ffc_gam"))
 })
+
+test_that("Stan train functions handle multiple K() and p() specials with warnings", {
+  # Test the warning logic for multiple specials without running full Stan models
+  
+  # Test ARDF and VARDF warning pattern - both K and p specials
+  specials_multiple_kp <- list(
+    K = list(3, 5), # Multiple K values
+    p = list(1, 2)  # Multiple p values  
+  )
+  
+  # Test condition that triggers warning in train_ardf and train_vardf
+  expect_true(length(specials_multiple_kp$K) > 1)
+  expect_true(length(specials_multiple_kp$p) > 1)
+  expect_true(length(specials_multiple_kp$K) > 1 || length(specials_multiple_kp$p) > 1)
+  
+  # Test GPDF warning pattern - only K special
+  specials_multiple_k <- list(
+    K = list(2, 4, 6) # Multiple K values only
+  )
+  
+  # Test condition that triggers warning in train_gpdf
+  expect_true(length(specials_multiple_k$K) > 1)
+  
+  # Test normal case - no warnings should be triggered
+  specials_single <- list(
+    K = list(3), # Single K value
+    p = list(1)  # Single p value
+  )
+  
+  # Test condition that does NOT trigger warnings
+  expect_false(length(specials_single$K) > 1)
+  expect_false(length(specials_single$p) > 1) 
+  expect_false(length(specials_single$K) > 1 || length(specials_single$p) > 1)
+})

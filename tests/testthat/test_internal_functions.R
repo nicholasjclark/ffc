@@ -1628,3 +1628,33 @@ test_that("utils.R helper functions work correctly", {
   expect_true(".test_id" %in% names(result_added))
   expect_equal(result_added$.test_id, 1:3)
 })
+
+test_that("model.frame.ffc_gam handles vars_to_add block correctly", {
+  # Create test data with fts() smooths that have terms not in basic model frame
+  set.seed(123)
+  n <- 30
+  test_data <- data.frame(
+    y = rnorm(n),
+    x1 = rnorm(n),
+    x2 = rnorm(n), 
+    by_var = factor(rep(c("A", "B"), length.out = n)),
+    time = 1:n
+  )
+  
+  # Fit model with fts() that includes by variable not in main formula
+  mod_with_by <- SW(ffc_gam(
+    y ~ s(x1, k = 4) + fts(x2, by = by_var, k = 3, time_k = 3),
+    time = "time",
+    data = test_data,
+    family = gaussian(),
+    engine = "gam"
+  ))
+  
+  # Extract model frame - this should trigger the vars_to_add block
+  mf <- model.frame(mod_with_by)
+  
+  # Test that model frame includes the by variable
+  expect_true("by_var" %in% colnames(mf))
+  expect_true(is.data.frame(mf))
+  expect_equal(nrow(mf), n)
+})
