@@ -4,7 +4,8 @@
 library(ffc)
 library(mgcv)
 library(MASS)
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 theme_set(theme_bw())
 ```
 
