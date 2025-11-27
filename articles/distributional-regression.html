@@ -167,6 +167,8 @@ Head acceleration measurements showing clear heteroskedasticity over
 time.
 </p>
 </div>
+<p>The data shows low variance before impact, extreme variance during
+the crash, and moderate variance in the rebound phase.</p>
 </div>
 <div class="section level3">
 <h3 id="identifying-variance-patterns">Identifying variance patterns<a class="anchor" aria-label="anchor" href="#identifying-variance-patterns"></a>
@@ -197,6 +199,9 @@ Moving variance reveals dramatic changes in acceleration variability
 over time.
 </p>
 </div>
+<p>The moving variance peaks dramatically during the crash phase,
+confirming that constant variance assumptions would be inappropriate for
+this data.</p>
 </div>
 </div>
 <div class="section level2">
@@ -303,6 +308,9 @@ Fitted location and scale parameters reveal distinct temporal patterns
 in crash dynamics.
 </p>
 </div>
+<p>The location parameter captures the mean acceleration trajectory
+while the scale parameter adapts to varying uncertainty levels
+throughout the crash sequence.</p>
 </div>
 <div class="section level3">
 <h3 id="extracting-parameter-specific-coefficients">Extracting parameter-specific coefficients<a class="anchor" aria-label="anchor" href="#extracting-parameter-specific-coefficients"></a>
@@ -416,6 +424,9 @@ Distributional forecasts capture both mean trends and evolving
 uncertainty from the time-varying scale parameter.
 </p>
 </div>
+<p>The widening prediction intervals in the test period reflect
+increasing uncertainty as we forecast further from the training data, a
+natural consequence of parameter extrapolation.</p>
 </div>
 </div>
 <div class="section level2">
@@ -475,45 +486,98 @@ Forecasted functional coefficients show parameter-specific evolution
 patterns with quantified uncertainty.
 </p>
 </div>
+<p>The forecasts for both parameters reflect the underlying nonlinear
+dynamics captured by the exponential smoothing and random walk ensemble
+model.</p>
 </div>
 <div class="section level2">
 <h2 id="rolling-forecast-evaluation">Rolling forecast evaluation<a class="anchor" aria-label="anchor" href="#rolling-forecast-evaluation"></a>
 </h2>
-<p>Rolling forecast evaluation provides robust validation for
-distributional models by testing performance across multiple forecast
-origins:</p>
+<div class="section level3">
+<h3 id="understanding-rolling-forecast-evaluation">Understanding rolling forecast evaluation<a class="anchor" aria-label="anchor" href="#understanding-rolling-forecast-evaluation"></a>
+</h3>
+<p><a href="https://otexts.com/fpp3/tscv.html" class="external-link">Rolling forecast
+evaluation</a>, also known as time series cross-validation, provides a
+more robust assessment of model performance than traditional train-test
+splits. Instead of evaluating predictions from a single time point, this
+approach tests how well a model performs when making forecasts from many
+different origins throughout the time series. This mimics real-world
+forecasting scenarios where we continuously update our models with new
+data and generate fresh predictions.</p>
+<p>The method works by sliding a fixed-size training window through the
+time series. At each position, we fit the model using only the data
+within that window, then generate forecasts for a specified number of
+steps ahead (the forecast horizon). By advancing the window position
+systematically (determined by the step size), we obtain multiple sets of
+forecasts that can be evaluated against the actual observed values. This
+reveals whether our model maintains consistent performance across
+different time periods and data conditions.</p>
+<p>For distributional models like ours, rolling evaluation is
+particularly valuable because it tests whether prediction intervals
+remain well-calibrated throughout the entire time series. In
+safety-critical applications such as crash analysis, we need confidence
+that our uncertainty estimates are reliable not just on average, but
+consistently across all phases of the crash timeline.</p>
+</div>
+<div class="section level3">
+<h3 id="rolling-forecast-parameters">Rolling forecast parameters<a class="anchor" aria-label="anchor" href="#rolling-forecast-parameters"></a>
+</h3>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Rolling forecast parameters</span></span>
-<span><span class="va">window_size</span> <span class="op">&lt;-</span> <span class="fl">80</span></span>
-<span><span class="va">forecast_horizon</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
-<span><span class="va">step_size</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
+<code class="sourceCode R"><span><span class="co"># Use 50 observations for each training window - enough data to estimate</span></span>
+<span><span class="co"># time-varying parameters while allowing multiple forecast origins</span></span>
+<span><span class="va">window_size</span> <span class="op">&lt;-</span> <span class="fl">50</span></span>
 <span></span>
-<span><span class="co"># Calculate forecast origins</span></span>
+<span><span class="co"># Predict 10 steps ahead from each origin - tests short-term accuracy</span></span>
+<span><span class="co"># relevant for crash dynamics without extending into highly uncertain territory  </span></span>
+<span><span class="va">forecast_horizon</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span></span>
+<span><span class="co"># Advance forecast origin by 10 steps between evaluations - balances</span></span>
+<span><span class="co"># computational cost with evaluation thoroughness</span></span>
+<span><span class="va">step_size</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span></span>
+<span><span class="co"># Calculate where each forecast origin will be positioned</span></span>
 <span><span class="va">max_start</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mcycle</span><span class="op">)</span> <span class="op">-</span> <span class="va">forecast_horizon</span></span>
 <span><span class="va">forecast_starts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">max_start</span> <span class="op">-</span> <span class="va">window_size</span><span class="op">)</span>, by <span class="op">=</span> <span class="va">step_size</span><span class="op">)</span></span></code></pre></div>
+<p>The choice of window size reflects a trade-off between having enough
+data to reliably estimate model parameters and maintaining enough
+forecast origins for robust evaluation. Our window of 50 observations
+captures sufficient crash dynamics while the step size of 10 provides
+reasonable coverage of the timeline without excessive computational
+burden. The 10-step forecast horizon tests the model’s ability to
+predict the immediate future, which is most relevant for understanding
+crash dynamics where conditions can change rapidly.</p>
+</div>
 <div class="section level3">
 <h3 id="executing-rolling-forecasts">Executing rolling forecasts<a class="anchor" aria-label="anchor" href="#executing-rolling-forecasts"></a>
 </h3>
+<p>The rolling forecast loop systematically moves through the time
+series, fitting a fresh model at each origin and generating predictions
+for the subsequent time points. This process simulates how forecasting
+works in practice, where we periodically retrain our models with the
+latest available data.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Storage for results</span></span>
+<code class="sourceCode R"><span><span class="co"># List to accumulate results from each forecast origin</span></span>
 <span><span class="va">rolling_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Perform rolling forecasts</span></span>
+<span><span class="co"># Loop through each forecast origin position</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">forecast_starts</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Define the training window boundaries</span></span>
 <span>  <span class="va">start_idx</span> <span class="op">&lt;-</span> <span class="va">forecast_starts</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
 <span>  <span class="va">end_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">start_idx</span> <span class="op">+</span> <span class="va">window_size</span> <span class="op">-</span> <span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mcycle</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span>  <span class="co"># Training data for this iteration</span></span>
+<span>  <span class="co"># Extract training data for this window</span></span>
 <span>  <span class="va">train_data</span> <span class="op">&lt;-</span> <span class="va">mcycle</span><span class="op">[</span><span class="va">start_idx</span><span class="op">:</span><span class="va">end_idx</span>, <span class="op">]</span></span>
 <span>  </span>
-<span>  <span class="co"># Test data</span></span>
+<span>  <span class="co"># Define the test period immediately following the training window</span></span>
 <span>  <span class="va">test_start</span> <span class="op">&lt;-</span> <span class="va">end_idx</span> <span class="op">+</span> <span class="fl">1</span></span>
 <span>  <span class="va">test_end</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">test_start</span> <span class="op">+</span> <span class="va">forecast_horizon</span> <span class="op">-</span> <span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mcycle</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
+<span>  <span class="co"># Only proceed if we have enough data for the full test period</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="va">test_end</span> <span class="op">&lt;=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mcycle</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">test_data</span> <span class="op">&lt;-</span> <span class="va">mcycle</span><span class="op">[</span><span class="va">test_start</span><span class="op">:</span><span class="va">test_end</span>, <span class="op">]</span></span>
 <span></span>
-<span>    <span class="co"># Fit model with reduced complexity for rolling validation</span></span>
+<span>    <span class="co"># Fit a distributional model to the training window</span></span>
+<span>    <span class="co"># Using mean_only = TRUE for computational efficiency in the loop</span></span>
 <span>    <span class="va">roll_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ffc_gam.html">ffc_gam</a></span><span class="op">(</span></span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>        <span class="va">accel</span> <span class="op">~</span> <span class="fu"><a href="../reference/fts.html">fts</a></span><span class="op">(</span><span class="va">index</span>, mean_only <span class="op">=</span> <span class="cn">TRUE</span>, time_k <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
@@ -524,14 +588,14 @@ origins:</p>
 <span>      time <span class="op">=</span> <span class="st">"index"</span></span>
 <span>    <span class="op">)</span></span>
 <span></span>
-<span>    <span class="co"># Generate forecasts</span></span>
+<span>    <span class="co"># Generate forecasts for the test period using ensemble method</span></span>
 <span>    <span class="va">roll_forecast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/forecast.html" class="external-link">forecast</a></span><span class="op">(</span></span>
 <span>      <span class="va">roll_model</span>,</span>
 <span>      newdata <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>      model <span class="op">=</span> <span class="st">"ENS"</span></span>
 <span>    <span class="op">)</span></span>
 <span></span>
-<span>    <span class="co"># Store results with metadata</span></span>
+<span>    <span class="co"># Combine actual values with predictions and add tracking metadata</span></span>
 <span>    <span class="va">rolling_results</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">test_data</span> <span class="op">|&gt;</span></span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_cols.html" class="external-link">bind_cols</a></span><span class="op">(</span><span class="va">roll_forecast</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
@@ -543,8 +607,13 @@ origins:</p>
 <span>  <span class="op">}</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># Combine all rolling forecast results</span></span>
+<span><span class="co"># Combine all forecast results into a single data frame for analysis</span></span>
 <span><span class="va">rolling_forecasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">rolling_results</span><span class="op">)</span></span></code></pre></div>
+<p>Each iteration of this loop represents a realistic forecasting
+scenario where we have historical data up to a certain point (the
+training window) and must predict what happens next. The metadata we
+track allows us to analyze how performance varies by forecast origin and
+horizon.</p>
 </div>
 </div>
 <div class="section level2">
@@ -553,15 +622,28 @@ origins:</p>
 <div class="section level3">
 <h3 id="forecast-accuracy-metrics">Forecast accuracy metrics<a class="anchor" aria-label="anchor" href="#forecast-accuracy-metrics"></a>
 </h3>
+<p>To evaluate our distributional forecasts comprehensively, we
+calculate both point forecast accuracy measures and <a href="https://otexts.com/fpp3/distaccuracy.html" class="external-link">coverage statistics</a>
+for the prediction intervals. Coverage refers to the proportion of
+actual observations that fall within the predicted intervals. A
+well-calibrated 95% prediction interval should contain the true value
+approximately 95% of the time across many forecasts. If coverage is
+substantially lower, the model is overconfident; if higher, it is being
+unnecessarily conservative.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Calculate forecast errors and coverage statistics</span></span>
+<code class="sourceCode R"><span><span class="co"># Calculate comprehensive performance metrics for each forecast</span></span>
 <span><span class="va">rolling_forecasts</span> <span class="op">&lt;-</span> <span class="va">rolling_forecasts</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    <span class="co"># Point forecast errors</span></span>
 <span>    forecast_error <span class="op">=</span> <span class="va">accel</span> <span class="op">-</span> <span class="va">.estimate</span>,</span>
 <span>    abs_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">forecast_error</span><span class="op">)</span>,</span>
 <span>    squared_error <span class="op">=</span> <span class="va">forecast_error</span><span class="op">^</span><span class="fl">2</span>,</span>
+<span>    </span>
+<span>    <span class="co"># Coverage indicators: TRUE if actual value falls within interval</span></span>
 <span>    coverage_95 <span class="op">=</span> <span class="op">(</span><span class="va">accel</span> <span class="op">&gt;=</span> <span class="va">.q2.5</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="va">accel</span> <span class="op">&lt;=</span> <span class="va">.q97.5</span><span class="op">)</span>,</span>
 <span>    coverage_80 <span class="op">=</span> <span class="op">(</span><span class="va">accel</span> <span class="op">&gt;=</span> <span class="va">.q10</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span><span class="va">accel</span> <span class="op">&lt;=</span> <span class="va">.q90</span><span class="op">)</span>,</span>
+<span>    </span>
+<span>    <span class="co"># Interval widths to assess uncertainty magnitude</span></span>
 <span>    interval_width_95 <span class="op">=</span> <span class="va">.q97.5</span> <span class="op">-</span> <span class="va">.q2.5</span>,</span>
 <span>    interval_width_80 <span class="op">=</span> <span class="va">.q90</span> <span class="op">-</span> <span class="va">.q10</span></span>
 <span>  <span class="op">)</span></span>
@@ -580,15 +662,20 @@ origins:</p>
 <span>    .groups <span class="op">=</span> <span class="st">'drop'</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">horizon_stats</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 8</span></span></span>
-<span><span class="co">#&gt;   horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95</span></span>
-<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       1          10  23.0  31.8         1           0.8         137.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>       2          10  28.8  43.8         0.9         0.7         135.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>       3          10  16.0  18.6         1           0.9         129.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>       4          10  28.5  33.4         0.9         0.8         142.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>       5          10  17.2  19.5         1           1           135.</span></span>
+<span><span class="va">horizon_stats</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 8</span></span></span>
+<span><span class="co">#&gt;    horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95</span></span>
+<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>       1           8  28.7  40.0       0.75        0.75          139.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>       2           8  41.3  52.4       0.75        0.625         138.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>       3           8  24.2  31.5       0.875       0.875         135.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>       4           8  26.3  29.6       1           0.75          139.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>       5           8  26.6  36.4       0.875       0.875         141.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>       6           8  38.1  52.9       0.75        0.625         140.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>       7           8  27.0  50.0       0.875       0.75          144.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>       8           8  23.3  27.8       1           0.875         135.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>       9           8  44.8  56.5       0.75        0.5           138.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>      10           8  29.6  38.4       0.75        0.625         140.</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: avg_width_80 &lt;dbl&gt;</span></span></span>
 <span></span>
 <span><span class="co"># Overall performance summary  </span></span>
@@ -602,9 +689,9 @@ origins:</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- 95% coverage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">overall_stats</span><span class="op">$</span><span class="va">overall_coverage_95</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - 95% coverage: 96 %</span></span>
+<span><span class="co">#&gt; - 95% coverage: 83.8 %</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- 80% coverage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">overall_stats</span><span class="op">$</span><span class="va">overall_coverage_80</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - 80% coverage: 84 %</span></span></code></pre></div>
+<span><span class="co">#&gt; - 80% coverage: 72.5 %</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="rolling-forecast-visualization">Rolling forecast visualization<a class="anchor" aria-label="anchor" href="#rolling-forecast-visualization"></a>
@@ -614,6 +701,8 @@ origins:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mcycle</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">index</span>, y <span class="op">=</span> <span class="va">accel</span><span class="op">)</span>,</span>
 <span>             alpha <span class="op">=</span> <span class="fl">0.4</span>, size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mcycle</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">index</span>, y <span class="op">=</span> <span class="va">accel</span><span class="op">)</span>,</span>
+<span>             alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">rolling_forecasts</span>,</span>
 <span>             <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">index</span>, y <span class="op">=</span> <span class="va">.estimate</span><span class="op">)</span>,</span>
 <span>             color <span class="op">=</span> <span class="st">"darkred"</span>, size <span class="op">=</span> <span class="fl">1.5</span>, alpha <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span></span>
@@ -622,7 +711,7 @@ origins:</p>
 <span>                color <span class="op">=</span> <span class="st">"darkred"</span>, alpha <span class="op">=</span> <span class="fl">0.6</span>, width <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_segment.html" class="external-link">geom_segment</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">rolling_forecasts</span>,</span>
 <span>               <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">index</span>, xend <span class="op">=</span> <span class="va">index</span>, y <span class="op">=</span> <span class="va">accel</span>, yend <span class="op">=</span> <span class="va">.estimate</span><span class="op">)</span>,</span>
-<span>               color <span class="op">=</span> <span class="st">"blue"</span>, alpha <span class="op">=</span> <span class="fl">0.3</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>               color <span class="op">=</span> <span class="st">"darkblue"</span>, alpha <span class="op">=</span> <span class="fl">0.3</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
 <span>    title <span class="op">=</span> <span class="st">"Rolling forecast evaluation across crash timeline"</span>,</span>
 <span>    x <span class="op">=</span> <span class="st">"Time Index"</span>, </span>
@@ -634,6 +723,9 @@ Rolling forecast evaluation reveals consistent prediction performance
 across different crash phases.
 </p>
 </div>
+<p>The plot shows forecasts (red points) with 80% prediction intervals
+capturing the observed values across diverse crash phases, demonstrating
+consistent model performance.</p>
 </div>
 <div class="section level3">
 <h3 id="coverage-evolution-analysis">Coverage evolution analysis<a class="anchor" aria-label="anchor" href="#coverage-evolution-analysis"></a>
@@ -649,9 +741,9 @@ across different crash phases.
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">coverage_data</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">index</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">running_coverage_95</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"darkred"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">running_coverage_80</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">running_coverage_80</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"darkblue"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0.95</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"darkred"</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0.80</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"blue"</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0.80</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"darkblue"</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="fu">scales</span><span class="fu">::</span><span class="fu"><a href="https://scales.r-lib.org/reference/percent_format.html" class="external-link">percent_format</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
 <span>    title <span class="op">=</span> <span class="st">"Cumulative coverage rates validate interval calibration"</span>,</span>
@@ -664,6 +756,9 @@ Cumulative coverage rates demonstrate well-calibrated prediction
 intervals throughout the evaluation.
 </p>
 </div>
+<p>The cumulative coverage rates fluctuate across the time index,
+revealing periods where the model is overconfident or conservative,
+before stabilizing closer to nominal levels.</p>
 </div>
 </div>
 <div class="section level2">

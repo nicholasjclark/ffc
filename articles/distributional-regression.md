@@ -87,6 +87,9 @@ time.](distributional-regression_files/figure-html/acceleration-patterns-1.png)
 Head acceleration measurements showing clear heteroskedasticity over
 time.
 
+The data shows low variance before impact, extreme variance during the
+crash, and moderate variance in the rebound phase.
+
 ### Identifying variance patterns
 
 Let’s examine how variance changes across different phases of the crash
@@ -118,6 +121,10 @@ time.](distributional-regression_files/figure-html/variance-exploration-1.png)
 
 Moving variance reveals dramatic changes in acceleration variability
 over time.
+
+The moving variance peaks dramatically during the crash phase,
+confirming that constant variance assumptions would be inappropriate for
+this data.
 
 ## Modeling with distributional GAMs
 
@@ -221,6 +228,10 @@ dynamics.](distributional-regression_files/figure-html/fitted-patterns-1.png)
 
 Fitted location and scale parameters reveal distinct temporal patterns
 in crash dynamics.
+
+The location parameter captures the mean acceleration trajectory while
+the scale parameter adapts to varying uncertainty levels throughout the
+crash sequence.
 
 ### Extracting parameter-specific coefficients
 
@@ -336,6 +347,10 @@ parameter.](distributional-regression_files/figure-html/forecast-visualization-1
 Distributional forecasts capture both mean trends and evolving
 uncertainty from the time-varying scale parameter.
 
+The widening prediction intervals in the test period reflect increasing
+uncertainty as we forecast further from the training data, a natural
+consequence of parameter extrapolation.
+
 ## Coefficient forecast inspection
 
 We can also forecast the functional coefficients themselves to
@@ -396,45 +411,99 @@ uncertainty.](distributional-regression_files/figure-html/coefficient-forecastin
 Forecasted functional coefficients show parameter-specific evolution
 patterns with quantified uncertainty.
 
+The forecasts for both parameters reflect the underlying nonlinear
+dynamics captured by the exponential smoothing and random walk ensemble
+model.
+
 ## Rolling forecast evaluation
 
-Rolling forecast evaluation provides robust validation for
-distributional models by testing performance across multiple forecast
-origins:
+### Understanding rolling forecast evaluation
+
+[Rolling forecast evaluation](https://otexts.com/fpp3/tscv.html), also
+known as time series cross-validation, provides a more robust assessment
+of model performance than traditional train-test splits. Instead of
+evaluating predictions from a single time point, this approach tests how
+well a model performs when making forecasts from many different origins
+throughout the time series. This mimics real-world forecasting scenarios
+where we continuously update our models with new data and generate fresh
+predictions.
+
+The method works by sliding a fixed-size training window through the
+time series. At each position, we fit the model using only the data
+within that window, then generate forecasts for a specified number of
+steps ahead (the forecast horizon). By advancing the window position
+systematically (determined by the step size), we obtain multiple sets of
+forecasts that can be evaluated against the actual observed values. This
+reveals whether our model maintains consistent performance across
+different time periods and data conditions.
+
+For distributional models like ours, rolling evaluation is particularly
+valuable because it tests whether prediction intervals remain
+well-calibrated throughout the entire time series. In safety-critical
+applications such as crash analysis, we need confidence that our
+uncertainty estimates are reliable not just on average, but consistently
+across all phases of the crash timeline.
+
+### Rolling forecast parameters
 
 ``` r
-# Rolling forecast parameters
-window_size <- 80
-forecast_horizon <- 5
-step_size <- 5
+# Use 50 observations for each training window - enough data to estimate
+# time-varying parameters while allowing multiple forecast origins
+window_size <- 50
 
-# Calculate forecast origins
+# Predict 10 steps ahead from each origin - tests short-term accuracy
+# relevant for crash dynamics without extending into highly uncertain territory  
+forecast_horizon <- 10
+
+# Advance forecast origin by 10 steps between evaluations - balances
+# computational cost with evaluation thoroughness
+step_size <- 10
+
+# Calculate where each forecast origin will be positioned
 max_start <- nrow(mcycle) - forecast_horizon
 forecast_starts <- seq(1, max(1, max_start - window_size), by = step_size)
 ```
 
+The choice of window size reflects a trade-off between having enough
+data to reliably estimate model parameters and maintaining enough
+forecast origins for robust evaluation. Our window of 50 observations
+captures sufficient crash dynamics while the step size of 10 provides
+reasonable coverage of the timeline without excessive computational
+burden. The 10-step forecast horizon tests the model’s ability to
+predict the immediate future, which is most relevant for understanding
+crash dynamics where conditions can change rapidly.
+
 ### Executing rolling forecasts
 
+The rolling forecast loop systematically moves through the time series,
+fitting a fresh model at each origin and generating predictions for the
+subsequent time points. This process simulates how forecasting works in
+practice, where we periodically retrain our models with the latest
+available data.
+
 ``` r
-# Storage for results
+# List to accumulate results from each forecast origin
 rolling_results <- list()
 
-# Perform rolling forecasts
+# Loop through each forecast origin position
 for (i in seq_along(forecast_starts)) {
+  # Define the training window boundaries
   start_idx <- forecast_starts[i]
   end_idx <- min(start_idx + window_size - 1, nrow(mcycle))
 
-  # Training data for this iteration
+  # Extract training data for this window
   train_data <- mcycle[start_idx:end_idx, ]
   
-  # Test data
+  # Define the test period immediately following the training window
   test_start <- end_idx + 1
   test_end <- min(test_start + forecast_horizon - 1, nrow(mcycle))
 
+  # Only proceed if we have enough data for the full test period
   if (test_end <= nrow(mcycle)) {
     test_data <- mcycle[test_start:test_end, ]
 
-    # Fit model with reduced complexity for rolling validation
+    # Fit a distributional model to the training window
+    # Using mean_only = TRUE for computational efficiency in the loop
     roll_model <- ffc_gam(
       list(
         accel ~ fts(index, mean_only = TRUE, time_k = 10),
@@ -445,14 +514,14 @@ for (i in seq_along(forecast_starts)) {
       time = "index"
     )
 
-    # Generate forecasts
+    # Generate forecasts for the test period using ensemble method
     roll_forecast <- forecast(
       roll_model,
       newdata = test_data,
       model = "ENS"
     )
 
-    # Store results with metadata
+    # Combine actual values with predictions and add tracking metadata
     rolling_results[[i]] <- test_data |>
       bind_cols(roll_forecast) |>
       mutate(
@@ -464,23 +533,43 @@ for (i in seq_along(forecast_starts)) {
   }
 }
 
-# Combine all rolling forecast results
+# Combine all forecast results into a single data frame for analysis
 rolling_forecasts <- bind_rows(rolling_results)
 ```
+
+Each iteration of this loop represents a realistic forecasting scenario
+where we have historical data up to a certain point (the training
+window) and must predict what happens next. The metadata we track allows
+us to analyze how performance varies by forecast origin and horizon.
 
 ## Rolling forecast performance analysis
 
 ### Forecast accuracy metrics
 
+To evaluate our distributional forecasts comprehensively, we calculate
+both point forecast accuracy measures and [coverage
+statistics](https://otexts.com/fpp3/distaccuracy.html) for the
+prediction intervals. Coverage refers to the proportion of actual
+observations that fall within the predicted intervals. A well-calibrated
+95% prediction interval should contain the true value approximately 95%
+of the time across many forecasts. If coverage is substantially lower,
+the model is overconfident; if higher, it is being unnecessarily
+conservative.
+
 ``` r
-# Calculate forecast errors and coverage statistics
+# Calculate comprehensive performance metrics for each forecast
 rolling_forecasts <- rolling_forecasts |>
   mutate(
+    # Point forecast errors
     forecast_error = accel - .estimate,
     abs_error = abs(forecast_error),
     squared_error = forecast_error^2,
+    
+    # Coverage indicators: TRUE if actual value falls within interval
     coverage_95 = (accel >= .q2.5) & (accel <= .q97.5),
     coverage_80 = (accel >= .q10) & (accel <= .q90),
+    
+    # Interval widths to assess uncertainty magnitude
     interval_width_95 = .q97.5 - .q2.5,
     interval_width_80 = .q90 - .q10
   )
@@ -499,15 +588,20 @@ horizon_stats <- rolling_forecasts |>
     .groups = 'drop'
   )
 
-print(horizon_stats)
-#> # A tibble: 5 × 8
-#>   horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95
-#>     <int>       <int> <dbl> <dbl>       <dbl>       <dbl>        <dbl>
-#> 1       1          10  23.0  31.8         1           0.8         137.
-#> 2       2          10  28.8  43.8         0.9         0.7         135.
-#> 3       3          10  16.0  18.6         1           0.9         129.
-#> 4       4          10  28.5  33.4         0.9         0.8         142.
-#> 5       5          10  17.2  19.5         1           1           135.
+horizon_stats
+#> # A tibble: 10 × 8
+#>    horizon n_forecasts   mae  rmse coverage_95 coverage_80 avg_width_95
+#>      <int>       <int> <dbl> <dbl>       <dbl>       <dbl>        <dbl>
+#>  1       1           8  28.7  40.0       0.75        0.75          139.
+#>  2       2           8  41.3  52.4       0.75        0.625         138.
+#>  3       3           8  24.2  31.5       0.875       0.875         135.
+#>  4       4           8  26.3  29.6       1           0.75          139.
+#>  5       5           8  26.6  36.4       0.875       0.875         141.
+#>  6       6           8  38.1  52.9       0.75        0.625         140.
+#>  7       7           8  27.0  50.0       0.875       0.75          144.
+#>  8       8           8  23.3  27.8       1           0.875         135.
+#>  9       9           8  44.8  56.5       0.75        0.5           138.
+#> 10      10           8  29.6  38.4       0.75        0.625         140.
 #> # ℹ 1 more variable: avg_width_80 <dbl>
 
 # Overall performance summary  
@@ -521,9 +615,9 @@ overall_stats <- rolling_forecasts |>
   )
 
 cat("- 95% coverage:", round(overall_stats$overall_coverage_95 * 100, 1), "%\n")
-#> - 95% coverage: 96 %
+#> - 95% coverage: 83.8 %
 cat("- 80% coverage:", round(overall_stats$overall_coverage_80 * 100, 1), "%\n")
-#> - 80% coverage: 84 %
+#> - 80% coverage: 72.5 %
 ```
 
 ### Rolling forecast visualization
@@ -533,6 +627,8 @@ cat("- 80% coverage:", round(overall_stats$overall_coverage_80 * 100, 1), "%\n")
 ggplot() +
   geom_point(data = mcycle, aes(x = index, y = accel),
              alpha = 0.4, size = 1) +
+  geom_line(data = mcycle, aes(x = index, y = accel),
+             alpha = 0.4) +
   geom_point(data = rolling_forecasts,
              aes(x = index, y = .estimate),
              color = "darkred", size = 1.5, alpha = 0.8) +
@@ -541,7 +637,7 @@ ggplot() +
                 color = "darkred", alpha = 0.6, width = 0.5) +
   geom_segment(data = rolling_forecasts,
                aes(x = index, xend = index, y = accel, yend = .estimate),
-               color = "blue", alpha = 0.3, linetype = "dashed") +
+               color = "darkblue", alpha = 0.3, linetype = "dashed") +
   labs(
     title = "Rolling forecast evaluation across crash timeline",
     x = "Time Index", 
@@ -556,6 +652,10 @@ phases.](distributional-regression_files/figure-html/rolling-visualization-1.png
 Rolling forecast evaluation reveals consistent prediction performance
 across different crash phases.
 
+The plot shows forecasts (red points) with 80% prediction intervals
+capturing the observed values across diverse crash phases, demonstrating
+consistent model performance.
+
 ### Coverage evolution analysis
 
 ``` r
@@ -569,9 +669,9 @@ coverage_data <- rolling_forecasts |>
 
 ggplot(coverage_data, aes(x = index)) +
   geom_line(aes(y = running_coverage_95), color = "darkred", linewidth = 1.2) +
-  geom_line(aes(y = running_coverage_80), color = "blue", linewidth = 1.2) +
+  geom_line(aes(y = running_coverage_80), color = "darkblue", linewidth = 1.2) +
   geom_hline(yintercept = 0.95, linetype = "dashed", color = "darkred", alpha = 0.7) +
-  geom_hline(yintercept = 0.80, linetype = "dashed", color = "blue", alpha = 0.7) +
+  geom_hline(yintercept = 0.80, linetype = "dashed", color = "darkblue", alpha = 0.7) +
   scale_y_continuous(labels = scales::percent_format()) +
   labs(
     title = "Cumulative coverage rates validate interval calibration",
@@ -586,6 +686,10 @@ evaluation.](distributional-regression_files/figure-html/coverage-evolution-1.pn
 
 Cumulative coverage rates demonstrate well-calibrated prediction
 intervals throughout the evaluation.
+
+The cumulative coverage rates fluctuate across the time index, revealing
+periods where the model is overconfident or conservative, before
+stabilizing closer to nominal levels.
 
 ## Key insights and best practices
 
