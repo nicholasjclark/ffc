@@ -61,8 +61,13 @@ validate_vars_in_data <- function(vars, data, var_type = "variable") {
 #' @noRd
 validate_no_missing_values <- function(data, vars = NULL) {
   checkmate::assert_data_frame(data)
-  checkmate::assert_character(vars, min.len = 1, any.missing = FALSE, null.ok = TRUE)
-  
+  checkmate::assert_character(
+    vars,
+    min.len = 1,
+    any.missing = FALSE,
+    null.ok = TRUE
+  )
+
   # If no specific variables provided, check all columns (backward compatibility)
   if (is.null(vars)) {
     check_data <- data
@@ -71,7 +76,7 @@ validate_no_missing_values <- function(data, vars = NULL) {
     validate_vars_in_data(vars, data, "variable")
     check_data <- data[, vars, drop = FALSE]
   }
-  
+
   if (any(is.na(check_data))) {
     na_vars <- sapply(check_data, function(x) any(is.na(x)))
     na_var_names <- names(na_vars)[na_vars]
@@ -745,14 +750,14 @@ validate_gam_init_structure <- function(gam_init_list, n_parameters) {
 #' variable names rather than function calls, following established patterns
 #' in the codebase.
 #'
-#' @param formula Formula or list of formulae 
+#' @param formula Formula or list of formulae
 #' @param time Character string specifying time variable
 #' @return Character vector of unique variable names used in the model
 #' @noRd
 extract_model_variables <- function(formula, time, data) {
   checkmate::assert_string(time, min.chars = 1)
   checkmate::assert_data_frame(data)
-  
+
   # Handle list formulae for distributional regression
   if (is.list(formula)) {
     checkmate::assert_list(formula, types = "formula", min.len = 1)
@@ -766,10 +771,10 @@ extract_model_variables <- function(formula, time, data) {
     checkmate::assert_class(formula, "formula")
     model_vars <- unique(c(all.vars(formula), time))
   }
-  
+
   # Filter to only variables that actually exist in the data frame
   # This prevents errors from expressions like nrow(train_data) or constants
   model_vars <- model_vars[model_vars %in% colnames(data)]
-  
+
   return(model_vars)
 }

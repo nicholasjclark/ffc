@@ -209,7 +209,7 @@ ffc_gam <- function(
 
   # Extract variables actually used in the model
   model_vars <- extract_model_variables(formula, time, data)
-  
+
   # Validate data has no missing values in model variables only
   validate_no_missing_values(data, model_vars)
 
@@ -401,7 +401,7 @@ update_mod_data <- function(
   # Use helper function to extract response variables robustly
   resp_terms <- extract_response_vars(gam_object$formula, return_all = TRUE)
   out_name <- resp_terms[1]
-  
+
   # Response validation delegated to mgcv's model.frame() for compatibility
 
   # Indices of missing responses in data

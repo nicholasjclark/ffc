@@ -241,8 +241,8 @@ test_that("response transformations work with arithmetic expressions inside func
   n <- 45
 
   test_data <- data.frame(
-    accel = rnorm(n, -50, 30),  # Can be negative like motorcycle data
-    pos_val = rgamma(n, 2, 1),  # Always positive
+    accel = rnorm(n, -50, 30), # Can be negative like motorcycle data
+    pos_val = rgamma(n, 2, 1), # Always positive
     x = runif(n, 0, 1),
     time = 1:n
   )
@@ -308,7 +308,7 @@ test_that("response transformations work with arithmetic expressions inside func
 
   expect_equal(length(pred_log_offset), nrow(newdata))
   expect_equal(length(pred_sqrt_expr), nrow(newdata))
-  expect_equal(nrow(pred_gaulss), nrow(newdata))  # Should return location parameter only
+  expect_equal(nrow(pred_gaulss), nrow(newdata)) # Should return location parameter only
 
   # Ensure predictions are finite
   expect_true(all(is.finite(pred_log_offset)))
