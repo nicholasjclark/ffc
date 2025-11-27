@@ -28,6 +28,8 @@ jobs:
              any::covr
              any::xml2
              any::fable
+             any::MASS
+             any::scales
 
       - name: Ensure configure file is executable
         run: |

@@ -45,7 +45,9 @@ Suggests:
     rmarkdown,
     knitr,
     patchwork,
-    lubridate
+    lubridate,
+    MASS,
+    scales
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),

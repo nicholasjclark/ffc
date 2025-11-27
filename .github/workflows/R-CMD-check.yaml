@@ -62,6 +62,8 @@ jobs:
              any::knitr
              any::rmarkdown
              any::usethis
+             any::MASS
+             any::scales
 
       - uses: r-lib/actions/check-r-package@v2
         with:
