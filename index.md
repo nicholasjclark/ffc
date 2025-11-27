@@ -36,14 +36,14 @@ using precompiled Stan models.
 You can install the development version of `ffc` from
 [GitHub](https://github.com/) with:
 
-``` r
+``` R
 # install.packages("pak")
 pak::pak("nicholasjclark/ffc")
 ```
 
 ## Quick Start
 
-``` r
+``` R
 library(ffc)
 
 # Fit a model with time-varying coefficients
@@ -62,7 +62,7 @@ fc <- forecast(mod, newdata = future_data, model = "ARDF")
 
 ### Tourism Forecasting with `fabletools` Integration
 
-``` r
+``` R
 library(fable)
 library(tsibble)
 library(tidyverse)
@@ -77,7 +77,7 @@ variables to the data, but in future this will be done automatically for
 seamless integration with the
 [`tsibbleverse`](https://tsibble.tidyverts.org/)
 
-``` r
+``` R
 tourism_melb <- tourism |>
   filter(
     Region == "Melbourne",
@@ -108,7 +108,7 @@ tourism_melb
 Split into training and testing folds. We wil aim to forecast the last 5
 quarters of the data
 
-``` r
+``` R
 train <- tourism_melb |>
   dplyr::slice_head(n = 75)
 
@@ -121,7 +121,7 @@ seasonality components, together with a Tweedie observation model
 (because our outcome, `Trips`, consists of non-negative real values).
 This model is simpler so we use the `'gam'` engine for fitting:
 
-``` r
+``` R
 mod <- ffc_gam(
   Trips ~
     # Use mean_only = TRUE to model a time-varying mean
@@ -152,7 +152,7 @@ method is handy for viewing the time-varying basis coefficients from
 models. Here we draw 10 realisations from the estimated coefficient
 distributions and plot them.
 
-``` r
+``` R
 fts_coefs(mod, times = 10, summary = FALSE) |>
   autoplot()
 ```
@@ -165,7 +165,7 @@ We can also draw the time-varying basis coefficients using support from
 the [`gratia`](https://gavinsimpson.github.io/gratia/) package, which
 has helpful functions for plotting smooth effects:
 
-``` r
+``` R
 gratia::draw(mod)
 ```
 
@@ -185,7 +185,7 @@ basis coefficient forecast models in parallel (which is automatically
 supported within the `fable` package). Here we fit independent
 exponential smoothing models to each coefficient time series
 
-``` r
+``` R
 fc <- forecast(
   object = mod,
   newdata = test,
@@ -197,7 +197,7 @@ fc <- forecast(
 We can also convert resulting forecasts to a `fable` object for
 automatic plotting and/or scoring of forecasts
 
-``` r
+``` R
 # Using the new as_fable method for seamless conversion
 fc_ffc <- as_fable(mod, newdata = test, forecasts = fc)
 fc_ffc
@@ -205,22 +205,22 @@ fc_ffc
 #> # Key:     Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  811. FFC_E…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  750. FFC_E…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  769. FFC_E…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  753. FFC_E…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  846. FFC_E…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  834. FFC_E…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  766. FFC_E…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  760. FFC_E…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  740. FFC_E…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  827. FFC_E…
 ```
 
 Leverage the fabletools ecosystem for forecast analysis
 
-``` r
+``` R
 # Calculate accuracy metrics
 accuracy(fc_ffc, test)
 #> # A tibble: 1 × 13
 #>   .model  Region   State Purpose .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE
 #>   <chr>   <chr>    <chr> <chr>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 FFC_ETS Melbour… Vict… Visiti… Test   17.2  83.0  66.4 0.930  8.12   NaN   NaN
+#> 1 FFC_ETS Melbour… Vict… Visiti… Test   17.9  91.7  78.8 0.921  9.55   NaN   NaN
 #> # ℹ 1 more variable: ACF1 <dbl>
 
 # Generate prediction intervals  
@@ -230,11 +230,11 @@ fc_intervals
 #> # Key:       Region, State, Purpose [1]
 #>   Quarter Region    State   Purpose Trips quarter  time       .dist .mean .model
 #>     <qtr> <chr>     <chr>   <chr>   <dbl>   <int> <int>      <dist> <dbl> <chr> 
-#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  811. FFC_E…
-#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  750. FFC_E…
-#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  769. FFC_E…
-#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  753. FFC_E…
-#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  846. FFC_E…
+#> 1 2016 Q4 Melbourne Victor… Visiti…  804.       4    76 sample[200]  834. FFC_E…
+#> 2 2017 Q1 Melbourne Victor… Visiti…  734.       1    77 sample[200]  766. FFC_E…
+#> 3 2017 Q2 Melbourne Victor… Visiti…  670.       2    78 sample[200]  760. FFC_E…
+#> 4 2017 Q3 Melbourne Victor… Visiti…  824.       3    79 sample[200]  740. FFC_E…
+#> 5 2017 Q4 Melbourne Victor… Visiti…  985.       4    80 sample[200]  827. FFC_E…
 #> # ℹ 2 more variables: `80%` <hilo>, `95%` <hilo>
 
 # Distribution summaries
@@ -249,18 +249,18 @@ fc_summary
 #> # A tsibble: 5 x 5 [1Q]
 #>   Quarter mean_forecast median_forecast   q25   q75
 #>     <qtr>         <dbl>           <dbl> <dbl> <dbl>
-#> 1 2016 Q4          811.            812.  761.  851.
-#> 2 2017 Q1          750.            752.  700.  793.
-#> 3 2017 Q2          769.            773.  719.  811.
-#> 4 2017 Q3          753.            750.  712.  800.
-#> 5 2017 Q4          846.            847.  790.  894.
+#> 1 2016 Q4          834.            831.  781.  889.
+#> 2 2017 Q1          766.            762.  714.  820.
+#> 3 2017 Q2          760.            760.  711.  800.
+#> 4 2017 Q3          740.            746.  693.  788.
+#> 5 2017 Q4          827.            830.  770.  875.
 ```
 
 Next we can explore how to compare forecasts from `ffc` models to
 traditional time series models by again leveraging the simplicity and
 power of the `fable` ecosystem
 
-``` r
+``` R
 # Generate FFC forecasts with different models
 fc_ffc_arima <- as_fable(mod, newdata = test, model = "ARIMA")
 fc_ffc_ets <- as_fable(mod, newdata = test, model = "ETS")
