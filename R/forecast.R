@@ -692,10 +692,13 @@ forecast.ffc_gam <- function(
     if (!is.null(model_offset) && !all(model_offset == 0)) {
       full_linpreds <- sweep(full_linpreds, 2, model_offset, "+")
     }
-    
+
     # Reconstruct lpi attribute for distributional families
     if (is_distributional_family(object$family)) {
-      attr(full_linpreds, "lpi") <- reconstruct_lpi_for_timepoints(full_linpreds, object$family)
+      attr(full_linpreds, "lpi") <- reconstruct_lpi_for_timepoints(
+        full_linpreds,
+        object$family
+      )
     }
   } else {
     # Determine horizon (assuming equal time gaps)
@@ -1248,7 +1251,10 @@ forecast.ffc_gam <- function(
 
     # Preserve lpi attribute for distributional families
     if (is_distributional_family(object$family)) {
-      attr(full_linpreds, "lpi") <- reconstruct_lpi_for_timepoints(full_linpreds, object$family)
+      attr(full_linpreds, "lpi") <- reconstruct_lpi_for_timepoints(
+        full_linpreds,
+        object$family
+      )
     }
   }
 
@@ -1273,8 +1279,7 @@ forecast.ffc_gam <- function(
         full_linpreds,
         object$family
       )
-      
-      
+
       par_linpreds <- split_linear_predictors_by_lpi(
         full_linpreds,
         parameter_info
@@ -1288,8 +1293,16 @@ forecast.ffc_gam <- function(
 
       # Prepare parameter matrices for posterior_predict
       location_matrix <- fitted_parameters[[1]]
-      scale_matrix <- if (length(fitted_parameters) >= 2) fitted_parameters[[2]] else NULL
-      shape_matrix <- if (length(fitted_parameters) >= 3) fitted_parameters[[3]] else NULL
+      scale_matrix <- if (length(fitted_parameters) >= 2) {
+        fitted_parameters[[2]]
+      } else {
+        NULL
+      }
+      shape_matrix <- if (length(fitted_parameters) >= 3) {
+        fitted_parameters[[3]]
+      } else {
+        NULL
+      }
 
       # Single call with parameter matrices and type
       preds <- posterior_predict(
@@ -1447,8 +1460,7 @@ split_linear_predictors_by_lpi <- function(linpreds, parameter_info) {
   par_predictions <- vector("list", parameter_info$n_parameters)
   for (i in seq_len(parameter_info$n_parameters)) {
     indices <- parameter_info$parameter_indices[[i]]
-    
-    
+
     checkmate::assert_integerish(indices, lower = 1, upper = ncol(linpreds))
     par_predictions[[i]] <- linpreds[, indices, drop = FALSE]
   }
@@ -1877,10 +1889,10 @@ fix_family_rd <- function(family, ...) {
 #' @importFrom mgcv fix.family.rd
 #' @importFrom stats family
 #' Reconstruct lpi attribute for timepoint-structured matrices
-#' 
+#'
 #' For distributional families, reconstructs lpi attribute where each parameter
 #' gets consecutive columns representing timepoints: [param1_times, param2_times, ...]
-#' 
+#'
 #' @param full_linpreds Matrix with timepoint-based column structure
 #' @param family mgcv family object with nlp property
 #' @return List of parameter indices for timepoint structure
@@ -1889,17 +1901,17 @@ reconstruct_lpi_for_timepoints <- function(full_linpreds, family) {
   checkmate::assert_matrix(full_linpreds)
   checkmate::assert_class(family, "family")
   checkmate::assert_true(is_distributional_family(family))
-  
+
   n_params <- family$nlp
   n_time_points <- ncol(full_linpreds) %/% n_params
-  
+
   forecast_lpi <- vector("list", n_params)
   for (p in seq_len(n_params)) {
     col_start <- (p - 1) * n_time_points + 1
     col_end <- p * n_time_points
     forecast_lpi[[p]] <- col_start:col_end
   }
-  
+
   return(forecast_lpi)
 }
 
