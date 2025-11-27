@@ -263,51 +263,6 @@ extract_base_variables <- function(expr_vars) {
   return(base_vars)
 }
 
-#' Optimized FC matrix reshaping
-#'
-#' Reshapes forecast linear predictors into matrix format using vectorized operations
-#'
-#' @param fc_linpreds Vector of forecast linear predictors
-#' @param draw_ids Vector of draw identifiers corresponding to fc_linpreds
-#' @param unique_draws Vector of unique draw identifiers in desired order
-#' @return Matrix with rows = draws, columns = prediction points
-#' @noRd
-optimized_fc_matrix_reshape <- function(fc_linpreds, draw_ids, unique_draws) {
-  # Input validation following package standards
-  checkmate::assert_numeric(fc_linpreds)
-  checkmate::assert_vector(draw_ids)
-  checkmate::assert_vector(unique_draws)
-  checkmate::assert_count(length(unique_draws), .var.name = "number of draws")
-
-  n_draws <- length(unique_draws)
-  n_cols <- length(fc_linpreds) / n_draws
-
-  # Enhanced dimension validation
-  if (length(fc_linpreds) %% n_draws != 0) {
-    stop(insight::format_error(
-      paste0(
-        "Dimension mismatch: fc_linpreds length (",
-        length(fc_linpreds),
-        ") not divisible by draws (",
-        n_draws,
-        ")"
-      )
-    ))
-  }
-
-  # Vectorized reshaping approach
-  draw_factor <- factor(draw_ids, levels = unique_draws)
-  draw_indices <- split(seq_along(fc_linpreds), draw_factor)
-
-  fc_matrix <- matrix(
-    fc_linpreds[unlist(draw_indices, use.names = FALSE)],
-    nrow = n_draws,
-    ncol = n_cols,
-    byrow = TRUE
-  )
-
-  return(fc_matrix)
-}
 
 #' Compute functional coefficient predictions using matrix operations
 #'

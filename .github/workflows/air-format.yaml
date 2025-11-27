@@ -46,10 +46,14 @@ jobs:
       - name: Commit any Air formatting changes
         shell: bash
         run: |
-          if find . -type f \( -name '*.r' -o -name '*.R' \) -exec git add -u {} +; then
-            echo "Staged modified R files"
-            git commit -a -m '`air format` (GitHub Actions)'
-            git push
-          else
+          # Stage any modified R files
+          find . -type f \( -name '*.r' -o -name '*.R' \) -exec git add -u {} +
+          
+          # Check if there are any changes to commit
+          if git diff --cached --quiet; then
             echo "No changes found in any R files"
+          else
+            echo "Staging and committing modified R files"
+            git commit -m '`air format` (GitHub Actions)'
+            git push
           fi
