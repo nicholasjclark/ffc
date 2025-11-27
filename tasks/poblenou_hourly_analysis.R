@@ -84,7 +84,10 @@ weekly_pattern <- poblenou_ts %>%
     .groups = "drop"
   )
 
-ggplot(weekly_pattern, aes(x = hour, y = mean_value, color = factor(day_week))) +
+ggplot(
+  weekly_pattern,
+  aes(x = hour, y = mean_value, color = factor(day_week))
+) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.5) +
   scale_color_viridis_d(
@@ -103,7 +106,9 @@ ggplot(weekly_pattern, aes(x = hour, y = mean_value, color = factor(day_week))) 
 ggplot(weekly_pattern, aes(x = hour, y = factor(day_week), fill = mean_value)) +
   geom_tile() +
   scale_fill_viridis_c(name = "NOx\n(mg/m³)") +
-  scale_y_discrete(labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")) +
+  scale_y_discrete(
+    labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+  ) +
   labs(
     title = "Weekly NOx Pattern Heatmap",
     subtitle = "Weekend effect visible: lower pollution on days 6-7",
@@ -120,7 +125,9 @@ poblenou_ts %>%
   ggplot(aes(x = factor(day_week), y = daily_mean, fill = factor(day_week))) +
   geom_boxplot(alpha = 0.7) +
   scale_fill_viridis_d(guide = "none") +
-  scale_x_discrete(labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")) +
+  scale_x_discrete(
+    labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+  ) +
   labs(
     title = "Daily NOx Levels by Day of Week",
     subtitle = "Weekends show lower pollution levels",
@@ -133,7 +140,7 @@ poblenou_ts %>%
 # Add a day_in_month variable based on a 28-day cycle
 poblenou_ts <- poblenou_ts %>%
   mutate(
-    day_month = ((day - 1) %% 28) + 1  # Creates a 28-day cycle
+    day_month = ((day - 1) %% 28) + 1 # Creates a 28-day cycle
   )
 
 # Plot 4: Check for monthly patterns
@@ -146,18 +153,25 @@ daily_avg <- poblenou_ts %>%
 # Autocorrelation plot to detect cycles
 acf_plot <- acf(daily_avg$daily_mean, lag.max = 60, plot = FALSE)
 acf_df <- data.frame(
-  lag = acf_plot$lag[-1],  # Remove lag 0
+  lag = acf_plot$lag[-1], # Remove lag 0
   acf = acf_plot$acf[-1]
 )
 
 ggplot(acf_df, aes(x = lag, y = acf)) +
   geom_hline(yintercept = 0, color = "gray50") +
-  geom_hline(yintercept = c(-1.96/sqrt(nrow(daily_avg)), 1.96/sqrt(nrow(daily_avg))),
-             linetype = "dashed", color = "blue") +
+  geom_hline(
+    yintercept = c(-1.96 / sqrt(nrow(daily_avg)), 1.96 / sqrt(nrow(daily_avg))),
+    linetype = "dashed",
+    color = "blue"
+  ) +
   geom_segment(aes(xend = lag, yend = 0), color = "black") +
   geom_point(size = 2) +
-  geom_vline(xintercept = c(7, 14, 21, 28, 35, 42),
-             linetype = "dotted", color = "red", alpha = 0.5) +
+  geom_vline(
+    xintercept = c(7, 14, 21, 28, 35, 42),
+    linetype = "dotted",
+    color = "red",
+    alpha = 0.5
+  ) +
   labs(
     title = "Autocorrelation Function of Daily NOx Averages",
     subtitle = "Red dotted lines at weekly intervals; peak around 28 days suggests monthly cycle",
@@ -177,9 +191,11 @@ monthly_pattern <- poblenou_ts %>%
   )
 
 ggplot(monthly_pattern, aes(x = day_month, y = mean_value)) +
-  geom_ribbon(aes(ymin = mean_value - 2*se_value,
-                  ymax = mean_value + 2*se_value),
-              alpha = 0.2, fill = "darkgreen") +
+  geom_ribbon(
+    aes(ymin = mean_value - 2 * se_value, ymax = mean_value + 2 * se_value),
+    alpha = 0.2,
+    fill = "darkgreen"
+  ) +
   geom_line(color = "darkgreen", linewidth = 1) +
   geom_point(color = "darkgreen", size = 2) +
   scale_x_continuous(breaks = seq(0, 28, 7)) +
@@ -226,7 +242,9 @@ mod_poblenou <- ffc_gam(
   discrete = TRUE
 )
 
-cat("\n=== Model with hourly, weekly, and monthly seasonality (Poisson BAM) ===\n")
+cat(
+  "\n=== Model with hourly, weekly, and monthly seasonality (Poisson BAM) ===\n"
+)
 
 # Model summary and diagnostics
 summary(mod_poblenou)
@@ -254,18 +272,20 @@ fable_forecasts %>%
   )
 
 # Visualization 2: Custom plot with uncertainty bands
-ggplot(fable_forecasts %>%
-         mutate(
-           time_seq = row_number(),
-           q05 = quantile(.dist, 0.05),
-           q10 = quantile(.dist, 0.10),
-           q25 = quantile(.dist, 0.25),
-           q50 = quantile(.dist, 0.50),
-           q75 = quantile(.dist, 0.75),
-           q90 = quantile(.dist, 0.90),
-           q95 = quantile(.dist, 0.95)
-         ),
-        aes(x = time_seq)) +
+ggplot(
+  fable_forecasts %>%
+    mutate(
+      time_seq = row_number(),
+      q05 = quantile(.dist, 0.05),
+      q10 = quantile(.dist, 0.10),
+      q25 = quantile(.dist, 0.25),
+      q50 = quantile(.dist, 0.50),
+      q75 = quantile(.dist, 0.75),
+      q90 = quantile(.dist, 0.90),
+      q95 = quantile(.dist, 0.95)
+    ),
+  aes(x = time_seq)
+) +
   # Uncertainty ribbons
   geom_ribbon(aes(ymin = q05, ymax = q95), alpha = 0.2, fill = "darkblue") +
   geom_ribbon(aes(ymin = q10, ymax = q90), alpha = 0.3, fill = "darkblue") +
@@ -313,11 +333,21 @@ fable_forecasts %>%
   ggplot(aes(x = hour, y = value, color = type)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1) +
-  facet_wrap(~day_week, ncol = 4,
-             labeller = labeller(day_week = c("1" = "Monday", "2" = "Tuesday",
-                                              "3" = "Wednesday", "4" = "Thursday",
-                                              "5" = "Friday", "6" = "Saturday",
-                                              "7" = "Sunday"))) +
+  facet_wrap(
+    ~day_week,
+    ncol = 4,
+    labeller = labeller(
+      day_week = c(
+        "1" = "Monday",
+        "2" = "Tuesday",
+        "3" = "Wednesday",
+        "4" = "Thursday",
+        "5" = "Friday",
+        "6" = "Saturday",
+        "7" = "Sunday"
+      )
+    )
+  ) +
   scale_color_manual(values = c("Actual" = "black", "Forecast" = "darkblue")) +
   labs(
     title = "Weekly Pattern Capture: Forecast vs Actual",
@@ -330,18 +360,20 @@ fable_forecasts %>%
 
 # Visualization 4: Focus on hourly patterns
 test_sample <- test_data %>%
-  filter(day <= min(day) + 2)  # First few test days
+  filter(day <= min(day) + 2) # First few test days
 
 fable_sample <- fable_forecasts %>%
   filter(day <= min(test_data$day) + 2)
 
-ggplot(fable_sample %>%
-         mutate(
-           q05 = quantile(.dist, 0.05),
-           q95 = quantile(.dist, 0.95),
-           q50 = quantile(.dist, 0.50)
-         ),
-        aes(x = hour)) +
+ggplot(
+  fable_sample %>%
+    mutate(
+      q05 = quantile(.dist, 0.05),
+      q95 = quantile(.dist, 0.95),
+      q50 = quantile(.dist, 0.50)
+    ),
+  aes(x = hour)
+) +
   geom_ribbon(aes(ymin = q05, ymax = q95), alpha = 0.3, fill = "darkblue") +
   geom_line(aes(y = q50), color = "darkblue", linewidth = 1) +
   geom_line(aes(y = value), color = "black", linewidth = 1) +

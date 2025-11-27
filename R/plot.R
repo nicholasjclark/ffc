@@ -12,9 +12,9 @@
 #' @examples
 #' # Extract and plot time-varying coefficients
 #' mod <- ffc_gam(
-#'   deaths ~ offset(log(population)) + sex + 
+#'   deaths ~ offset(log(population)) + sex +
 #'     fts(age, k = 8, bs = "cr", time_k = 10),
-#'   time = "year", 
+#'   time = "year",
 #'   data = qld_mortality,
 #'   family = poisson(),
 #'   engine = "bam"
@@ -77,9 +77,7 @@ autoplot.fts_ts <- function(object, ...) {
       do.call(
         what = `::`,
         args = list("ggborderline", "geom_borderline")
-      )(bordercolour = "white",
-        linewidth = 0.75,
-        show.legend = FALSE) +
+      )(bordercolour = "white", linewidth = 0.75, show.legend = FALSE) +
       scale_colour_viridis_d(
         option = "C",
         end = 0.85
@@ -94,7 +92,8 @@ autoplot.fts_ts <- function(object, ...) {
 
   if (n_basis > 1L) {
     p <- p +
-      facet_wrap(~.basis,
+      facet_wrap(
+        ~.basis,
         scales = "free_y",
         ncol = min(4, n_basis),
         labeller = labeller(.basis = label_wrap_gen(10))

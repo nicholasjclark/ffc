@@ -1,6 +1,6 @@
 test_that("list formula detection works", {
   # Simple list formula detection - no ffc_gam calls
-  test_formula <- list(y ~ x, ~ 1)
+  test_formula <- list(y ~ x, ~1)
   expect_true(is.list(test_formula))
   expect_length(test_formula, 2)
   expect_s3_class(test_formula[[1]], "formula")
@@ -34,7 +34,7 @@ test_that("basic input validation works", {
 
   # List of formulae should pass
   expect_silent(
-    checkmate::assert_list(list(y ~ x, ~ 1), types = "formula")
+    checkmate::assert_list(list(y ~ x, ~1), types = "formula")
   )
 })
 
@@ -65,14 +65,17 @@ test_that("interpret_ffc handles simple list formulae", {
 
   # Test with simple list formulae (no fts terms)
   result <- interpret_ffc(
-    formula = list(y ~ x, ~ 1),
+    formula = list(y ~ x, ~1),
     data = test_data,
     time_var = "time"
   )
 
   # Check return structure
   expect_type(result, "list")
-  expect_named(result, c("formula", "data", "orig_data", "fts_smooths", "gam_init"))
+  expect_named(
+    result,
+    c("formula", "data", "orig_data", "fts_smooths", "gam_init")
+  )
 
   # Check formula is a list
   expect_type(result$formula, "list")
@@ -100,7 +103,10 @@ test_that("interpret_ffc maintains backward compatibility", {
 
   # Check return structure for single formula
   expect_type(result, "list")
-  expect_named(result, c("formula", "data", "orig_data", "fts_smooths", "gam_init"))
+  expect_named(
+    result,
+    c("formula", "data", "orig_data", "fts_smooths", "gam_init")
+  )
 
   # Formula should be single formula, not list
   expect_s3_class(result$formula, "formula")
@@ -127,7 +133,11 @@ test_that("parameter-aware coefficient naming works for list formulae with fts",
   )
 
   # Check that coefficient names include semantic parameter prefixes
-  fts_cols <- grep("^(location|scale|shape)_fts_", names(result$data), value = TRUE)
+  fts_cols <- grep(
+    "^(location|scale|shape)_fts_",
+    names(result$data),
+    value = TRUE
+  )
   expect_true(length(fts_cols) > 0)
 
   # Should have coefficients for both parameters
@@ -161,7 +171,11 @@ test_that("single formula fts terms have no parameter prefix", {
   expect_true(length(fts_cols) > 0)
 
   # Should NOT have semantic parameter prefixes
-  param_cols <- grep("^(location|scale|shape)_", names(result$data), value = TRUE)
+  param_cols <- grep(
+    "^(location|scale|shape)_",
+    names(result$data),
+    value = TRUE
+  )
   expect_equal(length(param_cols), 0)
 })
 
@@ -175,8 +189,10 @@ test_that("mean_only fts terms get parameter prefixes correctly", {
 
   # List formulae with mean_only fts terms
   result <- interpret_ffc(
-    formula = list(y ~ fts(x, k = 3, mean_only = TRUE),
-                   ~ fts(x, k = 3, mean_only = TRUE)),
+    formula = list(
+      y ~ fts(x, k = 3, mean_only = TRUE),
+      ~ fts(x, k = 3, mean_only = TRUE)
+    ),
     data = test_data,
     time_var = "time"
   )
@@ -186,8 +202,11 @@ test_that("mean_only fts terms get parameter prefixes correctly", {
   expect_true(length(mean_cols) > 0)
 
   # Mean terms should have semantic parameter prefixes
-  param_mean_cols <- grep("^(location|scale|shape)_.*_mean$", names(result$data),
-                          value = TRUE)
+  param_mean_cols <- grep(
+    "^(location|scale|shape)_.*_mean$",
+    names(result$data),
+    value = TRUE
+  )
   expect_equal(length(param_mean_cols), length(mean_cols))
 })
 
@@ -199,22 +218,43 @@ test_that("extract_parameter_from_basis works correctly", {
   gaulss_family <- gaulss()
 
   # Test parameter extraction from semantic prefixed names
-  expect_equal(extract_parameter_from_basis("location_fts_bs_x", gaulss_family), "location")
-  expect_equal(extract_parameter_from_basis("scale_fts_bs_x", gaulss_family), "scale")
+  expect_equal(
+    extract_parameter_from_basis("location_fts_bs_x", gaulss_family),
+    "location"
+  )
+  expect_equal(
+    extract_parameter_from_basis("scale_fts_bs_x", gaulss_family),
+    "scale"
+  )
 
   # Test parameter extraction from numeric prefixed names (backward compatibility)
-  expect_equal(extract_parameter_from_basis("param1_fts_bs_x", gaulss_family), "location")
-  expect_equal(extract_parameter_from_basis("param2_fts_bs_x", gaulss_family), "scale")
+  expect_equal(
+    extract_parameter_from_basis("param1_fts_bs_x", gaulss_family),
+    "location"
+  )
+  expect_equal(
+    extract_parameter_from_basis("param2_fts_bs_x", gaulss_family),
+    "scale"
+  )
 
   # Test single-parameter model fallback
   gauss_family <- gaussian()
-  expect_equal(extract_parameter_from_basis("fts_bs_x", gauss_family), "location")
+  expect_equal(
+    extract_parameter_from_basis("fts_bs_x", gauss_family),
+    "location"
+  )
 
   # Test single-parameter with distributional family
-  expect_equal(extract_parameter_from_basis("fts_bs_x", gaulss_family), "location")
+  expect_equal(
+    extract_parameter_from_basis("fts_bs_x", gaulss_family),
+    "location"
+  )
 
   # Test fallback for invalid parameter numbers
-  expect_equal(extract_parameter_from_basis("param99_fts_bs_x", gaulss_family), "param99")
+  expect_equal(
+    extract_parameter_from_basis("param99_fts_bs_x", gaulss_family),
+    "param99"
+  )
 })
 
 test_that("end-to-end coefficient extraction works with gaulss()", {
@@ -227,12 +267,16 @@ test_that("end-to-end coefficient extraction works with gaulss()", {
   test_data <- data.frame(
     time = 1:n,
     x = rnorm(n),
-    y = rnorm(n, mean = sin(2 * pi * (1:n) / 10), sd = 0.5 + 0.3 * cos(2 * pi * (1:n) / 8))
+    y = rnorm(
+      n,
+      mean = sin(2 * pi * (1:n) / 10),
+      sd = 0.5 + 0.3 * cos(2 * pi * (1:n) / 8)
+    )
   )
 
   # Fit model with list formula and gaulss family
   model <- ffc_gam(
-    list(y ~ s(x, k = 5), ~ x),
+    list(y ~ s(x, k = 5), ~x),
     data = test_data,
     family = gaulss(),
     engine = "gam",
@@ -259,12 +303,12 @@ test_that("twlss() family works with list formulae", {
   test_data <- data.frame(
     time = 1:n,
     x = runif(n, 0, 1),
-    y = rgamma(n, shape = 2, rate = 1)  # Positive values for Tweedie
+    y = rgamma(n, shape = 2, rate = 1) # Positive values for Tweedie
   )
 
   # Test interpret_ffc with twlss
   result <- interpret_ffc(
-    formula = list(y ~ fts(x, k = 3), ~ fts(x, k = 3), ~ 1),
+    formula = list(y ~ fts(x, k = 3), ~ fts(x, k = 3), ~1),
     data = test_data,
     time_var = "time"
   )
@@ -280,7 +324,7 @@ test_that("twlss() family works with list formulae", {
 
   expect_true(length(location_cols) > 0)
   expect_true(length(scale_cols) > 0)
-  expect_equal(length(shape_cols), 0)  # Third parameter is ~ 1, no fts terms
+  expect_equal(length(shape_cols), 0) # Third parameter is ~ 1, no fts terms
 })
 
 test_that("different fts() specifications work per parameter", {
@@ -297,15 +341,19 @@ test_that("different fts() specifications work per parameter", {
   # Test with different k values per parameter
   result <- interpret_ffc(
     formula = list(
-      y ~ fts(x, k = 8),           # High flexibility for location
-      ~ fts(x, k = 3, mean_only = TRUE)   # Low flexibility, mean-only for scale
+      y ~ fts(x, k = 8), # High flexibility for location
+      ~ fts(x, k = 3, mean_only = TRUE) # Low flexibility, mean-only for scale
     ),
     data = test_data,
     time_var = "time"
   )
 
   # Check that different specifications are preserved
-  location_basis_cols <- grep("^location_fts_bs_", names(result$data), value = TRUE)
+  location_basis_cols <- grep(
+    "^location_fts_bs_",
+    names(result$data),
+    value = TRUE
+  )
   scale_basis_cols <- grep("^scale_fts_bs_", names(result$data), value = TRUE)
   scale_mean_cols <- grep("^scale_.*_mean$", names(result$data), value = TRUE)
 
@@ -358,8 +406,8 @@ test_that("fts() method integration with distributional models", {
   expect_true(nrow(scale_coefs) > 0)
 
   # Different parameters can have different numbers of coefficients
-  expect_true(length(unique(location_coefs$.basis)) >= 3)  # k=4 minus constraints
-  expect_true(length(unique(scale_coefs$.basis)) >= 2)     # k=3 minus constraints
+  expect_true(length(unique(location_coefs$.basis)) >= 3) # k=4 minus constraints
+  expect_true(length(unique(scale_coefs$.basis)) >= 2) # k=3 minus constraints
 })
 
 test_that("gam_init structure normalization in distributional regression", {
@@ -368,44 +416,48 @@ test_that("gam_init structure normalization in distributional regression", {
 
   library(mgcv)
 
-    # Create test data for distributional model
-    set.seed(1234)
-    n <- 35
-    test_data <- data.frame(
-      time = 1:n,
-      x = rnorm(n),
-      y = rnorm(n, sd = 0.5)
-    )
+  # Create test data for distributional model
+  set.seed(1234)
+  n <- 35
+  test_data <- data.frame(
+    time = 1:n,
+    x = rnorm(n),
+    y = rnorm(n, sd = 0.5)
+  )
 
-    # Fit distributional model with multiple parameters
-    model <- ffc_gam(
-      list(y ~ fts(x, k = 4), ~ fts(x, k = 3)),
-      data = test_data,
-      family = gaulss(),
-      time = "time"
-    )
+  # Fit distributional model with multiple parameters
+  model <- ffc_gam(
+    list(y ~ fts(x, k = 4), ~ fts(x, k = 3)),
+    data = test_data,
+    family = gaulss(),
+    time = "time"
+  )
 
-    # Verify model has correct gam_init structure
-    expect_s3_class(model, "ffc_gam_multi")
-    expect_length(model$gam_init, 2)
-    expect_true(all(sapply(model$gam_init, function(param_list) {
-      all(sapply(param_list, function(x) inherits(x, "gam")))
-    })))
+  # Verify model has correct gam_init structure
+  expect_s3_class(model, "ffc_gam_multi")
+  expect_length(model$gam_init, 2)
+  expect_true(all(sapply(model$gam_init, function(param_list) {
+    all(sapply(param_list, function(x) inherits(x, "gam")))
+  })))
 
-    # Create newdata for prediction
-    newdata <- data.frame(
-      time = (n + 1):(n + 3),
-      x = rnorm(3)
-    )
+  # Create newdata for prediction
+  newdata <- data.frame(
+    time = (n + 1):(n + 3),
+    x = rnorm(3)
+  )
 
-    # Test prediction with newdata
-    pred_result <- predict(model, newdata = newdata, type = "response")
+  # Test prediction with newdata
+  pred_result <- predict(model, newdata = newdata, type = "response")
 
-    # Verify prediction returns valid structure
-    expect_true(is.data.frame(pred_result) || is.matrix(pred_result) || is.numeric(pred_result))
+  # Verify prediction returns valid structure
+  expect_true(
+    is.data.frame(pred_result) ||
+      is.matrix(pred_result) ||
+      is.numeric(pred_result)
+  )
 
-    # Forecast
-    fc <- forecast(model, newdata = newdata)
+  # Forecast
+  fc <- forecast(model, newdata = newdata)
 })
 
 # Additional distributional regression test coverage
@@ -451,7 +503,7 @@ test_that("distributional basis column regex patterns work correctly", {
     location_fts_bs_x_1 = rnorm(20),
     scale_fts_bs_x_1 = rnorm(20),
     shape_fts_bs_x_1 = rnorm(20),
-    param1_fts_bs_x_1 = rnorm(20),  # Backward compatibility
+    param1_fts_bs_x_1 = rnorm(20), # Backward compatibility
     param2_fts_bs_x_1 = rnorm(20),
     regular_column = rnorm(20)
   )
@@ -489,9 +541,11 @@ test_that("fts_coefs preserves parameter information correctly", {
   test_data$time <- 1:n
 
   model <- ffc_gam(
-    list(y ~ fts(x0, k = 4, share_penalty = FALSE),
-         ~ fts(x0, k = 3, share_penalty = FALSE),
-         ~ 1),
+    list(
+      y ~ fts(x0, k = 4, share_penalty = FALSE),
+      ~ fts(x0, k = 3, share_penalty = FALSE),
+      ~1
+    ),
     data = test_data,
     family = mgcv::twlss(),
     time = "time"
@@ -507,7 +561,7 @@ test_that("fts_coefs preserves parameter information correctly", {
   unique_params <- unique(coefs$.parameter)
   expect_true("location" %in% unique_params)
   expect_true("scale" %in% unique_params)
-  expect_false("shape" %in% unique_params)  # No fts term for shape
+  expect_false("shape" %in% unique_params) # No fts term for shape
 
   # Each parameter should have correct number of basis functions
   location_bases <- unique(coefs[coefs$.parameter == "location", ".basis"])
@@ -530,8 +584,10 @@ test_that("share_penalty defaults to FALSE for distributional families", {
   )
 
   model_override <- SW(ffc_gam(
-    list(y ~ fts(x, k = 3, share_penalty = TRUE),
-         ~ fts(x, k = 3, share_penalty = TRUE)),
+    list(
+      y ~ fts(x, k = 3, share_penalty = TRUE),
+      ~ fts(x, k = 3, share_penalty = TRUE)
+    ),
     data = test_data,
     family = gaulss(),
     time = "time"
@@ -555,8 +611,10 @@ test_that("share_penalty=FALSE works normally for distributional families", {
 
   # Test that distributional model with share_penalty=FALSE works normally
   model_explicit <- SW(ffc_gam(
-    list(y ~ fts(x, k = 3, share_penalty = FALSE),
-         ~ fts(x, k = 3, share_penalty = FALSE)),
+    list(
+      y ~ fts(x, k = 3, share_penalty = FALSE),
+      ~ fts(x, k = 3, share_penalty = FALSE)
+    ),
     data = test_data,
     family = gaulss(),
     time = "time"
@@ -602,8 +660,10 @@ test_that("mixed share_penalty settings work correctly", {
   )
 
   model_mixed <- SW(ffc_gam(
-    list(y ~ fts(x1, k = 2, share_penalty = TRUE),
-         ~ fts(x1, k = 2, share_penalty = FALSE)),
+    list(
+      y ~ fts(x1, k = 2, share_penalty = TRUE),
+      ~ fts(x1, k = 2, share_penalty = FALSE)
+    ),
     data = test_data,
     family = gaulss(),
     time = "time"

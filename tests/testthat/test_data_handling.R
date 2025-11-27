@@ -103,7 +103,7 @@ test_that("tsibble checking functions work correctly", {
 test_that("tsibble checking functions detect issues", {
   # Test with irregular data
   irregular_data <- tsibble::tsibble(
-    time = c(1, 3, 7, 10),  # irregular spacing
+    time = c(1, 3, 7, 10), # irregular spacing
     value = rnorm(4),
     index = time,
     regular = FALSE
@@ -182,7 +182,9 @@ test_that("offset handling works correctly", {
 
   # Test with offset in formula
   mod_offset <- ffc_gam(
-    y ~ offset(offset_var) + s(season, bs = "cc", k = 12) + fts(time, time_k = 5),
+    y ~ offset(offset_var) +
+      s(season, bs = "cc", k = 12) +
+      fts(time, time_k = 5),
     time = "time",
     data = dat_offset,
     family = poisson()
@@ -224,12 +226,14 @@ test_that("edge cases in data dimensions", {
 
   # Should work but may produce warnings about small data size
   expect_no_error(
-    SW(mod_minimal <- ffc_gam(
-      y ~ s(season, k = 3) + fts(time, time_k = 3),
-      time = "time",
-      data = minimal_dat,
-      family = poisson()
-    ))
+    SW(
+      mod_minimal <- ffc_gam(
+        y ~ s(season, k = 3) + fts(time, time_k = 3),
+        time = "time",
+        data = minimal_dat,
+        family = poisson()
+      )
+    )
   )
 
   expect_true(inherits(mod_minimal, "ffc_gam"))

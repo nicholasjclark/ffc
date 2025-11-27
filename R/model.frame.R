@@ -8,8 +8,9 @@
 #' @return A \code{matrix} containing the fitted model frame
 #' @export
 model.frame.ffc_gam <- function(
-    formula,
-    ...) {
+  formula,
+  ...
+) {
   # Remove class to make it easier to extract the original model.frame
   gam_object <- formula
   class(gam_object) <- class(gam_object)[-1]

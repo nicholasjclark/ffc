@@ -1,12 +1,6 @@
 #' Create Stan data list from an ffc tbl_ts object
 #' @noRd
-prep_tbl_ts_stan = function(.data,
-                            h,
-                            K,
-                            p,
-                            family,
-                            model){
-
+prep_tbl_ts_stan = function(.data, h, K, p, family, model) {
   model <- match.arg(model, choices = c('ardf', 'gpdf', 'vardf'))
 
   # Expand the data to include NAs for the out of sample period
@@ -27,8 +21,10 @@ prep_tbl_ts_stan = function(.data,
   family <- ifelse(family$family == 'gaussian', 1, 2)
   n_series <- nlevels(.fulldata$.series)
 
-  if(K > n_series) {
-    rlang::warn('K cannot be greater than the number of unique series. Setting K = n_series')
+  if (K > n_series) {
+    rlang::warn(
+      'K cannot be greater than the number of unique series. Setting K = n_series'
+    )
     K <- n_series
   }
 
@@ -36,8 +32,7 @@ prep_tbl_ts_stan = function(.data,
 
   # Need a matrix of values for the series, excluding forecast values
   Y <- .fulldata |>
-    tidyr::pivot_wider(names_from = '.series',
-                       values_from = '.y') |>
+    tidyr::pivot_wider(names_from = '.series', values_from = '.y') |>
     dplyr::select(-.time) |>
     as.matrix()
 
@@ -82,20 +77,22 @@ prep_tbl_ts_stan = function(.data,
     beta = array(1)
   )
 
-  if (model %in% c('ardf', 'vardf')){
-    if(p > max(.fulldata$.time) - 1){
-      stop('Cannot estimate a model where p > maximum lag available in the data',
-           call. = FALSE)
+  if (model %in% c('ardf', 'vardf')) {
+    if (p > max(.fulldata$.time) - 1) {
+      stop(
+        'Cannot estimate a model where p > maximum lag available in the data',
+        call. = FALSE
+      )
     }
 
-    if (model == 'ardf'){
+    if (model == 'ardf') {
       c(model_data) <- nlist(
         prior_ar = c(1, 1, 1),
         P = p
       )
     }
 
-    if (model == 'vardf'){
+    if (model == 'vardf') {
       c(model_data) <- nlist(
         P = p
       )
@@ -106,12 +103,7 @@ prep_tbl_ts_stan = function(.data,
 }
 
 #' @noRd
-extract_stan_fc = function(stanfit,
-                           mod_name = 'ARDF',
-                           .data,
-                           model_data,
-                           h){
-
+extract_stan_fc = function(stanfit, mod_name = 'ARDF', .data, model_data, h) {
   # Extract forecast distributions for each series
   preds <- as.matrix(stanfit, pars = 'ypred')
   n_series <- model_data$n_series
@@ -128,16 +120,15 @@ extract_stan_fc = function(stanfit,
     rbind,
     lapply(
       1:n_series,
-      function(x){
+      function(x) {
         s_name <- set_series_levels(unique(.data$.basis))[x]
         data.frame(
           .basis = s_name,
           .realisation = 1,
           .model = mod_name,
-          .rep = 1 : NROW(preds),
-          .sim = as.vector(preds[ , starts[x] : ends[x]][, -c(1 : (ends[1] - h))]),
-          .time = sort(rep((ends[1] - h + 1) : (ends[1]),
-                           NROW(preds)))
+          .rep = 1:NROW(preds),
+          .sim = as.vector(preds[, starts[x]:ends[x]][, -c(1:(ends[1] - h))]),
+          .time = sort(rep((ends[1] - h + 1):(ends[1]), NROW(preds)))
         )
       }
     )
@@ -149,15 +140,16 @@ extract_stan_fc = function(stanfit,
   out <- suppressMessages(
     make_future_data(.data, h = h) |>
       dplyr::as_tibble() |>
-      dplyr::mutate(.time = rep((ends[1] - h + 1) : (ends[1]),
-                                n_series)) |>
+      dplyr::mutate(.time = rep((ends[1] - h + 1):(ends[1]), n_series)) |>
       dplyr::select(-.basis, -.realisation) |>
       dplyr::distinct() |>
 
       # ... and join to the forecast data
-      dplyr::right_join(series_fcs,
-                        relationship = 'many-to-many',
-                        by = dplyr::join_by(.time)) |>
+      dplyr::right_join(
+        series_fcs,
+        relationship = 'many-to-many',
+        by = dplyr::join_by(.time)
+      ) |>
       tsibble::as_tsibble(
         key = c(.basis, .realisation, .model, .rep),
         index = index
@@ -168,6 +160,6 @@ extract_stan_fc = function(stanfit,
 }
 
 #' @noRd
-set_series_levels = function(x){
+set_series_levels = function(x) {
   sort(unique(x))
 }

@@ -35,10 +35,18 @@ mcycle_test <- mcycle |>
 # Visualize the data
 p1 <- ggplot(mcycle, aes(x = index, y = accel)) +
   geom_point(alpha = 0.7, size = 2) +
-  geom_vline(xintercept = 110, linetype = "dashed", color = "red", alpha = 0.7) +
-  labs(title = "Motorcycle Crash Data: Head Acceleration vs Time",
-       subtitle = "Red line shows initial train/test split",
-       x = "Time Index", y = "Head Acceleration") +
+  geom_vline(
+    xintercept = 110,
+    linetype = "dashed",
+    color = "red",
+    alpha = 0.7
+  ) +
+  labs(
+    title = "Motorcycle Crash Data: Head Acceleration vs Time",
+    subtitle = "Red line shows initial train/test split",
+    x = "Time Index",
+    y = "Head Acceleration"
+  ) +
   theme_minimal()
 
 print(p1)
@@ -103,22 +111,40 @@ forecast_plot_data <- mcycle_train |>
   )
 
 p2 <- ggplot(forecast_plot_data, aes(x = index, y = accel)) +
-  geom_point(data = filter(forecast_plot_data, type == "observed"),
-             alpha = 0.7, size = 2) +
-  geom_ribbon(data = filter(forecast_plot_data, type == "forecast"),
-              aes(ymin = .q2.5, ymax = .q97.5),
-              fill = "darkred", alpha = 0.2) +
-  geom_ribbon(data = filter(forecast_plot_data, type == "forecast"),
-              aes(ymin = .q10, ymax = .q90),
-              fill = "darkred", alpha = 0.3) +
-  geom_line(data = filter(forecast_plot_data, type == "forecast"),
-            aes(y = .estimate),
-            colour = "darkred", size = 1.2) +
-  geom_point(data = filter(forecast_plot_data, type == "forecast"),
-             color = "black", size = 2) +
-  labs(title = "Motorcycle Crash Data: Distributional GAM Forecast",
-       subtitle = "Training data (points) and out-of-sample forecasts (red)",
-       x = "Time Index", y = "Head Acceleration") +
+  geom_point(
+    data = filter(forecast_plot_data, type == "observed"),
+    alpha = 0.7,
+    size = 2
+  ) +
+  geom_ribbon(
+    data = filter(forecast_plot_data, type == "forecast"),
+    aes(ymin = .q2.5, ymax = .q97.5),
+    fill = "darkred",
+    alpha = 0.2
+  ) +
+  geom_ribbon(
+    data = filter(forecast_plot_data, type == "forecast"),
+    aes(ymin = .q10, ymax = .q90),
+    fill = "darkred",
+    alpha = 0.3
+  ) +
+  geom_line(
+    data = filter(forecast_plot_data, type == "forecast"),
+    aes(y = .estimate),
+    colour = "darkred",
+    size = 1.2
+  ) +
+  geom_point(
+    data = filter(forecast_plot_data, type == "forecast"),
+    color = "black",
+    size = 2
+  ) +
+  labs(
+    title = "Motorcycle Crash Data: Distributional GAM Forecast",
+    subtitle = "Training data (points) and out-of-sample forecasts (red)",
+    x = "Time Index",
+    y = "Head Acceleration"
+  ) +
   theme_minimal()
 
 print(p2)
@@ -160,19 +186,28 @@ fts_coefs_summary <- fts_coefs_training |>
 # Visualize training coefficients vs forecasted coefficients
 p_coefs <- ggplot() +
   # Training coefficients
-  geom_line(data = fts_coefs_summary,
-            aes(x = .time, y = .estimate, color = .basis),
-            size = 1) +
+  geom_line(
+    data = fts_coefs_summary,
+    aes(x = .time, y = .estimate, color = .basis),
+    size = 1
+  ) +
   # Forecasted coefficients
-  geom_ribbon(data = coef_forecast,
-              aes(x = .time, ymin = .q2.5, ymax = .q97.5, fill = .basis),
-              alpha = 0.2) +
-  geom_line(data = coef_forecast,
-            aes(x = .time, y = .estimate, color = .basis),
-            size = 1.2) +
-  facet_wrap(~ .basis, scales = "free_y") +
-  labs(title = "Functional Coefficients: Training vs Forecasted",
-       x = "Time Index", y = "Coefficient Value") +
+  geom_ribbon(
+    data = coef_forecast,
+    aes(x = .time, ymin = .q2.5, ymax = .q97.5, fill = .basis),
+    alpha = 0.2
+  ) +
+  geom_line(
+    data = coef_forecast,
+    aes(x = .time, y = .estimate, color = .basis),
+    size = 1.2
+  ) +
+  facet_wrap(~.basis, scales = "free_y") +
+  labs(
+    title = "Functional Coefficients: Training vs Forecasted",
+    x = "Time Index",
+    y = "Coefficient Value"
+  ) +
   theme_minimal() +
   theme(legend.position = "none")
 
@@ -185,10 +220,10 @@ print(p_coefs)
 cat("\n=== Rolling Forecast Evaluation ===\n")
 
 # Set up rolling forecast parameters
-window_size <- 80    # Initial training window
-min_window <- 80     # Minimum training window
+window_size <- 80 # Initial training window
+min_window <- 80 # Minimum training window
 forecast_horizon <- 5 # Forecast 5 steps ahead each time
-step_size <- 5       # Move window by 5 observations each time
+step_size <- 5 # Move window by 5 observations each time
 
 # Calculate the rolling forecast range
 max_start <- nrow(mcycle) - forecast_horizon
@@ -221,7 +256,11 @@ for (i in seq_along(forecast_starts)) {
     # Fit model on training data
     roll_model <- ffc_gam(
       list(
-        accel ~ fts(index, mean_only = TRUE, time_k = min(15, nrow(train_data) - 5)),
+        accel ~ fts(
+          index,
+          mean_only = TRUE,
+          time_k = min(15, nrow(train_data) - 5)
+        ),
         ~ fts(index, mean_only = TRUE, time_k = min(15, nrow(train_data) - 5))
       ),
       family = gaulss(),
@@ -246,9 +285,21 @@ for (i in seq_along(forecast_starts)) {
         horizon = 1:nrow(test_data)
       )
 
-    cat("Completed forecast", i, "of", length(forecast_starts),
-        "- training:", start_idx, "to", end_idx,
-        "- testing:", test_start, "to", test_end, "\n")
+    cat(
+      "Completed forecast",
+      i,
+      "of",
+      length(forecast_starts),
+      "- training:",
+      start_idx,
+      "to",
+      end_idx,
+      "- testing:",
+      test_start,
+      "to",
+      test_end,
+      "\n"
+    )
   }
 }
 
@@ -317,22 +368,38 @@ cat("- 80% coverage:", round(overall_stats$overall_coverage_80 * 100, 1), "%\n")
 # Plot rolling forecasts over time
 p3 <- ggplot() +
   # Original data points
-  geom_point(data = mcycle, aes(x = index, y = accel),
-             alpha = 0.4, size = 1) +
+  geom_point(data = mcycle, aes(x = index, y = accel), alpha = 0.4, size = 1) +
   # Rolling forecast points and intervals
-  geom_point(data = rolling_forecasts,
-             aes(x = index, y = .estimate),
-             color = "darkred", size = 1.5, alpha = 0.8) +
-  geom_errorbar(data = rolling_forecasts,
-                aes(x = index, ymin = .q10, ymax = .q90),
-                color = "darkred", alpha = 0.6, width = 0.5) +
-  geom_segment(data = rolling_forecasts,
-               aes(x = index, xend = index, y = accel, yend = .estimate),
-               color = "blue", alpha = 0.3, linetype = "dashed") +
-  labs(title = "Rolling Forecast Evaluation: Motorcycle Crash Data",
-       subtitle = paste("Red points: forecasts | Blue dashes: forecast errors |",
-                        "Error bars: 80% prediction intervals"),
-       x = "Time Index", y = "Head Acceleration") +
+  geom_point(
+    data = rolling_forecasts,
+    aes(x = index, y = .estimate),
+    color = "darkred",
+    size = 1.5,
+    alpha = 0.8
+  ) +
+  geom_errorbar(
+    data = rolling_forecasts,
+    aes(x = index, ymin = .q10, ymax = .q90),
+    color = "darkred",
+    alpha = 0.6,
+    width = 0.5
+  ) +
+  geom_segment(
+    data = rolling_forecasts,
+    aes(x = index, xend = index, y = accel, yend = .estimate),
+    color = "blue",
+    alpha = 0.3,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Rolling Forecast Evaluation: Motorcycle Crash Data",
+    subtitle = paste(
+      "Red points: forecasts | Blue dashes: forecast errors |",
+      "Error bars: 80% prediction intervals"
+    ),
+    x = "Time Index",
+    y = "Head Acceleration"
+  ) +
   theme_minimal()
 
 print(p3)
@@ -342,9 +409,12 @@ p4 <- ggplot(rolling_forecasts, aes(x = index, y = forecast_error)) +
   geom_point(aes(color = factor(horizon)), size = 2, alpha = 0.7) +
   geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
   scale_color_viridis_d(name = "Forecast\nHorizon") +
-  labs(title = "Forecast Errors Over Time",
-       subtitle = "Rolling forecast evaluation results",
-       x = "Time Index", y = "Forecast Error (Actual - Predicted)") +
+  labs(
+    title = "Forecast Errors Over Time",
+    subtitle = "Rolling forecast evaluation results",
+    x = "Time Index",
+    y = "Forecast Error (Actual - Predicted)"
+  ) +
   theme_minimal()
 
 print(p4)
@@ -360,12 +430,25 @@ coverage_data <- rolling_forecasts |>
 p5 <- ggplot(coverage_data, aes(x = index)) +
   geom_line(aes(y = running_coverage_95), color = "red", size = 1.2) +
   geom_line(aes(y = running_coverage_80), color = "blue", size = 1.2) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "red", alpha = 0.7) +
-  geom_hline(yintercept = 0.80, linetype = "dashed", color = "blue", alpha = 0.7) +
+  geom_hline(
+    yintercept = 0.95,
+    linetype = "dashed",
+    color = "red",
+    alpha = 0.7
+  ) +
+  geom_hline(
+    yintercept = 0.80,
+    linetype = "dashed",
+    color = "blue",
+    alpha = 0.7
+  ) +
   scale_y_continuous(labels = scales::percent_format()) +
-  labs(title = "Cumulative Coverage Rates",
-       subtitle = "Red: 95% intervals | Blue: 80% intervals | Dashed: nominal rates",
-       x = "Time Index", y = "Cumulative Coverage Rate") +
+  labs(
+    title = "Cumulative Coverage Rates",
+    subtitle = "Red: 95% intervals | Blue: 80% intervals | Dashed: nominal rates",
+    x = "Time Index",
+    y = "Cumulative Coverage Rate"
+  ) +
   theme_minimal()
 
 print(p5)

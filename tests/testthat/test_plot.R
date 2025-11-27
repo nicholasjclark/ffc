@@ -53,7 +53,9 @@ test_that("autoplot works with multiple basis functions (n_basis > 1L)", {
 
   # Check facet parameters (scales parameter may be named differently)
   facet_params <- p$facet$params
-  expect_true("scales" %in% names(facet_params) || "free" %in% names(facet_params))
+  expect_true(
+    "scales" %in% names(facet_params) || "free" %in% names(facet_params)
+  )
   expect_equal(p$facet$params$ncol, min(4, n_basis))
 
   # Should not have a title (titles are only for single basis)
@@ -132,8 +134,8 @@ test_that("autoplot works with different numbers of basis functions", {
 
   mod_5basis <- SW(ffc_gam(
     y ~ fts(x1, k = 3, time_k = 4) +
-        fts(x2, k = 2, time_k = 4) +
-        fts(x3, k = 3, time_k = 4),
+      fts(x2, k = 2, time_k = 4) +
+      fts(x3, k = 3, time_k = 4),
     time = "time",
     data = test_data_5,
     family = gaussian()
@@ -208,7 +210,7 @@ test_that("autoplot labeller works with long basis names", {
 
   mod_long <- SW(ffc_gam(
     y ~ fts(very_long_variable_name, k = 2, time_k = 4) +
-        fts(another_long_name, k = 2, time_k = 4),
+      fts(another_long_name, k = 2, time_k = 4),
     time = "time",
     data = test_data,
     family = gaussian()

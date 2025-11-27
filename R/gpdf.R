@@ -30,18 +30,19 @@
 #' fc <- forecast(mod, newdata = test_data, model = "GPDF",
 #'                chains = 1, iter = 300)
 #' @export
-GPDF = function(formula,
-                family = gaussian(),
-                h = get_stan_param("h", "forecast"),
-                chains = get_stan_param("chains"),
-                cores = get_stan_param("cores"),
-                iter = get_stan_param("iter"),
-                warmup = floor(iter / 2),
-                adapt_delta = get_stan_param("adapt_delta"),
-                max_treedepth = get_stan_param("max_treedepth"),
-                silent = get_stan_param("silent"),
-                ...){
-
+GPDF = function(
+  formula,
+  family = gaussian(),
+  h = get_stan_param("h", "forecast"),
+  chains = get_stan_param("chains"),
+  cores = get_stan_param("cores"),
+  iter = get_stan_param("iter"),
+  warmup = floor(iter / 2),
+  adapt_delta = get_stan_param("adapt_delta"),
+  max_treedepth = get_stan_param("max_treedepth"),
+  silent = get_stan_param("silent"),
+  ...
+) {
   gpdf_model <- new_model_class(
     "GPDF",
     train = train_gpdf,
@@ -69,22 +70,24 @@ GPDF = function(formula,
 #' @return a tsibble containing forecast draws
 #'
 train_gpdf = function(
-    .data,
-    specials,
-    family = gaussian(),
-    h = get_stan_param("h", "forecast"),
-    chains = get_stan_param("chains"),
-    cores = get_stan_param("cores"),
-    iter = get_stan_param("iter"),
-    warmup = floor(get_stan_param("iter") / 2),
-    adapt_delta = get_stan_param("adapt_delta"),
-    max_treedepth = get_stan_param("max_treedepth"),
-    silent = get_stan_param("silent"),
-    ...){
-
+  .data,
+  specials,
+  family = gaussian(),
+  h = get_stan_param("h", "forecast"),
+  chains = get_stan_param("chains"),
+  cores = get_stan_param("cores"),
+  iter = get_stan_param("iter"),
+  warmup = floor(get_stan_param("iter") / 2),
+  adapt_delta = get_stan_param("adapt_delta"),
+  max_treedepth = get_stan_param("max_treedepth"),
+  silent = get_stan_param("silent"),
+  ...
+) {
   # Extract arguments from specials
-  if(length(specials$K) > 1){
-    rlang::warn("Only one special for `K()` is allowed, defaulting to the first usage")
+  if (length(specials$K) > 1) {
+    rlang::warn(
+      "Only one special for `K()` is allowed, defaulting to the first usage"
+    )
   }
   K <- specials$K[[1]]
 
@@ -99,8 +102,18 @@ train_gpdf = function(
   )
 
   # Fit the model
-  stanfit <- run_stan_sampling("gpdf", model_data, chains, cores, iter, warmup,
-                               adapt_delta, max_treedepth, silent, ...)
+  stanfit <- run_stan_sampling(
+    "gpdf",
+    model_data,
+    chains,
+    cores,
+    iter,
+    warmup,
+    adapt_delta,
+    max_treedepth,
+    silent,
+    ...
+  )
 
   # Extract forecasts as a tsibble
   out <- extract_stan_fc(

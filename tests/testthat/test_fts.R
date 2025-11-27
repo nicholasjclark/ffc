@@ -17,10 +17,7 @@ test_that("fts() working correctly", {
   expect_error(fts("growth", k = 11, bs = "cr"))
 
   # Also check that multidimensional bases are handled
-  fts_obj <- fts(growth, age,
-    k = 11, bs = "tp",
-    time_bs = "ps"
-  )
+  fts_obj <- fts(growth, age, k = 11, bs = "tp", time_bs = "ps")
   expect_true(inherits(fts_obj, "list"))
   expect_true(all.equal(fts_obj$term, c("growth", "age")))
   expect_true(fts_obj$by == "NA")
@@ -39,7 +36,7 @@ test_that("ffc_gam handles response transformations correctly", {
 
   # Create data with positive y for transformations
   test_data <- data.frame(
-    y_raw = rgamma(n, shape = 2, rate = 1),  # Positive values
+    y_raw = rgamma(n, shape = 2, rate = 1), # Positive values
     x = runif(n, 0, 1),
     time = 1:n
   )
@@ -98,7 +95,7 @@ test_that("ffc_gam handles response transformations correctly", {
 
   # Test predictions work with transformed responses
   newdata <- data.frame(
-    y_raw = rgamma(5, shape = 2, rate = 1),  # Not used in prediction
+    y_raw = rgamma(5, shape = 2, rate = 1), # Not used in prediction
     x = runif(5, 0, 1),
     time = (n + 1):(n + 5)
   )
@@ -132,7 +129,7 @@ test_that("ffc_gam handles response transformations with different families", {
     sqrt(count_raw) ~ s(x, k = 6) + fts(time, k = 5, time_k = 5),
     time = "time",
     data = test_data,
-    family = gaussian()  # Model transformed response as Gaussian
+    family = gaussian() # Model transformed response as Gaussian
   ))
 
   expect_true(inherits(mod_sqrt_pois, "ffc_gam"))
@@ -154,7 +151,7 @@ test_that("ffc_gam handles response transformations with different families", {
     exp(small_vals) ~ s(x, k = 6) + fts(time, k = 5, time_k = 5),
     time = "time",
     data = test_data,
-    family = Gamma()  # Gamma family for positive continuous response
+    family = Gamma() # Gamma family for positive continuous response
   ))
 
   expect_true(inherits(mod_exp, "ffc_gam"))
@@ -181,7 +178,7 @@ test_that("response transformations work with complex expressions", {
   n <- 40
 
   test_data <- data.frame(
-    y1 = rnorm(n, 5, 1),  # Mean around 5
+    y1 = rnorm(n, 5, 1), # Mean around 5
     y2 = rnorm(n, 3, 0.5), # Mean around 3
     x = runif(n, 0, 1),
     time = 1:n

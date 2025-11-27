@@ -78,10 +78,15 @@
 #'   key_vars = c("Region", "State")
 #' )
 #' @export
-as_fable.ffc_gam <- function(x, newdata, forecasts = NULL,
-                             response = NULL, model = "ETS",
-                             key_vars = NULL, ...) {
-
+as_fable.ffc_gam <- function(
+  x,
+  newdata,
+  forecasts = NULL,
+  response = NULL,
+  model = "ETS",
+  key_vars = NULL,
+  ...
+) {
   # Input validation
   checkmate::assert_class(x, "ffc_gam")
   checkmate::assert_data_frame(newdata, min.rows = 1)
@@ -124,8 +129,13 @@ as_fable.ffc_gam <- function(x, newdata, forecasts = NULL,
 
   # Generate forecasts if not provided
   if (is.null(forecasts)) {
-    forecasts <- forecast(x, newdata = newdata,
-                         model = model, summary = FALSE, ...)
+    forecasts <- forecast(
+      x,
+      newdata = newdata,
+      model = model,
+      summary = FALSE,
+      ...
+    )
   }
 
   # Validate forecast dimensions match newdata
@@ -161,12 +171,20 @@ as_fable.ffc_gam <- function(x, newdata, forecasts = NULL,
   }
 
   # Validate time index for tsibble compatibility
-  time_classes <- c("Date", "POSIXct", "yearquarter", "yearmonth",
-                    "numeric", "integer")
+  time_classes <- c(
+    "Date",
+    "POSIXct",
+    "yearquarter",
+    "yearmonth",
+    "numeric",
+    "integer"
+  )
 
-  if (!any(sapply(time_classes, function(cls) {
-    inherits(fable_data[[time_var]], cls)
-  }))) {
+  if (
+    !any(sapply(time_classes, function(cls) {
+      inherits(fable_data[[time_var]], cls)
+    }))
+  ) {
     # Reason: Convert time to numeric if not compatible with tsibble
     if (is.character(fable_data[[time_var]])) {
       insight::format_warning(
