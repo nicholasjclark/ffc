@@ -35,7 +35,7 @@ ggplot(
   facet_wrap(~sex) +
   scale_colour_viridis_c(name = "Year") +
   labs(
-    x = "Age", 
+    x = "Age",
     y = "Mortality rate",
     title = "Queensland mortality patterns over time"
   ) +
@@ -60,7 +60,7 @@ mod <- ffc_gam(
     fts(
       age,
       by = sex,
-      bs = "tp", 
+      bs = "tp",
       time_k = 15,
       time_m = 1
     ),
@@ -78,7 +78,7 @@ summary(mod)
 
 ## ----predicted-curves, fig.cap="Model predictions showing expected mortality curves by age and year. Smooth curves demonstrate systematic evolution of the age-mortality relationship over four decades."----
 newdat <- qld_mortality
-newdat$population <- 1  # Standardized predictions
+newdat$population <- 1 # Standardized predictions
 
 newdat$preds <- predict(
   mod,
@@ -168,7 +168,7 @@ autoplot(functional_coefs) +
 ## ----forecast-coefficients----------------------------------------------------
 functional_fc <- forecast(
   object = functional_coefs,
-  h = 5,      # 5-year horizon
+  h = 5, # 5-year horizon
   times = 10, # Forecast replicates
   model = "ARIMA"
 )
@@ -197,27 +197,27 @@ mortality_forecasts <- forecast(
 head(mortality_forecasts)
 
 # Plot forecasted mortality rates, together with uncertainties
-ggplot(mortality_forecasts |>
-         dplyr::bind_cols(newdata_forecast),
-       aes(x = age,
-           y = .estimate,
-           group = year,
-           colour = year)) +
-  geom_ribbon(aes(
-    ymin = .q10,
-    ymax = .q90,
-    fill = year
-  ),
-  alpha = 0.2,
-  colour = NA) +
+ggplot(
+  mortality_forecasts |>
+    dplyr::bind_cols(newdata_forecast),
+  aes(x = age, y = .estimate, group = year, colour = year)
+) +
+  geom_ribbon(
+    aes(
+      ymin = .q10,
+      ymax = .q90,
+      fill = year
+    ),
+    alpha = 0.2,
+    colour = NA
+  ) +
   geom_line() +
   facet_wrap(~sex) +
   scale_colour_viridis_c(name = "Year") +
   scale_fill_viridis_c(name = "Year") +
   labs(
-    x = "Age", 
+    x = "Age",
     y = "Mortality rate",
     title = "Expected mortality"
   ) +
   scale_y_log10()
-

@@ -26,20 +26,27 @@ glimpse(elnino_sst)
 # Check temporal coverage
 cat("Years covered:", min(elnino_sst$year), "-", max(elnino_sst$year), "\n")
 cat("Total observations:", nrow(elnino_sst), "\n")
-cat("Monthly measurements per year:", elnino_sst |> 
-    index_by(year) |> 
-    summarise(n = n()) |> 
-    pull(n) |> 
-    unique(), "\n")
+cat(
+  "Monthly measurements per year:",
+  elnino_sst |>
+    index_by(year) |>
+    summarise(n = n()) |>
+    pull(n) |>
+    unique(),
+  "\n"
+)
 
 
 ## ----seasonal-patterns, fig.cap="Monthly SST patterns across years."----------
-ggplot(elnino_sst, aes(x = month, y = temperature, group = year, color = year)) +
+ggplot(
+  elnino_sst,
+  aes(x = month, y = temperature, group = year, color = year)
+) +
   geom_line(alpha = 0.7, linewidth = 0.8) +
   scale_color_viridis_c(name = "Year") +
   scale_x_continuous(breaks = 1:12, labels = month.abb) +
   labs(
-    x = "Month", 
+    x = "Month",
     y = "Temperature (°C)",
     title = "El Niño SST: Evolving seasonal patterns",
   )
@@ -56,7 +63,7 @@ annual_means <- elnino_sst |>
     anomaly = mean_temp - mean(mean_temp),
     phase = case_when(
       anomaly > 0.5 ~ "El Niño",
-      anomaly < -0.5 ~ "La Niña", 
+      anomaly < -0.5 ~ "La Niña",
       TRUE ~ "Neutral"
     )
   )
@@ -65,7 +72,11 @@ ggplot(annual_means, aes(x = year, y = anomaly, fill = phase)) +
   geom_col(alpha = 0.8) +
   geom_hline(yintercept = c(-0.5, 0.5), linetype = "dashed", alpha = 0.5) +
   scale_fill_manual(
-    values = c("El Niño" = "darkred", "La Niña" = "darkblue", "Neutral" = "gray60"),
+    values = c(
+      "El Niño" = "darkred",
+      "La Niña" = "darkblue",
+      "Neutral" = "gray60"
+    ),
     name = "ENSO Phase"
   ) +
   labs(
@@ -76,10 +87,10 @@ ggplot(annual_means, aes(x = year, y = anomaly, fill = phase)) +
 
 
 ## ----data-split---------------------------------------------------------------
-train_data <- elnino_sst |> 
+train_data <- elnino_sst |>
   filter(year <= 2014) |>
   arrange(year, month)
-test_data <- elnino_sst |> 
+test_data <- elnino_sst |>
   filter(year > 2014) |>
   arrange(year, month)
 
@@ -89,20 +100,20 @@ mod_elnino <- ffc_gam(
   temperature ~
     # Time-varying intercept: captures inter-annual variability
     fts(
-      year, 
+      year,
       mean_only = TRUE,
       time_k = 15
     ) +
-    
+
     # Time-varying seasonal pattern: cyclic splines ensure continuity
     fts(
-      month, 
-      k = 12, 
-      bs = "cc", 
+      month,
+      k = 12,
+      bs = "cc",
       time_k = 15
     ),
   data = train_data,
-  
+
   # Specify cyclic boundaries for month
   knots = list(month = c(0.5, 12.5)),
   time = "year",
@@ -175,12 +186,21 @@ ggplot(forecast_summary, aes(x = year)) +
   geom_ribbon(aes(ymin = q05, ymax = q95, fill = .basis), alpha = 0.2) +
   geom_ribbon(aes(ymin = q10, ymax = q90, fill = .basis), alpha = 0.3) +
   geom_line(aes(y = mean, color = .basis), linewidth = 1) +
-  geom_ribbon(data = historical_summary,
-              aes(ymin = q05, ymax = q95, fill = .basis), alpha = 0.2) +
-  geom_ribbon(data = historical_summary,
-              aes(ymin = q10, ymax = q90, fill = .basis), alpha = 0.3) +
-  geom_line(data = historical_summary,
-            aes(y = mean, color = .basis), linewidth = 1) +
+  geom_ribbon(
+    data = historical_summary,
+    aes(ymin = q05, ymax = q95, fill = .basis),
+    alpha = 0.2
+  ) +
+  geom_ribbon(
+    data = historical_summary,
+    aes(ymin = q10, ymax = q90, fill = .basis),
+    alpha = 0.3
+  ) +
+  geom_line(
+    data = historical_summary,
+    aes(y = mean, color = .basis),
+    linewidth = 1
+  ) +
   geom_vline(xintercept = 2014.5, linetype = "dashed", alpha = 0.5) +
   facet_wrap(~.basis, scales = "free_y", ncol = 2) +
   scale_fill_viridis_d(guide = "none") +
@@ -254,15 +274,20 @@ for (q in quantiles) {
   forecast_q <- forecast_results[[paste0(".q", sprintf("%.0f", q * 100))]]
   if (is.null(forecast_q)) {
     # Handle different quantile naming conventions
-    if (q == 0.05) forecast_q <- forecast_results$.q2.5
-    else if (q == 0.95) forecast_q <- forecast_results$.q97.5
-    else if (q == 0.50) forecast_q <- forecast_results$.estimate
-    else next
+    if (q == 0.05) {
+      forecast_q <- forecast_results$.q2.5
+    } else if (q == 0.95) {
+      forecast_q <- forecast_results$.q97.5
+    } else if (q == 0.50) {
+      forecast_q <- forecast_results$.estimate
+    } else {
+      next
+    }
   }
-  
+
   forecast_ts_q <- ts(forecast_q, frequency = 12)
   forecast_spec_q <- spectrum(forecast_ts_q, plot = FALSE)
-  
+
   forecast_spectra[[paste0("q", sprintf("%.0f", q * 100))]] <- data.frame(
     frequency = forecast_spec_q$freq,
     power = forecast_spec_q$spec,
@@ -279,7 +304,7 @@ forecast_summary <- forecast_spec_df |>
   summarise(
     median = median(power),
     q05 = quantile(power, 0.05, na.rm = TRUE),
-    q10 = quantile(power, 0.10, na.rm = TRUE), 
+    q10 = quantile(power, 0.10, na.rm = TRUE),
     q90 = quantile(power, 0.90, na.rm = TRUE),
     q95 = quantile(power, 0.95, na.rm = TRUE),
     .groups = "drop"
@@ -297,29 +322,39 @@ ggplot() +
   geom_ribbon(
     data = forecast_summary,
     aes(x = frequency, ymin = log(q05), ymax = log(q95)),
-    alpha = 0.2, fill = "darkred"
+    alpha = 0.2,
+    fill = "darkred"
   ) +
   geom_ribbon(
-    data = forecast_summary, 
+    data = forecast_summary,
     aes(x = frequency, ymin = log(q10), ymax = log(q90)),
-    alpha = 0.3, fill = "darkred"
+    alpha = 0.3,
+    fill = "darkred"
   ) +
   # Forecast median
   geom_line(
     data = forecast_summary,
     aes(x = frequency, y = log(median)),
-    color = "darkred", linewidth = 1.2
+    color = "darkred",
+    linewidth = 1.2
   ) +
   # Observed spectrum
   geom_line(
     data = observed_df,
     aes(x = frequency, y = log(power)),
-    color = "black", linewidth = 1.2
+    color = "black",
+    linewidth = 1.2
   ) +
   # Highlight annual frequency
   geom_vline(xintercept = 1, linetype = "dashed", alpha = 0.6) +
-  annotate("text", x = 1.1, y = max(log(observed_df$power)) * 0.9, 
-           label = "Annual cycle", hjust = 0, size = 3) +
+  annotate(
+    "text",
+    x = 1.1,
+    y = max(log(observed_df$power)) * 0.9,
+    label = "Annual cycle",
+    hjust = 0,
+    size = 3
+  ) +
   labs(
     x = "Frequency (cycles per year)",
     y = "Log spectral density",
@@ -351,4 +386,3 @@ fable_forecasts |>
     y = "Temperature (C)",
     title = "Forecasts broken down by month"
   )
-
